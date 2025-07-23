@@ -8,7 +8,6 @@ import 'package:nostr_sdk/event.dart';
 import 'package:nostr_sdk/filter.dart';
 import '../models/user_profile.dart';
 import 'nostr_service_interface.dart';
-import 'connection_status_service.dart';
 import 'subscription_manager.dart';
 import 'profile_cache_service.dart';
 import '../utils/unified_logger.dart';

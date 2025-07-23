@@ -518,7 +518,7 @@ final videoManagerDebugInfoProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef VideoManagerDebugInfoRef = AutoDisposeProviderRef<Map<String, dynamic>>;
-String _$videoManagerHash() => r'1edbfe4dbd2edce4374912d757fcc2dd58a303a6';
+String _$videoManagerHash() => r'f0c94f7d055ded6d34cb9540c3b6d545cd01a12d';
 
 /// Main Riverpod video manager provider
 ///

@@ -8,7 +8,6 @@ import '../services/video_manager_interface.dart';
 import '../services/video_event_service.dart';
 import '../services/nostr_service_interface.dart';
 import '../services/seen_videos_service.dart';
-import '../services/connection_status_service.dart';
 import '../services/subscription_manager.dart';
 import '../utils/unified_logger.dart';
 

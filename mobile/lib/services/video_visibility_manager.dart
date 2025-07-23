@@ -1,252 +1,281 @@
-// ABOUTME: Centralized video visibility manager that ensures videos ONLY play when actually visible
-// ABOUTME: Single source of truth for video playback state based on real visibility detection
+// ABOUTME: DEPRECATED - Legacy ChangeNotifier-based service for managing video visibility and playback control
+// ABOUTME: Replaced by Riverpod providers in lib/providers/video_visibility_providers.dart
 
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import '../utils/unified_logger.dart';
+/*
+ * DEPRECATION NOTICE - VideoVisibilityManager
+ * 
+ * This service has been deprecated as part of the Riverpod migration.
+ * It was originally designed using ChangeNotifier pattern which has several issues:
+ * - Global singleton pattern makes testing difficult
+ * - Manual lifecycle management required
+ * - State mutations can happen from anywhere
+ * - Complex internal state management without proper immutability
+ * 
+ * REPLACED BY: lib/providers/video_visibility_providers.dart
+ * - Uses modern Riverpod providers with immutable state
+ * - Automatic lifecycle management
+ * - Better testability with provider overrides
+ * - Type-safe state management with freezed data classes
+ * - Clear separation between state and logic
+ * 
+ * MIGRATION GUIDE:
+ * Old usage:
+ *   final manager = context.read<VideoVisibilityManager>();
+ *   manager.updateVideoVisibility(videoId, fraction);
+ *   final shouldPlay = manager.shouldVideoPlay(videoId);
+ * 
+ * New usage:
+ *   ref.read(videoVisibilityProvider.notifier).updateVisibility(videoId, fraction);
+ *   final state = ref.watch(videoVisibilityProvider);
+ *   final shouldPlay = state.playableVideos.contains(videoId);
+ */
 
-/// Visibility info for a video widget
-class VideoVisibilityInfo {
-  final String videoId;
-  final double visibilityFraction;
-  final bool isVisible;
-  final DateTime lastUpdate;
-  
-  VideoVisibilityInfo({
-    required this.videoId,
-    required this.visibilityFraction,
-    required this.isVisible,
-    required this.lastUpdate,
-  });
-}
+// import 'dart:async';
+// import 'package:flutter/foundation.dart';
+// import '../utils/unified_logger.dart';
 
-/// Centralized manager for video visibility and playback control
-/// 
-/// This service is the SINGLE SOURCE OF TRUTH for which videos should be playing.
-/// It uses actual visibility detection (not index-based assumptions) to ensure
-/// videos NEVER play when not visible on screen.
-class VideoVisibilityManager extends ChangeNotifier {
-  /// Minimum visibility fraction required for a video to play (50%)
-  static const double minVisibilityThreshold = 0.5;
+// /// Visibility info for a video widget
+// class VideoVisibilityInfo {
+//   final String videoId;
+//   final double visibilityFraction;
+//   final bool isVisible;
+//   final DateTime lastUpdate;
   
-  /// Map of video IDs to their visibility info
-  final Map<String, VideoVisibilityInfo> _visibilityMap = {};
+//   VideoVisibilityInfo({
+//     required this.videoId,
+//     required this.visibilityFraction,
+//     required this.isVisible,
+//     required this.lastUpdate,
+//   });
+// }
+
+// /// Centralized manager for video visibility and playback control
+// /// 
+// /// This service is the SINGLE SOURCE OF TRUTH for which videos should be playing.
+// /// It uses actual visibility detection (not index-based assumptions) to ensure
+// /// videos NEVER play when not visible on screen.
+// class VideoVisibilityManager extends ChangeNotifier {
+//   /// Minimum visibility fraction required for a video to play (50%)
+//   static const double minVisibilityThreshold = 0.5;
   
-  /// Set of video IDs that are allowed to play
-  final Set<String> _playableVideos = {};
+//   /// Map of video IDs to their visibility info
+//   final Map<String, VideoVisibilityInfo> _visibilityMap = {};
   
-  /// Track if user is actively scrolling/playing videos (auto-play mode)
-  bool _autoPlayEnabled = false;
+//   /// Set of video IDs that are allowed to play
+//   final Set<String> _playableVideos = {};
   
-  /// The last video that was playing (for auto-play continuation)
-  String? _lastPlayingVideo;
+//   /// Track if user is actively scrolling/playing videos (auto-play mode)
+//   bool _autoPlayEnabled = false;
   
-  /// Stream controller for visibility changes
-  final _visibilityStreamController = StreamController<VideoVisibilityInfo>.broadcast();
+//   /// The last video that was playing (for auto-play continuation)
+//   String? _lastPlayingVideo;
   
-  /// Get stream of visibility changes
-  Stream<VideoVisibilityInfo> get visibilityStream => _visibilityStreamController.stream;
+//   /// Stream controller for visibility changes
+//   final _visibilityStreamController = StreamController<VideoVisibilityInfo>.broadcast();
   
-  /// Get all currently visible videos
-  List<String> get visibleVideos => _visibilityMap.entries
-      .where((e) => e.value.isVisible)
-      .map((e) => e.key)
-      .toList();
+//   /// Get stream of visibility changes
+//   Stream<VideoVisibilityInfo> get visibilityStream => _visibilityStreamController.stream;
   
-  /// Get all videos allowed to play (visible above threshold)
-  Set<String> get playableVideos => Set.unmodifiable(_playableVideos);
+//   /// Get all currently visible videos
+//   List<String> get visibleVideos => _visibilityMap.entries
+//       .where((e) => e.value.isVisible)
+//       .map((e) => e.key)
+//       .toList();
   
-  /// Check if a specific video should be playing
-  bool shouldVideoPlay(String videoId) => _playableVideos.contains(videoId);
+//   /// Get all videos allowed to play (visible above threshold)
+//   Set<String> get playableVideos => Set.unmodifiable(_playableVideos);
   
-  /// Check if auto-play is enabled
-  bool get isAutoPlayEnabled => _autoPlayEnabled;
+//   /// Check if a specific video should be playing
+//   bool shouldVideoPlay(String videoId) => _playableVideos.contains(videoId);
   
-  /// Get the currently actively playing video (for auto-play)
-  String? get activelyPlayingVideo => _lastPlayingVideo;
+//   /// Check if auto-play is enabled
+//   bool get isAutoPlayEnabled => _autoPlayEnabled;
   
-  /// Update visibility for a video
-  /// 
-  /// This is called by VisibilityDetector widgets wrapping each video.
-  /// The manager decides if the video should play based on visibility.
-  void updateVideoVisibility(String videoId, double visibilityFraction) {
-    final wasPlayable = _playableVideos.contains(videoId);
-    final isNowVisible = visibilityFraction > 0;
-    final isNowPlayable = visibilityFraction >= minVisibilityThreshold;
+//   /// Get the currently actively playing video (for auto-play)
+//   String? get activelyPlayingVideo => _lastPlayingVideo;
+  
+//   /// Update visibility for a video
+//   /// 
+//   /// This is called by VisibilityDetector widgets wrapping each video.
+//   /// The manager decides if the video should play based on visibility.
+//   void updateVideoVisibility(String videoId, double visibilityFraction) {
+//     final wasPlayable = _playableVideos.contains(videoId);
+//     final isNowVisible = visibilityFraction > 0;
+//     final isNowPlayable = visibilityFraction >= minVisibilityThreshold;
     
-    // Update visibility info
-    final info = VideoVisibilityInfo(
-      videoId: videoId,
-      visibilityFraction: visibilityFraction,
-      isVisible: isNowVisible,
-      lastUpdate: DateTime.now(),
-    );
+//     // Update visibility info
+//     final info = VideoVisibilityInfo(
+//       videoId: videoId,
+//       visibilityFraction: visibilityFraction,
+//       isVisible: isNowVisible,
+//       lastUpdate: DateTime.now(),
+//     );
     
-    _visibilityMap[videoId] = info;
+//     _visibilityMap[videoId] = info;
     
-    // Update playable set
-    if (isNowPlayable && !wasPlayable) {
-      _playableVideos.add(videoId);
+//     // Update playable set
+//     if (isNowPlayable && !wasPlayable) {
+//       _playableVideos.add(videoId);
       
-      // Auto-play logic: if auto-play is enabled and this is a new visible video,
-      // make it the actively playing one
-      if (_autoPlayEnabled) {
-        // When setting a new actively playing video, ensure only one can play
-        _setActivelyPlaying(videoId);
-      }
+//       // Auto-play logic: if auto-play is enabled and this is a new visible video,
+//       // make it the actively playing one
+//       if (_autoPlayEnabled) {
+//         // When setting a new actively playing video, ensure only one can play
+//         _setActivelyPlaying(videoId);
+//       }
       
-      Log.info('✅ Video $videoId is now playable (visibility: ${(visibilityFraction * 100).toStringAsFixed(1)}%)', 
-          name: 'VideoVisibilityManager', category: LogCategory.video);
-    } else if (!isNowPlayable && wasPlayable) {
-      _playableVideos.remove(videoId);
+//       Log.info('✅ Video $videoId is now playable (visibility: ${(visibilityFraction * 100).toStringAsFixed(1)}%)', 
+//           name: 'VideoVisibilityManager', category: LogCategory.video);
+//     } else if (!isNowPlayable && wasPlayable) {
+//       _playableVideos.remove(videoId);
       
-      // If this was the actively playing video, update auto-play state
-      if (_lastPlayingVideo == videoId) {
-        _lastPlayingVideo = null;
-        // If auto-play is enabled, find the next most visible video
-        if (_autoPlayEnabled && _playableVideos.isNotEmpty) {
-          // Get the most visible video from the remaining playable ones
-          String? nextVideo;
-          double maxVisibility = 0;
-          for (final id in _playableVideos) {
-            final info = _visibilityMap[id];
-            if (info != null && info.visibilityFraction > maxVisibility) {
-              maxVisibility = info.visibilityFraction;
-              nextVideo = id;
-            }
-          }
-          if (nextVideo != null) {
-            _setActivelyPlaying(nextVideo);
-          }
-        }
-      }
+//       // If this was the actively playing video, update auto-play state
+//       if (_lastPlayingVideo == videoId) {
+//         _lastPlayingVideo = null;
+//         // If auto-play is enabled, find the next most visible video
+//         if (_autoPlayEnabled && _playableVideos.isNotEmpty) {
+//           // Get the most visible video from the remaining playable ones
+//           String? nextVideo;
+//           double maxVisibility = 0;
+//           for (final id in _playableVideos) {
+//             final info = _visibilityMap[id];
+//             if (info != null && info.visibilityFraction > maxVisibility) {
+//               maxVisibility = info.visibilityFraction;
+//               nextVideo = id;
+//             }
+//           }
+//           if (nextVideo != null) {
+//             _setActivelyPlaying(nextVideo);
+//           }
+//         }
+//       }
       
-      Log.info('⏸️ Video $videoId is no longer playable (visibility: ${(visibilityFraction * 100).toStringAsFixed(1)}%)', 
-          name: 'VideoVisibilityManager', category: LogCategory.video);
-    }
+//       Log.info('⏸️ Video $videoId is no longer playable (visibility: ${(visibilityFraction * 100).toStringAsFixed(1)}%)', 
+//           name: 'VideoVisibilityManager', category: LogCategory.video);
+//     }
     
-    // Emit visibility change
-    _visibilityStreamController.add(info);
+//     // Emit visibility change
+//     _visibilityStreamController.add(info);
     
-    // Notify listeners if playability changed
-    if (wasPlayable != isNowPlayable) {
-      notifyListeners();
-    }
-  }
+//     // Notify listeners if playability changed
+//     if (wasPlayable != isNowPlayable) {
+//       notifyListeners();
+//     }
+//   }
   
-  /// Remove a video from tracking (e.g., when widget is disposed)
-  void removeVideo(String videoId) {
-    _visibilityMap.remove(videoId);
-    _playableVideos.remove(videoId);
-    Log.debug('Removed video $videoId from visibility tracking', 
-        name: 'VideoVisibilityManager', category: LogCategory.video);
-    notifyListeners();
-  }
+//   /// Remove a video from tracking (e.g., when widget is disposed)
+//   void removeVideo(String videoId) {
+//     _visibilityMap.remove(videoId);
+//     _playableVideos.remove(videoId);
+//     Log.debug('Removed video $videoId from visibility tracking', 
+//         name: 'VideoVisibilityManager', category: LogCategory.video);
+//     notifyListeners();
+//   }
   
-  /// Pause all videos (e.g., when app goes to background)
-  void pauseAllVideos() {
-    _playableVideos.clear();
-    Log.info('⏸️ Paused all videos', name: 'VideoVisibilityManager', category: LogCategory.video);
-    notifyListeners();
-  }
+//   /// Pause all videos (e.g., when app goes to background)
+//   void pauseAllVideos() {
+//     _playableVideos.clear();
+//     Log.info('⏸️ Paused all videos', name: 'VideoVisibilityManager', category: LogCategory.video);
+//     notifyListeners();
+//   }
   
-  /// Resume visibility-based playback
-  void resumeVisibilityBasedPlayback() {
-    // Re-evaluate which videos should play based on current visibility
-    _playableVideos.clear();
+//   /// Resume visibility-based playback
+//   void resumeVisibilityBasedPlayback() {
+//     // Re-evaluate which videos should play based on current visibility
+//     _playableVideos.clear();
     
-    for (final entry in _visibilityMap.entries) {
-      if (entry.value.visibilityFraction >= minVisibilityThreshold) {
-        _playableVideos.add(entry.key);
-      }
-    }
+//     for (final entry in _visibilityMap.entries) {
+//       if (entry.value.visibilityFraction >= minVisibilityThreshold) {
+//         _playableVideos.add(entry.key);
+//       }
+//     }
     
-    Log.info('▶️ Resumed visibility-based playback (${_playableVideos.length} videos playable)', 
-        name: 'VideoVisibilityManager', category: LogCategory.video);
-    notifyListeners();
-  }
+//     Log.info('▶️ Resumed visibility-based playback (${_playableVideos.length} videos playable)', 
+//         name: 'VideoVisibilityManager', category: LogCategory.video);
+//     notifyListeners();
+//   }
   
-  /// Mark a video as actively playing (enables auto-play mode)
-  /// 
-  /// This should be called when a user explicitly starts playing a video.
-  /// It enables auto-play so the next visible video will automatically play.
-  void setActivelyPlaying(String videoId) {
-    if (_playableVideos.contains(videoId)) {
-      _setActivelyPlaying(videoId);
-      notifyListeners();
-    }
-  }
+//   /// Mark a video as actively playing (enables auto-play mode)
+//   /// 
+//   /// This should be called when a user explicitly starts playing a video.
+//   /// It enables auto-play so the next visible video will automatically play.
+//   void setActivelyPlaying(String videoId) {
+//     if (_playableVideos.contains(videoId)) {
+//       _setActivelyPlaying(videoId);
+//       notifyListeners();
+//     }
+//   }
   
-  /// Internal method to set actively playing video
-  void _setActivelyPlaying(String videoId) {
-    // If there was a previous video playing, ensure it's no longer in playable set
-    if (_lastPlayingVideo != null && _lastPlayingVideo != videoId) {
-      _playableVideos.remove(_lastPlayingVideo);
-      Log.info('⏸️ Removing previous video from playable: $_lastPlayingVideo', 
-          name: 'VideoVisibilityManager', category: LogCategory.video);
-    }
+//   /// Internal method to set actively playing video
+//   void _setActivelyPlaying(String videoId) {
+//     // If there was a previous video playing, ensure it's no longer in playable set
+//     if (_lastPlayingVideo != null && _lastPlayingVideo != videoId) {
+//       _playableVideos.remove(_lastPlayingVideo);
+//       Log.info('⏸️ Removing previous video from playable: $_lastPlayingVideo', 
+//           name: 'VideoVisibilityManager', category: LogCategory.video);
+//     }
     
-    _autoPlayEnabled = true;
-    _lastPlayingVideo = videoId;
-    Log.info('🎬 Auto-play enabled - actively playing: $videoId', 
-        name: 'VideoVisibilityManager', category: LogCategory.video);
-  }
+//     _autoPlayEnabled = true;
+//     _lastPlayingVideo = videoId;
+//     Log.info('🎬 Auto-play enabled - actively playing: $videoId', 
+//         name: 'VideoVisibilityManager', category: LogCategory.video);
+//   }
   
-  /// Disable auto-play (user paused or stopped video)
-  void disableAutoPlay() {
-    _autoPlayEnabled = false;
-    _lastPlayingVideo = null;
-    Log.info('⏹️ Auto-play disabled', name: 'VideoVisibilityManager', category: LogCategory.video);
-    notifyListeners();
-  }
+//   /// Disable auto-play (user paused or stopped video)
+//   void disableAutoPlay() {
+//     _autoPlayEnabled = false;
+//     _lastPlayingVideo = null;
+//     Log.info('⏹️ Auto-play disabled', name: 'VideoVisibilityManager', category: LogCategory.video);
+//     notifyListeners();
+//   }
   
-  /// Check if a specific video should auto-play when visible
-  /// 
-  /// Returns true if:
-  /// - Auto-play is enabled
-  /// - Video is visible above threshold
-  /// - No other video is currently the designated active one, OR this video becomes visible first
-  bool shouldAutoPlay(String videoId) {
-    if (!_autoPlayEnabled || !_playableVideos.contains(videoId)) {
-      return false;
-    }
+//   /// Check if a specific video should auto-play when visible
+//   /// 
+//   /// Returns true if:
+//   /// - Auto-play is enabled
+//   /// - Video is visible above threshold
+//   /// - No other video is currently the designated active one, OR this video becomes visible first
+//   bool shouldAutoPlay(String videoId) {
+//     if (!_autoPlayEnabled || !_playableVideos.contains(videoId)) {
+//       return false;
+//     }
     
-    // If no actively playing video, this one can auto-play
-    if (_lastPlayingVideo == null) {
-      return true;
-    }
+//     // If no actively playing video, this one can auto-play
+//     if (_lastPlayingVideo == null) {
+//       return true;
+//     }
     
-    // If the actively playing video is no longer playable, this one can take over
-    if (!_playableVideos.contains(_lastPlayingVideo!)) {
-      return true;
-    }
+//     // If the actively playing video is no longer playable, this one can take over
+//     if (!_playableVideos.contains(_lastPlayingVideo!)) {
+//       return true;
+//     }
     
-    // This is the actively playing video
-    return _lastPlayingVideo == videoId;
-  }
+//     // This is the actively playing video
+//     return _lastPlayingVideo == videoId;
+//   }
   
-  /// Get visibility info for a specific video
-  VideoVisibilityInfo? getVisibilityInfo(String videoId) => _visibilityMap[videoId];
+//   /// Get visibility info for a specific video
+//   VideoVisibilityInfo? getVisibilityInfo(String videoId) => _visibilityMap[videoId];
   
-  /// Debug info about current visibility state
-  Map<String, dynamic> get debugInfo => {
-    'totalTracked': _visibilityMap.length,
-    'visibleCount': visibleVideos.length,
-    'playableCount': _playableVideos.length,
-    'threshold': '${(minVisibilityThreshold * 100).toStringAsFixed(0)}%',
-    'autoPlayEnabled': _autoPlayEnabled,
-    'activelyPlaying': _lastPlayingVideo,
-    'videos': _visibilityMap.map((id, info) => MapEntry(id, {
-      'visibility': '${(info.visibilityFraction * 100).toStringAsFixed(1)}%',
-      'playable': _playableVideos.contains(id),
-      'shouldAutoPlay': shouldAutoPlay(id),
-      'lastUpdate': info.lastUpdate.toIso8601String(),
-    })),
-  };
+//   /// Debug info about current visibility state
+//   Map<String, dynamic> get debugInfo => {
+//     'totalTracked': _visibilityMap.length,
+//     'visibleCount': visibleVideos.length,
+//     'playableCount': _playableVideos.length,
+//     'threshold': '${(minVisibilityThreshold * 100).toStringAsFixed(0)}%',
+//     'autoPlayEnabled': _autoPlayEnabled,
+//     'activelyPlaying': _lastPlayingVideo,
+//     'videos': _visibilityMap.map((id, info) => MapEntry(id, {
+//       'visibility': '${(info.visibilityFraction * 100).toStringAsFixed(1)}%',
+//       'playable': _playableVideos.contains(id),
+//       'shouldAutoPlay': shouldAutoPlay(id),
+//       'lastUpdate': info.lastUpdate.toIso8601String(),
+//     })),
+//   };
   
-  @override
-  void dispose() {
-    _visibilityStreamController.close();
-    super.dispose();
-  }
-}
+//   @override
+//   void dispose() {
+//     _visibilityStreamController.close();
+//     super.dispose();
+//   }
+// }

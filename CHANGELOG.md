@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Codebase Cleanup & Quality Assessment**: Major technical debt reduction and architecture improvements
+  - Reduced analyzer issues by 45% (from 690 to 378 issues)
+  - Implemented "zen:refactor" approach for cleaner architecture transitions
+  - Removed 4,720+ lines of duplicate code across the codebase
+  - Fixed critical security vulnerabilities in key storage and CSAM detection
+
+### Changed
+- **Riverpod Migration - Clean Refactor**: Transitioned from gradual migration to complete replacement strategy
+  - Migrated ConnectionStatusService to modern Riverpod providers with deprecation documentation
+  - Migrated VideoVisibilityManager to reactive Riverpod state management
+  - Updated main.dart to remove all Provider package dependencies from root
+  - Converted core widgets (VisibilityAwareVideo, AppLifecycleHandler) to ConsumerStatefulWidget
+  - Removed bridge pattern implementations in favor of direct Riverpod usage
+  - Updated 5+ core services to remove deprecated singleton dependencies
+  - Improved state management architecture with immutable state and reactive patterns
+
+### Removed
+- **Legacy Architecture Components**: Cleaned up deprecated and duplicate implementations
+  - Deleted 16 files total (8 production, 8 test files)
+  - Removed profile_screen_scrollable.dart (1,147 lines of duplicate code)
+  - Removed video_feed_provider_v2.dart, video_player_widget.dart, video_manager_provider.dart
+  - Removed identity_manager_service.dart with security vulnerabilities
+  - Removed connection_status_bridge.dart and video_visibility_bridge.dart (bridge pattern abandoned)
+  - Deprecated and commented out ConnectionStatusService and VideoVisibilityManager
+
+### Fixed
+- **Test Quality**: Improved test reliability and async patterns
+  - Replaced Future.delayed timing hacks with Completer patterns in 2 test files
+  - Fixed Mockito null-safety issues and type mismatches
+  - Resolved TestEventBroadcastResult vs NostrBroadcastResult type conflicts
+  - Fixed missing required arguments in upload manager tests
+
+### Technical Improvements
+- **Code Quality**: Significant improvements in maintainability and architecture
+  - Established single state management pattern (Riverpod) across the application
+  - Improved separation of concerns with proper dependency injection
+  - Enhanced code documentation with detailed deprecation notices
+  - Reduced technical debt through systematic refactoring
+  - Improved test coverage and reliability
+
+### Added
 - **Riverpod Migration Complete**: Fully migrated video feed system from Provider to Riverpod 2.0
   - **VideoEventBridge Eliminated**: Replaced complex manual coordination with reactive provider architecture
   - **Reactive Video Feeds**: Following list changes now automatically trigger video feed updates

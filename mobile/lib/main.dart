@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/vine_theme.dart';
 import 'screens/universal_camera_screen.dart';
 import 'screens/feed_screen_v2.dart';
@@ -23,7 +24,8 @@ import 'utils/unified_logger.dart';
 // import 'services/vine_publishing_service.dart'; // Removed - using video-based approach
 // import 'services/gif_service.dart'; // Removed - using video-based approach
 // import 'services/video_cache_service.dart'; // Removed - using VideoManager instead
-import 'services/connection_status_service.dart';
+import 'providers/connection_status_providers.dart';
+import 'providers/video_visibility_providers.dart';
 import 'services/user_profile_service.dart';
 import 'services/direct_upload_service.dart';
 import 'services/nip98_auth_service.dart';
@@ -38,7 +40,7 @@ import 'services/social_service.dart';
 import 'services/hashtag_service.dart';
 import 'services/video_manager_interface.dart';
 import 'services/video_manager_service.dart';
-import 'services/video_visibility_manager.dart';
+// import 'services/video_visibility_manager.dart'; // DEPRECATED - Replaced by Riverpod providers
 import 'services/curation_service.dart';
 import 'services/explore_video_manager.dart';
 import 'services/content_reporting_service.dart';
@@ -111,56 +113,59 @@ void main() async {
   Log.info('🚀 OpenVine starting...', name: 'Main');
   Log.info('📊 Log level: ${UnifiedLogger.currentLevel.name}', name: 'Main');
   
-  runApp(const OpenVineApp());
+  runApp(
+    ProviderScope(
+      child: const OpenVineApp(),
+    ),
+  );
 }
 
-class OpenVineApp extends StatelessWidget {
+class OpenVineApp extends ConsumerWidget {
   const OpenVineApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize Riverpod providers
+    ref.watch(connectionStatusNotifierProvider);
+    ref.watch(videoVisibilityNotifierProvider);
+    
+    return provider.MultiProvider(
       providers: [
-        // Connection status service
-        ChangeNotifierProvider(create: (_) => ConnectionStatusService()),
-        
-        // Video visibility manager - ensures videos only play when visible
-        ChangeNotifierProvider(create: (_) => VideoVisibilityManager()),
         
         // Analytics service (with opt-out support)
-        ChangeNotifierProvider(create: (_) {
+        provider.ChangeNotifierProvider(create: (_) {
           final service = AnalyticsService();
           service.initialize(); // Initialize asynchronously
           return service;
         }),
         
         // Age verification service
-        ChangeNotifierProvider(create: (_) {
+        provider.ChangeNotifierProvider(create: (_) {
           final service = AgeVerificationService();
           service.initialize(); // Initialize asynchronously
           return service;
         }),
         
         // Secure key storage service (foundational service)
-        ChangeNotifierProvider(create: (_) => SecureKeyStorageService()),
+        provider.ChangeNotifierProvider(create: (_) => SecureKeyStorageService()),
         
         // Legacy key storage service (for migration only)
-        ChangeNotifierProvider(create: (_) => KeyStorageService()),
+        provider.ChangeNotifierProvider(create: (_) => KeyStorageService()),
         
         // Web authentication service (for web platform only)
-        ChangeNotifierProvider(create: (_) => WebAuthService()),
+        provider.ChangeNotifierProvider(create: (_) => WebAuthService()),
         
         // Authentication service depends on secure key storage
-        ChangeNotifierProxyProvider<SecureKeyStorageService, AuthService>(
+        provider.ChangeNotifierProxyProvider<SecureKeyStorageService, AuthService>(
           create: (context) => AuthService(keyStorage: context.read<SecureKeyStorageService>()),
           update: (_, secureKeyStorageService, previous) => previous ?? AuthService(keyStorage: secureKeyStorageService),
         ),
         
         // Nostr key manager
-        ChangeNotifierProvider(create: (_) => NostrKeyManager()),
+        provider.ChangeNotifierProvider(create: (_) => NostrKeyManager()),
         
         // Core Nostr service using nostr_sdk
-        ChangeNotifierProxyProvider<NostrKeyManager, INostrService>(
+        provider.ChangeNotifierProxyProvider<NostrKeyManager, INostrService>(
           create: (context) {
             final keyManager = context.read<NostrKeyManager>();
             Log.debug('Creating NostrService with nostr_sdk RelayPool', name: 'Main');
@@ -174,13 +179,13 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Subscription manager for centralized subscription management
-        ChangeNotifierProxyProvider<INostrService, SubscriptionManager>(
+        provider.ChangeNotifierProxyProvider<INostrService, SubscriptionManager>(
           create: (context) => SubscriptionManager(context.read<INostrService>()),
           update: (_, nostrService, previous) => previous ?? SubscriptionManager(nostrService),
         ),
         
         // Profile cache service for persistent profile storage
-        ChangeNotifierProvider(
+        provider.ChangeNotifierProvider(
           create: (_) {
             final service = ProfileCacheService();
             // Initialize asynchronously to avoid blocking UI
@@ -192,13 +197,13 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Seen videos service for tracking viewed content
-        ChangeNotifierProvider(create: (_) => SeenVideosService()),
+        provider.ChangeNotifierProvider(create: (_) => SeenVideosService()),
         
         // Content blocklist service for filtering unwanted content from feeds
-        ChangeNotifierProvider(create: (_) => ContentBlocklistService()),
+        provider.ChangeNotifierProvider(create: (_) => ContentBlocklistService()),
         
         // Video event service depends on Nostr, SeenVideos, Blocklist, and SubscriptionManager services
-        ChangeNotifierProxyProvider4<INostrService, SeenVideosService, ContentBlocklistService, SubscriptionManager, VideoEventService>(
+        provider.ChangeNotifierProxyProvider4<INostrService, SeenVideosService, ContentBlocklistService, SubscriptionManager, VideoEventService>(
           create: (context) {
             final service = VideoEventService(
               context.read<INostrService>(),
@@ -224,13 +229,13 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Hashtag service depends on Video event service
-        ChangeNotifierProxyProvider<VideoEventService, HashtagService>(
+        provider.ChangeNotifierProxyProvider<VideoEventService, HashtagService>(
           create: (context) => HashtagService(context.read<VideoEventService>()),
           update: (_, videoService, previous) => previous ?? HashtagService(videoService),
         ),
         
         // User profile service depends on Nostr service, SubscriptionManager, and ProfileCacheService
-        ChangeNotifierProxyProvider3<INostrService, SubscriptionManager, ProfileCacheService, UserProfileService>(
+        provider.ChangeNotifierProxyProvider3<INostrService, SubscriptionManager, ProfileCacheService, UserProfileService>(
           create: (context) {
             final service = UserProfileService(
               context.read<INostrService>(),
@@ -254,10 +259,10 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // NIP-05 service for username registration and verification
-        ChangeNotifierProvider(create: (_) => Nip05Service()),
+        provider.ChangeNotifierProvider(create: (_) => Nip05Service()),
         
         // Social service depends on Nostr service, Auth service, and SubscriptionManager
-        ChangeNotifierProxyProvider3<INostrService, AuthService, SubscriptionManager, SocialService>(
+        provider.ChangeNotifierProxyProvider3<INostrService, AuthService, SubscriptionManager, SocialService>(
           create: (context) => SocialService(
             context.read<INostrService>(),
             context.read<AuthService>(),
@@ -271,7 +276,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Profile stats provider depends on Social service
-        ChangeNotifierProxyProvider<SocialService, ProfileStatsProvider>(
+        provider.ChangeNotifierProxyProvider<SocialService, ProfileStatsProvider>(
           create: (context) => ProfileStatsProvider(
             context.read<SocialService>(),
           ),
@@ -281,7 +286,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Profile videos provider depends on Nostr service and VideoEventService
-        ChangeNotifierProxyProvider2<INostrService, VideoEventService, ProfileVideosProvider>(
+        provider.ChangeNotifierProxyProvider2<INostrService, VideoEventService, ProfileVideosProvider>(
           create: (context) {
             final provider = ProfileVideosProvider(
               context.read<INostrService>(),
@@ -301,7 +306,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Enhanced notification service with Nostr integration (lazy loaded)
-        ChangeNotifierProxyProvider3<INostrService, UserProfileService, VideoEventService, NotificationServiceEnhanced>(
+        provider.ChangeNotifierProxyProvider3<INostrService, UserProfileService, VideoEventService, NotificationServiceEnhanced>(
           create: (context) {
             final service = NotificationServiceEnhanced();
             // Delay initialization until after critical path is loaded
@@ -347,7 +352,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Video Manager Service - single source of truth for video state with smart ordering
-        ProxyProvider2<SeenVideosService, ContentBlocklistService, IVideoManager>(
+        provider.ProxyProvider2<SeenVideosService, ContentBlocklistService, IVideoManager>(
           create: (context) {
             final videoManager = VideoManagerService(
               config: VideoManagerConfig.wifi(), // Default to WiFi optimized
@@ -376,34 +381,34 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // NIP-98 authentication service
-        ChangeNotifierProxyProvider<AuthService, Nip98AuthService>(
+        provider.ChangeNotifierProxyProvider<AuthService, Nip98AuthService>(
           create: (context) => Nip98AuthService(authService: context.read<AuthService>()),
           update: (_, authService, previous) => previous ?? Nip98AuthService(authService: authService),
         ),
         
         // Direct upload service with auth
-        ChangeNotifierProxyProvider<Nip98AuthService, DirectUploadService>(
+        provider.ChangeNotifierProxyProvider<Nip98AuthService, DirectUploadService>(
           create: (context) => DirectUploadService(authService: context.read<Nip98AuthService>()),
           update: (_, authService, previous) => previous ?? DirectUploadService(authService: authService),
         ),
         
         // Stream upload service
-        ChangeNotifierProvider(create: (_) => StreamUploadService()),
+        provider.ChangeNotifierProvider(create: (_) => StreamUploadService()),
         
         // Upload manager depends on direct upload service
-        ChangeNotifierProxyProvider<DirectUploadService, UploadManager>(
+        provider.ChangeNotifierProxyProvider<DirectUploadService, UploadManager>(
           create: (context) => UploadManager(uploadService: context.read<DirectUploadService>()),
           update: (_, uploadService, previous) => previous ?? UploadManager(uploadService: uploadService),
         ),
         
         // API service depends on auth service
-        ChangeNotifierProxyProvider<Nip98AuthService, ApiService>(
+        provider.ChangeNotifierProxyProvider<Nip98AuthService, ApiService>(
           create: (context) => ApiService(authService: context.read<Nip98AuthService>()),
           update: (_, authService, previous) => previous ?? ApiService(authService: authService),
         ),
         
         // Video event publisher depends on multiple services
-        ChangeNotifierProxyProvider4<UploadManager, INostrService, ApiService, AuthService, VideoEventPublisher>(
+        provider.ChangeNotifierProxyProvider4<UploadManager, INostrService, ApiService, AuthService, VideoEventPublisher>(
           create: (context) => VideoEventPublisher(
             uploadManager: context.read<UploadManager>(),
             nostrService: context.read<INostrService>(),
@@ -421,7 +426,7 @@ class OpenVineApp extends StatelessWidget {
         ),
 
         // Curation Service - manages NIP-51 video curation sets
-        ChangeNotifierProxyProvider3<INostrService, VideoEventService, SocialService, CurationService>(
+        provider.ChangeNotifierProxyProvider3<INostrService, VideoEventService, SocialService, CurationService>(
           create: (context) => CurationService(
             nostrService: context.read<INostrService>(),
             videoEventService: context.read<VideoEventService>(),
@@ -435,7 +440,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // ExploreVideoManager - bridges CurationService with separate VideoManager instance
-        ChangeNotifierProxyProvider3<CurationService, SeenVideosService, ContentBlocklistService, ExploreVideoManager>(
+        provider.ChangeNotifierProxyProvider3<CurationService, SeenVideosService, ContentBlocklistService, ExploreVideoManager>(
           create: (context) {
             // Create a separate video manager instance specifically for explore
             final exploreVideoManager = VideoManagerService(
@@ -471,7 +476,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Content reporting service for NIP-56 compliance (temporarily using FakeSharedPreferences)
-        ChangeNotifierProxyProvider<INostrService, ContentReportingService>(
+        provider.ChangeNotifierProxyProvider<INostrService, ContentReportingService>(
           create: (context) => ContentReportingService(
             nostrService: context.read<INostrService>(),
             prefs: FakeSharedPreferences(),
@@ -483,7 +488,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Curated list service for NIP-51 lists (temporarily using FakeSharedPreferences)
-        ChangeNotifierProxyProvider2<INostrService, AuthService, CuratedListService>(
+        provider.ChangeNotifierProxyProvider2<INostrService, AuthService, CuratedListService>(
           create: (context) => CuratedListService(
             nostrService: context.read<INostrService>(),
             authService: context.read<AuthService>(),
@@ -497,7 +502,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Video sharing service
-        ChangeNotifierProxyProvider3<INostrService, AuthService, UserProfileService, VideoSharingService>(
+        provider.ChangeNotifierProxyProvider3<INostrService, AuthService, UserProfileService, VideoSharingService>(
           create: (context) => VideoSharingService(
             nostrService: context.read<INostrService>(),
             authService: context.read<AuthService>(),
@@ -511,7 +516,7 @@ class OpenVineApp extends StatelessWidget {
         ),
         
         // Content deletion service for NIP-09 delete events (temporarily using FakeSharedPreferences)
-        ChangeNotifierProxyProvider<INostrService, ContentDeletionService>(
+        provider.ChangeNotifierProxyProvider<INostrService, ContentDeletionService>(
           create: (context) => ContentDeletionService(
             nostrService: context.read<INostrService>(),
             prefs: FakeSharedPreferences(),
@@ -642,7 +647,7 @@ class _AppInitializerState extends State<AppInitializer> {
     }
 
     // Check authentication state and show appropriate screen
-    return Consumer<AuthService>(
+    return provider.Consumer<AuthService>(
       builder: (context, authService, child) {
         switch (authService.authState) {
           case AuthState.unauthenticated:
@@ -846,7 +851,7 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
       if (exploreScreen is ExploreScreen) {
         // The ExploreScreen already handles pausing in its dispose method,
         // but we can force pause all videos here for immediate effect
-        final exploreVideoManager = Provider.of<ExploreVideoManager>(context, listen: false);
+        final exploreVideoManager = provider.Provider.of<ExploreVideoManager>(context, listen: false);
         exploreVideoManager.pauseAllVideos();
         Log.debug('Paused explore videos when navigating away', name: 'Main', category: LogCategory.system);
       }

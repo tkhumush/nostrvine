@@ -2,12 +2,12 @@
 // ABOUTME: Ensures videos never play when app is not visible
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/video_visibility_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/video_visibility_providers.dart';
 import '../utils/unified_logger.dart';
 
 /// Handles app lifecycle events for video playback
-class AppLifecycleHandler extends StatefulWidget {
+class AppLifecycleHandler extends ConsumerStatefulWidget {
   final Widget child;
   
   const AppLifecycleHandler({
@@ -16,10 +16,10 @@ class AppLifecycleHandler extends StatefulWidget {
   });
   
   @override
-  State<AppLifecycleHandler> createState() => _AppLifecycleHandlerState();
+  ConsumerState<AppLifecycleHandler> createState() => _AppLifecycleHandlerState();
 }
 
-class _AppLifecycleHandlerState extends State<AppLifecycleHandler> with WidgetsBindingObserver {
+class _AppLifecycleHandlerState extends ConsumerState<AppLifecycleHandler> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -36,13 +36,13 @@ class _AppLifecycleHandlerState extends State<AppLifecycleHandler> with WidgetsB
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     
-    final visibilityManager = context.read<VideoVisibilityManager>();
+    final visibilityNotifier = ref.read(videoVisibilityNotifierProvider.notifier);
     
     switch (state) {
       case AppLifecycleState.resumed:
         Log.info('📱 App resumed - enabling visibility-based playback', 
             name: 'AppLifecycleHandler', category: LogCategory.system);
-        visibilityManager.resumeVisibilityBasedPlayback();
+        visibilityNotifier.resumeVisibilityBasedPlayback();
         break;
         
       case AppLifecycleState.inactive:
@@ -50,7 +50,7 @@ class _AppLifecycleHandlerState extends State<AppLifecycleHandler> with WidgetsB
       case AppLifecycleState.hidden:
         Log.info('📱 App backgrounded - pausing all videos', 
             name: 'AppLifecycleHandler', category: LogCategory.system);
-        visibilityManager.pauseAllVideos();
+        visibilityNotifier.pauseAllVideos();
         break;
         
       case AppLifecycleState.detached:

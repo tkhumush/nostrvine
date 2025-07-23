@@ -8,7 +8,6 @@ import 'package:nostr_sdk/filter.dart';
 import 'package:flutter/widgets.dart';
 import '../models/video_event.dart';
 import 'nostr_service_interface.dart';
-import 'connection_status_service.dart';
 import 'seen_videos_service.dart';
 import 'default_content_service.dart';
 import 'content_blocklist_service.dart';
@@ -19,7 +18,6 @@ import '../constants/app_constants.dart';
 /// Service for handling NIP-71 kind 22 video events
 class VideoEventService extends ChangeNotifier {
   final INostrService _nostrService;
-  final ConnectionStatusService _connectionService = ConnectionStatusService();
   final List<VideoEvent> _videoEvents = [];
   final Map<String, StreamSubscription> _subscriptions = {}; // Direct subscriptions fallback
   final List<String> _activeSubscriptionIds = []; // Managed subscription IDs
@@ -115,14 +113,8 @@ class VideoEventService extends ChangeNotifier {
       throw VideoEventServiceException('Nostr service not initialized');
     }
     
-    // Check connection status
-    if (!_connectionService.isOnline) {
-      _isLoading = false;
-      notifyListeners();
-      Log.warning('Device is offline, will retry when connection is restored', name: 'VideoEventService', category: LogCategory.video);
-      _scheduleRetryWhenOnline();
-      throw VideoEventServiceException('Device is offline');
-    }
+    // Connection checking removed - handled by UI layer with Riverpod providers
+    // The UI will show appropriate offline state using ConnectionStatusProvider
     
     if (_nostrService.connectedRelayCount == 0) {
       Log.warning('WARNING: No relays connected - subscription will likely fail', name: 'VideoEventService', category: LogCategory.video);
@@ -973,7 +965,7 @@ class VideoEventService extends ChangeNotifier {
     _retryTimer?.cancel();
     
     _retryTimer = Timer.periodic(_retryDelay, (timer) {
-      if (_connectionService.isOnline && _retryAttempts < _maxRetryAttempts) {
+      if (_retryAttempts < _maxRetryAttempts) {
         _retryAttempts++;
         Log.warning('Attempting to resubscribe to video feed (attempt $_retryAttempts/$_maxRetryAttempts)', name: 'VideoEventService', category: LogCategory.video);
         
@@ -990,8 +982,6 @@ class VideoEventService extends ChangeNotifier {
             Log.warning('Max retry attempts reached for video feed subscription', name: 'VideoEventService', category: LogCategory.video);
           }
         });
-      } else if (!_connectionService.isOnline) {
-        Log.debug('⏳ Still offline, waiting for connection...', name: 'VideoEventService', category: LogCategory.video);
       } else {
         // Max retries reached
         timer.cancel();
@@ -1008,7 +998,7 @@ class VideoEventService extends ChangeNotifier {
       'retryAttempts': _retryAttempts,
       'hasError': _error != null,
       'lastError': _error,
-      'connectionInfo': _connectionService.getConnectionInfo(),
+      // Connection info now handled by Riverpod ConnectionStatusProvider
     };
   }
   

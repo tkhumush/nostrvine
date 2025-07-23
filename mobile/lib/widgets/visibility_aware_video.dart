@@ -2,15 +2,15 @@
 // ABOUTME: Abstract base for all video widgets to inherit proper visibility behavior
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import '../services/video_visibility_manager.dart';
+import '../providers/video_visibility_providers.dart';
 import '../utils/unified_logger.dart';
 
 /// Mixin for widgets that need visibility-aware video playback
 /// 
 /// This ensures consistent visibility behavior across all video widgets
-mixin VideoVisibilityMixin<T extends StatefulWidget> on State<T> {
+mixin VideoVisibilityMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Unique key for this video widget
   String get videoId;
   
@@ -25,10 +25,10 @@ mixin VideoVisibilityMixin<T extends StatefulWidget> on State<T> {
   
   /// Update visibility for this video
   void updateVisibility(double visibleFraction) {
-    final visibilityManager = context.read<VideoVisibilityManager>();
-    visibilityManager.updateVideoVisibility(videoId, visibleFraction);
+    ref.read(videoVisibilityNotifierProvider.notifier).updateVisibility(videoId, visibleFraction);
     
-    final shouldPlay = visibilityManager.shouldVideoPlay(videoId);
+    final state = ref.read(videoVisibilityNotifierProvider);
+    final shouldPlay = state.playableVideos.contains(videoId);
     if (shouldPlay != _isVisibleEnoughToPlay) {
       setState(() {
         _isVisibleEnoughToPlay = shouldPlay;
@@ -41,8 +41,7 @@ mixin VideoVisibilityMixin<T extends StatefulWidget> on State<T> {
   void dispose() {
     // Clean up visibility tracking
     try {
-      final visibilityManager = context.read<VideoVisibilityManager>();
-      visibilityManager.removeVideo(videoId);
+      ref.read(videoVisibilityNotifierProvider.notifier).removeVideo(videoId);
     } catch (e) {
       // Visibility manager might not be available
     }
@@ -53,7 +52,7 @@ mixin VideoVisibilityMixin<T extends StatefulWidget> on State<T> {
 /// Base widget for visibility-aware video playback
 /// 
 /// Wrap any video widget with this to ensure it only plays when visible
-class VisibilityAwareVideo extends StatefulWidget {
+class VisibilityAwareVideo extends ConsumerStatefulWidget {
   final String videoId;
   final Widget child;
   final Function(VisibilityInfo)? onVisibilityChanged;
@@ -66,10 +65,10 @@ class VisibilityAwareVideo extends StatefulWidget {
   });
   
   @override
-  State<VisibilityAwareVideo> createState() => _VisibilityAwareVideoState();
+  ConsumerState<VisibilityAwareVideo> createState() => _VisibilityAwareVideoState();
 }
 
-class _VisibilityAwareVideoState extends State<VisibilityAwareVideo> {
+class _VisibilityAwareVideoState extends ConsumerState<VisibilityAwareVideo> {
   bool _mounted = true;
   
   @override
@@ -80,6 +79,11 @@ class _VisibilityAwareVideoState extends State<VisibilityAwareVideo> {
   
   @override
   Widget build(BuildContext context) {
+    // Watch the video visibility state
+    final visibilityState = ref.watch(videoVisibilityNotifierProvider);
+    final shouldPlay = visibilityState.playableVideos.contains(widget.videoId);
+    final shouldAutoPlay = ref.read(videoVisibilityNotifierProvider.notifier).shouldAutoPlay(widget.videoId);
+    
     return VisibilityDetector(
       key: Key('video-visibility-${widget.videoId}'),
       onVisibilityChanged: (visibilityInfo) {
@@ -88,8 +92,7 @@ class _VisibilityAwareVideoState extends State<VisibilityAwareVideo> {
         
         // Report to centralized manager
         try {
-          final visibilityManager = context.read<VideoVisibilityManager>();
-          visibilityManager.updateVideoVisibility(
+          ref.read(videoVisibilityNotifierProvider.notifier).updateVisibility(
             widget.videoId,
             visibilityInfo.visibleFraction,
           );
@@ -111,19 +114,11 @@ class _VisibilityAwareVideoState extends State<VisibilityAwareVideo> {
           widget.onVisibilityChanged?.call(visibilityInfo);
         }
       },
-      child: Consumer<VideoVisibilityManager>(
-        builder: (context, visibilityManager, _) {
-          final shouldPlay = visibilityManager.shouldVideoPlay(widget.videoId);
-          final shouldAutoPlay = visibilityManager.shouldAutoPlay(widget.videoId);
-          
-          // Provide visibility context to child
-          return _VisibilityContext(
-            videoId: widget.videoId,
-            shouldPlay: shouldPlay,
-            shouldAutoPlay: shouldAutoPlay,
-            child: widget.child,
-          );
-        },
+      child: _VisibilityContext(
+        videoId: widget.videoId,
+        shouldPlay: shouldPlay,
+        shouldAutoPlay: shouldAutoPlay,
+        child: widget.child,
       ),
     );
   }

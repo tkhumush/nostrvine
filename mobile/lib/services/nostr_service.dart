@@ -19,7 +19,6 @@ import '../models/nip94_metadata.dart';
 import '../utils/unified_logger.dart';
 import 'nostr_key_manager.dart';
 import 'nostr_service_interface.dart';
-import 'connection_status_service.dart';
 
 /// Relay connection status
 enum RelayStatus { connected, connecting, disconnected }
@@ -42,7 +41,6 @@ class NostrService extends ChangeNotifier implements INostrService {
   static const String _relaysPrefsKey = 'custom_relays';
   
   final NostrKeyManager _keyManager;
-  final ConnectionStatusService _connectionService = ConnectionStatusService();
   
   Nostr? _nostrClient;
   bool _isInitialized = false;
@@ -105,23 +103,8 @@ class NostrService extends ChangeNotifier implements INostrService {
     }
     
     try {
-      // Initialize connection service with web-specific error handling
-      if (kIsWeb) {
-        try {
-          await _connectionService.initialize();
-        } catch (e) {
-          Log.warning('⚠️ Connection service init failed on web (expected): $e', category: LogCategory.relay);
-          // On web, assume we're online and continue
-        }
-      } else {
-        await _connectionService.initialize();
-      }
-      
-      // Check connectivity (skip on web where connectivity check might fail)
-      if (!kIsWeb && !_connectionService.isOnline) {
-        Log.warning('⚠️ Device appears to be offline', category: LogCategory.relay);
-        throw NostrServiceException('Device is offline');
-      }
+      // Connection checking removed - handled by Riverpod providers now
+      // The app will handle connectivity at the UI layer with ConnectionStatusProvider
       
       // Initialize key manager
       if (!_keyManager.isInitialized) {
@@ -607,7 +590,7 @@ class NostrService extends ChangeNotifier implements INostrService {
       'isInitialized': _isInitialized,
       'connectedRelays': _connectedRelays.length,
       'totalRelays': _relays.length,
-      'connectionInfo': _connectionService.getConnectionInfo(),
+      // Connection info now handled by Riverpod ConnectionStatusProvider
     };
   }
   
