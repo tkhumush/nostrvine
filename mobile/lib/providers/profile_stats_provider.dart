@@ -195,7 +195,10 @@ class ProfileStatsNotifier extends _$ProfileStatsNotifier {
 
   /// Load profile stats for a user
   Future<void> loadStats(String pubkey) async {
-    state = state.copyWith(isLoading: true, error: null);
+    // Defer state modification to avoid modifying provider during build
+    await Future.microtask(() {
+      state = state.copyWith(isLoading: true, error: null);
+    });
     
     try {
       final stats = await ref.read(profileStatsProvider(pubkey).future);

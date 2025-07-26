@@ -270,24 +270,30 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
     // Check cache first
     final cached = _getCachedProfileVideos(pubkey);
     if (cached != null) {
-      state = state.copyWith(
-        videos: cached,
-        isLoading: false,
-        hasMore: _profileVideosHasMoreCache[pubkey] ?? true,
-        error: null,
-      );
+      // Defer state modification to avoid modifying provider during build
+      await Future.microtask(() {
+        state = state.copyWith(
+          videos: cached,
+          isLoading: false,
+          hasMore: _profileVideosHasMoreCache[pubkey] ?? true,
+          error: null,
+        );
+      });
       _loadingCompleter!.complete();
       _loadingCompleter = null;
       return;
     }
 
-    state = state.copyWith(
-      isLoading: true,
-      videos: [],
-      error: null,
-      hasMore: true,
-      lastTimestamp: null,
-    );
+    // Defer state modification to avoid modifying provider during build
+    await Future.microtask(() {
+      state = state.copyWith(
+        isLoading: true,
+        videos: [],
+        error: null,
+        hasMore: true,
+        lastTimestamp: null,
+      );
+    });
 
     try {
       final videos = await ref.read(profileVideosProvider(pubkey).future);
@@ -318,7 +324,10 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
       return;
     }
 
-    state = state.copyWith(isLoadingMore: true, error: null);
+    // Defer state modification to avoid modifying provider during build
+    await Future.microtask(() {
+      state = state.copyWith(isLoadingMore: true, error: null);
+    });
 
     try {
       final nostrService = ref.read(nostrServiceProvider);

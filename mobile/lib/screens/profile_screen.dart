@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nostr_sdk/event.dart';
+import 'package:openvine/models/user_profile.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/profile_stats_provider.dart';
 import 'package:openvine/providers/profile_videos_provider.dart';
+import 'package:openvine/providers/user_profile_providers.dart';
 import 'package:openvine/screens/debug_video_test.dart';
 import 'package:openvine/screens/key_import_screen.dart';
 import 'package:openvine/screens/profile_setup_screen.dart';
@@ -177,8 +179,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void _loadUserProfile() {
     if (_targetPubkey == null) return;
 
-    final userProfileService = ref.read(userProfileServiceProvider);
-    userProfileService.fetchProfile(_targetPubkey!);
+    // Defer profile loading to avoid triggering during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProfileService = ref.read(userProfileServiceProvider);
+      userProfileService.fetchProfile(_targetPubkey!);
+    });
   }
 
   @override
@@ -209,15 +214,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     try {
       // Watch Riverpod providers
       final authService = ref.watch(authServiceProvider);
-      final userProfileService = ref.watch(userProfileServiceProvider);
       final socialService = ref.watch(socialServiceProvider);
       final profileStatsState = ref.watch(profileStatsNotifierProvider);
 
       // Get profile for display name in app bar
       final authProfile = _isOwnProfile ? authService.currentProfile : null;
-      final cachedProfile = _targetPubkey != null
-          ? userProfileService.getCachedProfile(_targetPubkey!)
-          : null;
+      
+      // Use reactive provider for profile data
+      final profileAsync = _targetPubkey != null 
+          ? ref.watch(userProfileProvider(_targetPubkey!))
+          : const AsyncValue<UserProfile?>.data(null);
+      
+      final cachedProfile = profileAsync.valueOrNull;
       final userName = cachedProfile?.bestDisplayName ??
           authProfile?.displayName ??
           'Anonymous';
@@ -400,13 +408,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ProfileStatsState profileStatsState) {
     // Watch Riverpod providers directly
     final authService = ref.watch(authServiceProvider);
-    final userProfileService = ref.watch(userProfileServiceProvider);
 
     // Get the profile data for the target user (could be current user or another user)
     final authProfile = _isOwnProfile ? authService.currentProfile : null;
-    final cachedProfile = _targetPubkey != null
-        ? userProfileService.getCachedProfile(_targetPubkey!)
-        : null;
+    
+    // Use reactive provider for profile data
+    final profileAsync = _targetPubkey != null 
+        ? ref.watch(userProfileProvider(_targetPubkey!))
+        : const AsyncValue<UserProfile?>.data(null);
+    
+    final cachedProfile = profileAsync.valueOrNull;
 
     final profilePictureUrl =
         authProfile?.picture ?? cachedProfile?.picture;
