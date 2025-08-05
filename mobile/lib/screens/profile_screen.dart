@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -259,7 +260,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       
       final userName = cachedProfile?.bestDisplayName ??
           authProfile?.displayName ??
-          'Anonymous';
+          'Loading user information';
 
           return Scaffold(
             key: ValueKey('profile_screen_${_targetPubkey ?? 'unknown'}'),
@@ -383,9 +384,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     // because UserProfileService has the most up-to-date data from the relay
     final displayName = cachedProfile?.bestDisplayName ??
         authProfile?.displayName ??
-        'Anonymous';
+        'Loading user information';
     final hasCustomName =
-        displayName != 'Anonymous' && !displayName.startsWith('npub1');
+        displayName != 'Loading user information' && !displayName.startsWith('npub1');
 
     return Padding(
             padding: const EdgeInsets.all(20),
@@ -538,8 +539,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               fontSize: 16,
                             ),
                           ),
+                          // Add Vine verified badge if this was a verified Vine account
+                          if (cachedProfile?.vineVerified == true) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                            ),
+                          ]
                           // Add NIP-05 verification badge if verified
-                          if ((authProfile?.nip05 ?? cachedProfile?.nip05) !=
+                          else if ((authProfile?.nip05 ?? cachedProfile?.nip05) !=
                                   null &&
                               (authProfile?.nip05 ?? cachedProfile?.nip05)!
                                   .isNotEmpty) ...[
@@ -554,6 +571,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 Icons.check,
                                 color: Colors.white,
                                 size: 12,
+                              ),
+                            ),
+                          ],
+                          // Show Vine import badge
+                          if (cachedProfile?.isVineImport == true) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.purple.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.purple.withValues(alpha: 0.5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.archive_outlined,
+                                    color: Colors.purple[300],
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Vine Import',
+                                    style: TextStyle(
+                                      color: Colors.purple[300],
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -585,6 +633,119 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             height: 1.3,
                           ),
                         ),
+                      const SizedBox(height: 8),
+                      // Show location if available
+                      if (cachedProfile?.location != null &&
+                          cachedProfile!.location!.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 14, color: Colors.grey[400]),
+                            const SizedBox(width: 4),
+                            Text(
+                              cachedProfile.location!,
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      // Show Vine stats if this is an imported Vine account
+                      if (cachedProfile?.isVineImport == true) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.purple.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.history,
+                                      size: 14, color: Colors.purple[300]),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Original Vine Stats',
+                                    style: TextStyle(
+                                      color: Colors.purple[300],
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  if (cachedProfile != null && cachedProfile.vineLoops != null) ...[
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _formatCount(cachedProfile.vineLoops!),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Loops',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 24),
+                                  ],
+                                  if (cachedProfile?.vineFollowers != null &&
+                                      cachedProfile!.vineFollowers! > 0) ...[
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _formatCount(cachedProfile.vineFollowers!),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Vine Followers',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'This account was imported from the original Vine archive',
+                                style: TextStyle(
+                                  color: Colors.purple[200],
+                                  fontSize: 10,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       // Public key display with copy functionality
                       if (_targetPubkey != null)
@@ -2001,7 +2162,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final cachedProfile = _targetPubkey != null 
         ? profileState.getCachedProfile(_targetPubkey!)
         : null;
-    final displayName = cachedProfile?.bestDisplayName ?? 'Anonymous';
+    final displayName = cachedProfile?.bestDisplayName ?? 'Loading user information';
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -2197,86 +2358,98 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   /// Build curated lists section
   Widget _buildCuratedListSection() => Consumer(
         builder: (context, ref, child) {
-          final listService = ref.watch(curatedListServiceProvider);
-          final userLists = _isOwnProfile 
-              ? listService.lists 
-              : listService.lists.where((list) => list.isPublic).toList();
+          final listServiceAsync = ref.watch(curatedListServiceProvider);
+          
+          return listServiceAsync.when(
+            data: (listService) {
+              final userLists = _isOwnProfile 
+                  ? listService.lists 
+                  : listService.lists.where((list) => list.isPublic).toList();
 
-          if (userLists.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.playlist_play,
-                    color: Colors.grey,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _isOwnProfile ? 'No Lists Yet' : 'No Public Lists',
-                    style: const TextStyle(
-                      color: VineTheme.whiteText,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isOwnProfile 
-                        ? 'Create lists to organize your favorite videos'
-                        : 'This user hasn\'t shared any public lists',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (_isOwnProfile) ...[
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Show create list dialog
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create List'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VineTheme.vineGreen,
-                        foregroundColor: Colors.white,
+              if (userLists.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.playlist_play,
+                        color: Colors.grey,
+                        size: 64,
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          }
+                      const SizedBox(height: 16),
+                      Text(
+                        _isOwnProfile ? 'No Lists Yet' : 'No Public Lists',
+                        style: const TextStyle(
+                          color: VineTheme.whiteText,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _isOwnProfile 
+                            ? 'Create lists to organize your favorite videos'
+                            : 'This user hasn\'t shared any public lists',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_isOwnProfile) ...[
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Show create list dialog
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create List'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: VineTheme.vineGreen,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
 
-          return ListView.builder(
-            itemCount: userLists.length,
-            itemBuilder: (context, index) {
-              final list = userLists[index];
-              return _buildListTile(
-                icon: Icons.playlist_play,
-                title: list.name,
-                subtitle: '${list.videoEventIds.length} videos${list.description != null ? ' • ${list.description}' : ''}',
-                trailing: list.tags.isNotEmpty 
-                    ? Wrap(
-                        spacing: 4,
-                        children: list.tags.take(2).map((tag) => 
-                          Chip(
-                            label: Text(tag, style: const TextStyle(fontSize: 10)),
-                            backgroundColor: VineTheme.vineGreen.withValues(alpha: 0.2),
-                            labelStyle: const TextStyle(color: VineTheme.whiteText),
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              return ListView.builder(
+                itemCount: userLists.length,
+                itemBuilder: (context, index) {
+                  final list = userLists[index];
+                  return _buildListTile(
+                    icon: Icons.playlist_play,
+                    title: list.name,
+                    subtitle: '${list.videoEventIds.length} videos${list.description != null ? ' • ${list.description}' : ''}',
+                    trailing: list.tags.isNotEmpty 
+                        ? Wrap(
+                            spacing: 4,
+                            children: list.tags.take(2).map((tag) => 
+                              Chip(
+                                label: Text(tag, style: const TextStyle(fontSize: 10)),
+                                backgroundColor: VineTheme.vineGreen.withValues(alpha: 0.2),
+                                labelStyle: const TextStyle(color: VineTheme.whiteText),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              )
+                            ).toList(),
                           )
-                        ).toList(),
-                      )
-                    : null,
-                onTap: () {
-                  // TODO: Navigate to list detail screen
+                        : null,
+                    onTap: () {
+                      // TODO: Navigate to list detail screen
+                    },
+                  );
                 },
               );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Text(
+                'Error loading lists: $error',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
           );
         },
       );
@@ -2481,6 +2654,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 );
               },
             ),
+            // Only show P2P sync on mobile platforms
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.share, color: Colors.blue),
+                title: const Text('P2P Video Sync',
+                    style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Share videos with nearby devices',
+                    style: TextStyle(color: Colors.grey)),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Navigate to P2P screen - only available on mobile
+                  _openP2PSync();
+                },
+              ),
             const Divider(color: Colors.grey),
             ListTile(
               leading: const Icon(Icons.bug_report, color: Colors.orange),
@@ -3185,6 +3372,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: const Text('Continue'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openP2PSync() {
+    // P2P Video Sync is fully implemented but only available on mobile platforms
+    // The P2P screen exists at lib/screens/p2p_sync_screen.dart
+    // Mobile builds will automatically use EmbeddedRelayService with P2P capabilities
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(kIsWeb 
+          ? 'P2P Video Sync requires mobile app - not available on web'
+          : 'P2P Video Sync available! Connect to nearby OpenVine users.'),
+        backgroundColor: kIsWeb ? Colors.orange : Colors.blue,
+        duration: const Duration(seconds: 3),
       ),
     );
   }

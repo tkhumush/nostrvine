@@ -4,7 +4,7 @@
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 /// Web implementation of CryptographyFlutterPlugin
-class CryptographyFlutterPlugin {
+class CryptographyFlutterWebPlugin {
   /// Registers the web plugin
   static void registerWith(Registrar registrar) {
     // No-op for web

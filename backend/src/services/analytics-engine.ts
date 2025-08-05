@@ -1,7 +1,7 @@
 // ABOUTME: Modern analytics service using Cloudflare Analytics Engine
 // ABOUTME: Replaces KV-based analytics with proper time-series data storage
 
-import { AnalyticsFallbackService } from './analytics-fallback';
+// import { AnalyticsFallbackService } from './analytics-fallback'; // Disabled - using Analytics Engine only
 
 export interface VideoViewEvent {
   videoId: string;
@@ -48,13 +48,13 @@ export interface VideoSocialMetrics {
 }
 
 export class VideoAnalyticsEngineService {
-  private fallbackService: AnalyticsFallbackService;
+  // private fallbackService: AnalyticsFallbackService; // Disabled - using Analytics Engine only
 
   constructor(
     private env: Env,
     private ctx: ExecutionContext
   ) {
-    this.fallbackService = new AnalyticsFallbackService(env, ctx);
+    // this.fallbackService = new AnalyticsFallbackService(env, ctx); // Disabled
   }
 
   /**
@@ -101,23 +101,8 @@ export class VideoAnalyticsEngineService {
       })
     );
 
-    // Also write to fallback KV storage for immediate dashboard display
-    this.ctx.waitUntil(
-      this.fallbackService.trackVideoView({
-        videoId: event.videoId,
-        userId: event.userId,
-        creatorPubkey: event.creatorPubkey,
-        source: event.source,
-        eventType: event.eventType,
-        timestamp: Date.now(),
-        watchDuration: event.watchDuration,
-        totalDuration: event.totalDuration,
-        loopCount: event.loopCount,
-        completionRate: event.completionRate,
-        hashtags: event.hashtags,
-        title: event.title
-      })
-    );
+    // Disabled KV fallback - using Analytics Engine only
+    // console.log('📊 KV fallback disabled - using Analytics Engine only');
 
     // Log for debugging
     console.log(`📊 Analytics Engine: Tracked ${event.eventType} for video ${event.videoId.substring(0, 8)}...`);
@@ -167,10 +152,10 @@ export class VideoAnalyticsEngineService {
       })
     );
 
-    // Also update fallback KV storage for immediate access
-    this.ctx.waitUntil(
-      this.updateSocialMetricsCache(event.videoId, event.interactionType, 1)
-    );
+    // Disabled KV cache - using Analytics Engine only
+    // this.ctx.waitUntil(
+    //   this.updateSocialMetricsCache(event.videoId, event.interactionType, 1)
+    // );
 
     console.log(`🔄 Analytics Engine: Tracked ${event.interactionType} for video ${event.videoId.substring(0, 8)}...`);
   }
@@ -219,7 +204,7 @@ export class VideoAnalyticsEngineService {
       const cacheKey = `social_metrics:${videoId}`;
       
       // Get current metrics
-      const cached = await this.env.METADATA_CACHE.get(cacheKey);
+      const cached = await this.env.ANALYTICS_KV.get(cacheKey);
       let metrics: VideoSocialMetrics;
       
       if (cached) {
@@ -255,7 +240,7 @@ export class VideoAnalyticsEngineService {
       metrics.lastUpdated = new Date().toISOString();
 
       // Cache for 1 hour
-      await this.env.METADATA_CACHE.put(cacheKey, JSON.stringify(metrics), {
+      await this.env.ANALYTICS_KV.put(cacheKey, JSON.stringify(metrics), {
         expirationTtl: 3600
       });
     } catch (error) {
@@ -271,14 +256,14 @@ export class VideoAnalyticsEngineService {
     limit: number = 10
   ): Promise<VideoMetrics[]> {
     try {
-      // First try a simple count query to test if there's any data
-      const testQuery = `SELECT COUNT(*) as total FROM VIDEO_ANALYTICS`;
+      // First try a simple count query to test if there's any data  
+      const testQuery = `SELECT COUNT() as total FROM nostrvine_video_views`;
       
       console.log('Testing Analytics Engine with simple count query...');
       const testResults = await this.executeAnalyticsQuery(testQuery);
       console.log('Test query results:', testResults);
 
-      // Use correct Analytics Engine table name (binding name)
+      // Use correct Analytics Engine table name (binding name) with ClickHouse SQL syntax
       const query = `
         SELECT 
           blob1 AS videoId,
@@ -287,7 +272,7 @@ export class VideoAnalyticsEngineService {
           AVG(double2) AS avgWatchTime,
           AVG(double4) AS avgCompletionRate,
           SUM(double3) AS totalLoops
-        FROM VIDEO_ANALYTICS
+        FROM nostrvine_video_views
         GROUP BY blob1
         ORDER BY views DESC
         LIMIT ${limit}
@@ -298,12 +283,15 @@ export class VideoAnalyticsEngineService {
       if (results && results.length > 0) {
         return results as VideoMetrics[];
       }
+      
+      // No fallback - return empty if Analytics Engine fails
+      console.log('Analytics Engine returned no results');
+      return [];
     } catch (error) {
-      console.error('Analytics Engine query failed, falling back to KV:', error);
+      console.error('Analytics Engine query failed:', error);
+      // No fallback - throw the error or return empty
+      return [];
     }
-    
-    // Fallback to KV storage for immediate data
-    return await this.fallbackService.getPopularVideos(limit);
   }
 
   /**
@@ -320,7 +308,7 @@ export class VideoAnalyticsEngineService {
         SUM(double3) AS totalLoops,
         SUM(double6) AS newViews,
         SUM(double7) AS completedViews
-      FROM VIDEO_ANALYTICS
+      FROM nostrvine_video_views
       WHERE blob1 = '${videoId}'
         AND timestamp >= NOW() - INTERVAL '${days}' DAY
       GROUP BY date
@@ -345,7 +333,7 @@ export class VideoAnalyticsEngineService {
    */
   async getRealtimeMetrics(): Promise<any> {
     try {
-      // Try Analytics Engine first
+      // Use Analytics Engine only
       const query = `
         SELECT 
           COUNT(*) AS totalEvents,
@@ -353,19 +341,33 @@ export class VideoAnalyticsEngineService {
           COUNT(DISTINCT blob2) AS activeUsers,
           AVG(double2) AS avgWatchTime,
           SUM(double6) AS newViews
-        FROM VIDEO_ANALYTICS
+        FROM nostrvine_video_views
       `;
       
       const results = await this.executeAnalyticsQuery(query);
-      if (results && results.length > 0 && results[0].totalEvents > 0) {
+      if (results && results.length > 0) {
         return results[0];
       }
+      
+      // No fallback - return zeros if no data
+      return {
+        totalEvents: 0,
+        activeVideos: 0,
+        activeUsers: 0,
+        avgWatchTime: 0,
+        newViews: 0
+      };
     } catch (error) {
-      console.error('Analytics Engine query failed, falling back to KV:', error);
+      console.error('Analytics Engine query failed:', error);
+      // Return default values on error
+      return {
+        totalEvents: 0,
+        activeVideos: 0,
+        activeUsers: 0,
+        avgWatchTime: 0,
+        newViews: 0
+      };
     }
-    
-    // Fallback to KV storage for immediate data
-    return await this.fallbackService.getRealtimeMetrics();
   }
 
   /**
@@ -446,37 +448,67 @@ export class VideoAnalyticsEngineService {
       const apiToken = this.env.CLOUDFLARE_API_TOKEN;
       
       if (!accountId || !apiToken) {
-        console.log('Analytics Engine API credentials not configured');
+        console.log('❌ Analytics Engine API credentials not configured');
         console.log('CLOUDFLARE_ACCOUNT_ID present:', !!accountId);
         console.log('CLOUDFLARE_API_TOKEN present:', !!apiToken);
         console.log('Data is being written successfully, but queries need API setup');
         return [];
       }
       
-      // Use Cloudflare's Analytics Engine SQL API
-      const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`,
-        {
+      
+      console.log('✅ Analytics Engine credentials configured, attempting query...');
+      
+      // Use Cloudflare's Analytics Engine SQL API with timeout
+      console.log(`🔍 Making Analytics Engine API request to: accounts/${accountId.substring(0, 8)}...`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        // Note: Analytics Engine dataset name might be needed in URL
+        const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`;
+        console.log(`📡 Analytics Engine SQL API URL: ${apiUrl}`);
+        console.log(`📊 Query being sent: ${query}`);
+        
+        // Try different request formats based on Cloudflare's Analytics Engine API
+        console.log('🧪 Trying Analytics Engine SQL API format...');
+        
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'text/plain', // Try text/plain instead of JSON
           },
-          body: JSON.stringify({ query })
+          body: query, // Send raw SQL query, not JSON
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        console.log(`📡 Analytics Engine API response: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ Analytics Engine API error: ${response.status} - ${errorText}`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        const result = await response.json();
+        console.log('📊 Analytics Engine result structure:', Object.keys(result));
+        const rows = result.data || [];
+        
+        console.log(`✅ Analytics query returned ${rows.length} rows`);
+        if (rows.length > 0) {
+          console.log('📋 Query results preview:', JSON.stringify(rows.slice(0, 3), null, 2));
+        }
+        
+        return rows;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.error('⏰ Analytics Engine query timed out after 10 seconds');
+          throw new Error('Analytics Engine query timeout');
+        }
+        throw error;
       }
-      
-      const result = await response.json();
-      const rows = result.data || [];
-      
-      console.log(`Analytics query returned ${rows.length} rows`);
-      console.log('Query results preview:', JSON.stringify(rows.slice(0, 3), null, 2));
-      
-      return rows;
     } catch (error) {
       console.error('Analytics Engine SQL query failed:', error);
       console.error('Error details:', {
@@ -555,15 +587,7 @@ export class VideoAnalyticsEngineService {
    */
   async getVideoSocialMetrics(videoId: string): Promise<VideoSocialMetrics> {
     try {
-      // First try to get from cache for fast response
-      const cacheKey = `social_metrics:${videoId}`;
-      const cached = await this.env.METADATA_CACHE.get(cacheKey);
-      
-      if (cached) {
-        return JSON.parse(cached);
-      }
-
-      // If not in cache, query Analytics Engine for historical data
+      // Query Analytics Engine directly (no KV cache)
       const query = `
         SELECT 
           blob3 AS interactionType,
@@ -612,11 +636,7 @@ export class VideoAnalyticsEngineService {
       // TODO: Get actual view count from analytics for better engagement calculation
       metrics.engagementRate = totalInteractions > 0 ? Math.min(totalInteractions / Math.max(totalInteractions, 100), 1) : 0;
 
-      // Cache the result for 1 hour
-      await this.env.METADATA_CACHE.put(cacheKey, JSON.stringify(metrics), {
-        expirationTtl: 3600
-      });
-
+      // No caching - return directly from Analytics Engine
       return metrics;
     } catch (error) {
       console.error('Failed to get video social metrics:', error);

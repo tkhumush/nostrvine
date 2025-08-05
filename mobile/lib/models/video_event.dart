@@ -389,18 +389,15 @@ class VideoEvent {
   final int? originalLoops; // Original loop count from classic Vine
   final int? originalLikes; // Original like count from classic Vine
 
-  /// Parse imeta tag which contains key-value pairs in "key value" format
+  /// Parse imeta tag which contains alternating key-value elements
   static void _parseImetaTag(
       List<String> tag, void Function(String key, String value) onKeyValue) {
     // Skip the first element which is "imeta"
-    // Each element after the first is in format "key value" and needs to be split
-    for (var i = 1; i < tag.length; i++) {
-      final element = tag[i];
-      final spaceIndex = element.indexOf(' ');
-      
-      if (spaceIndex > 0 && spaceIndex < element.length - 1) {
-        final key = element.substring(0, spaceIndex);
-        final value = element.substring(spaceIndex + 1);
+    // Elements alternate: key, value, key, value, ...
+    for (var i = 1; i < tag.length - 1; i += 2) {
+      if (i + 1 < tag.length) {
+        final key = tag[i];
+        final value = tag[i + 1];
         onKeyValue(key, value);
       }
     }

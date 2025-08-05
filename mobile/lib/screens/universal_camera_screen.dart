@@ -1,6 +1,9 @@
 // ABOUTME: Universal camera screen that works on all platforms (mobile, macOS, web, Windows)
 // ABOUTME: Uses VineRecordingController abstraction for consistent recording experience
 
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/main.dart';
@@ -212,6 +215,10 @@ class _UniversalCameraScreenState extends ConsumerState<UniversalCameraScreen> {
                 child: Consumer(
                   builder: (context, ref, child) {
                     final recordingNotifier = ref.watch(vineRecordingProvider.notifier);
+                    // Only show controls if camera interface is initialized
+                    if (recordingNotifier.controller.cameraInterface == null) {
+                      return const SizedBox.shrink();
+                    }
                     return CameraControlsOverlay(
                       cameraInterface: recordingNotifier.controller.cameraInterface!,
                       recordingState: recordingNotifier.controller.state,
@@ -278,17 +285,22 @@ class _UniversalCameraScreenState extends ConsumerState<UniversalCameraScreen> {
     List<Widget> additionalInfo = [];
 
     // Check for specific error types and provide helpful guidance
-    if (_errorMessage?.contains('No camera found') == true || 
+    if (_errorMessage?.contains('No cameras available') == true ||
+        _errorMessage?.contains('No camera found') == true || 
         _errorMessage?.contains('NotFoundError') == true) {
       title = 'No Camera Found';
       icon = Icons.videocam_off;
-      message = 'Please connect a webcam to record videos.';
+      message = 'A camera is required to record videos.';
       additionalInfo.add(
-        const Padding(
-          padding: EdgeInsets.only(top: 16),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
           child: Text(
-            'OpenVine needs a camera to record videos. Connect a webcam and try again.',
-            style: TextStyle(color: Colors.white60, fontSize: 14),
+            kIsWeb
+                ? 'Please connect a webcam to record videos.'
+                : (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
+                    ? 'OpenVine needs camera access to record videos. Please check your camera permissions in Settings.'
+                    : 'Please connect a webcam to record videos.',
+            style: const TextStyle(color: Colors.white60, fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ),

@@ -153,6 +153,28 @@ class UserProfile {
     return null;
   }
 
+  /// Vine-specific metadata getters from rawData
+  String? get vineUsername => rawData['vine_username'] as String?;
+  bool get vineVerified => rawData['vine_verified'] == true;
+  int? get vineFollowers {
+    final value = rawData['vine_followers'];
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+  int? get vineLoops {
+    final value = rawData['vine_loops'];
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+  
+  /// Check if this is an imported Vine user account
+  bool get isVineImport => vineUsername != null;
+  
+  /// Get location data if available
+  String? get location => rawData['location'] as String?;
+
   /// Convert profile to JSON
   Map<String, dynamic> toJson() => {
         'pubkey': pubkey,

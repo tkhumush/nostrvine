@@ -162,7 +162,7 @@ class _ProfileScreenScrollableState extends ConsumerState<ProfileScreenScrollabl
         : null;
     final userName = authProfile?.displayName ??
         cachedProfile?.displayName ??
-              'Anonymous';
+              'Loading user information';
 
           return Scaffold(
             backgroundColor: VineTheme.backgroundColor,
@@ -293,7 +293,7 @@ class _ProfileScreenScrollableState extends ConsumerState<ProfileScreenScrollabl
     final displayName = authProfile?.displayName ?? cachedProfile?.displayName;
     final hasCustomName = displayName != null &&
         !displayName.startsWith('npub1') &&
-        displayName != 'Anonymous';
+        displayName != 'Loading user information';
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -434,7 +434,7 @@ class _ProfileScreenScrollableState extends ConsumerState<ProfileScreenScrollabl
                 Row(
                   children: [
                     SelectableText(
-                      displayName ?? 'Anonymous',
+                      displayName ?? 'Loading user information',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/services/nostr_service_interface.dart';
+import 'package:openvine/services/nostr_list_service_mixin.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -130,7 +131,7 @@ class BookmarkSet {
 }
 
 /// Service for managing NIP-51 bookmarks and bookmark sets
-class BookmarkService {
+class BookmarkService with NostrListServiceMixin {
   BookmarkService({
     required INostrService nostrService,
     required AuthService authService,
@@ -138,12 +139,18 @@ class BookmarkService {
   })  : _nostrService = nostrService,
         _authService = authService,
         _prefs = prefs {
-    _loadBookmarks();
+    _loadBookmarksFromSharedPreferences();
   }
 
   final INostrService _nostrService;
   final AuthService _authService;
   final SharedPreferences _prefs;
+
+  // Mixin interface implementations
+  @override
+  INostrService get nostrService => _nostrService;
+  @override
+  AuthService get authService => _authService;
 
   static const String globalBookmarksStorageKey = 'global_bookmarks';
   static const String bookmarkSetsStorageKey = 'bookmark_sets';
@@ -170,6 +177,15 @@ class BookmarkService {
             name: 'BookmarkService', category: LogCategory.system);
         return;
       }
+
+      // 1. Load from SharedPreferences cache (fast, may be stale)
+      _loadBookmarksFromSharedPreferences();
+
+      // 2. Load from embedded relay (authoritative, cached locally)
+      await _loadBookmarksFromNostr();
+
+      // 3. Update SharedPreferences cache for next startup
+      await _saveBookmarksToSharedPreferences();
 
       _isInitialized = true;
       Log.info('Bookmark service initialized with ${_globalBookmarks.length} global bookmarks and ${_bookmarkSets.length} bookmark sets',
@@ -562,10 +578,132 @@ class BookmarkService {
     }
   }
 
+  // === NOSTR LOADING ===
+
+  /// Load bookmarks from embedded relay (authoritative)
+  Future<void> _loadBookmarksFromNostr() async {
+    try {
+      // Get all our published events using the universal query
+      final myEvents = await getMyPublishedEvents();
+      
+      // Filter for bookmark-related events
+      final bookmarkEvents = filterMyEventsByKind(myEvents, [10003, 30003]);
+      
+      if (bookmarkEvents.isEmpty) {
+        Log.debug('No bookmark events found in embedded relay',
+            name: 'BookmarkService', category: LogCategory.system);
+        return;
+      }
+
+      // Process global bookmarks (kind 10003) - latest replaces previous
+      final globalBookmarkEvents = bookmarkEvents.where((e) => e.kind == 10003).toList();
+      if (globalBookmarkEvents.isNotEmpty) {
+        // Sort by created_at to get the latest
+        globalBookmarkEvents.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _parseGlobalBookmarksFromEvent(globalBookmarkEvents.first);
+        Log.debug('Loaded global bookmarks from Nostr event: ${globalBookmarkEvents.first.id}',
+            name: 'BookmarkService', category: LogCategory.system);
+      }
+
+      // Process bookmark sets (kind 30003) - latest per d-tag
+      final bookmarkSetEvents = filterMyParameterizedEvents(myEvents, [30003]);
+      for (final event in bookmarkSetEvents.values) {
+        _parseBookmarkSetFromEvent(event);
+      }
+      
+      Log.info('Loaded ${_globalBookmarks.length} global bookmarks and ${_bookmarkSets.length} bookmark sets from embedded relay',
+          name: 'BookmarkService', category: LogCategory.system);
+
+    } catch (e) {
+      Log.error('Failed to load bookmarks from embedded relay: $e',
+          name: 'BookmarkService', category: LogCategory.system);
+    }
+  }
+
+  /// Parse global bookmarks from NIP-51 kind 10003 event
+  void _parseGlobalBookmarksFromEvent(Event event) {
+    _globalBookmarks.clear();
+    
+    for (final tag in event.tags) {
+      if (tag.length >= 2 && ['e', 'a', 't', 'r'].contains(tag[0])) {
+        final item = BookmarkItem(
+          type: tag[0],
+          id: tag[1],
+          relay: tag.length > 2 ? tag[2] : null,
+          petname: tag.length > 3 ? tag[3] : null,
+        );
+        _globalBookmarks.add(item);
+      }
+    }
+  }
+
+  /// Parse bookmark set from NIP-51 kind 30003 event
+  void _parseBookmarkSetFromEvent(Event event) {
+    // Extract d-tag (identifier)
+    String? dTag;
+    String? title;
+    String? description;
+    String? imageUrl;
+    
+    for (final tag in event.tags) {
+      if (tag.length >= 2) {
+        switch (tag[0]) {
+          case 'd':
+            dTag = tag[1];
+            break;
+          case 'title':
+            title = tag[1];
+            break;
+          case 'description':
+            description = tag[1];
+            break;
+          case 'image':
+            imageUrl = tag[1];
+            break;
+        }
+      }
+    }
+    
+    if (dTag == null) {
+      Log.warning('Bookmark set event missing d-tag: ${event.id}',
+          name: 'BookmarkService', category: LogCategory.system);
+      return;
+    }
+
+    // Parse bookmark items from tags
+    final items = <BookmarkItem>[];
+    for (final tag in event.tags) {
+      if (tag.length >= 2 && ['e', 'a', 't', 'r'].contains(tag[0])) {
+        final item = BookmarkItem(
+          type: tag[0],
+          id: tag[1],
+          relay: tag.length > 2 ? tag[2] : null,
+          petname: tag.length > 3 ? tag[3] : null,
+        );
+        items.add(item);
+      }
+    }
+
+    final bookmarkSet = BookmarkSet(
+      id: dTag,
+      name: title ?? dTag,
+      description: description,
+      imageUrl: imageUrl,
+      items: items,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
+      nostrEventId: event.id,
+    );
+
+    // Remove existing set with same ID and add updated one
+    _bookmarkSets.removeWhere((set) => set.id == dTag);
+    _bookmarkSets.add(bookmarkSet);
+  }
+
   // === STORAGE ===
 
-  /// Load bookmarks from local storage
-  void _loadBookmarks() {
+  /// Load bookmarks from SharedPreferences cache (fast startup)
+  void _loadBookmarksFromSharedPreferences() {
     // Load global bookmarks
     final globalBookmarksJson = _prefs.getString(globalBookmarksStorageKey);
     if (globalBookmarksJson != null) {
@@ -635,8 +773,8 @@ class BookmarkService {
     return parts.join(' ');
   }
 
-  /// Save bookmarks to local storage
-  Future<void> _saveBookmarks() async {
+  /// Save bookmarks to SharedPreferences cache 
+  Future<void> _saveBookmarksToSharedPreferences() async {
     try {
       // Save global bookmarks
       final globalBookmarksJson = _globalBookmarks.map((item) => item.toJson()).toList();
@@ -646,8 +784,13 @@ class BookmarkService {
       final bookmarkSetsJson = _bookmarkSets.map((set) => set.toJson()).toList();
       await _prefs.setString(bookmarkSetsStorageKey, jsonEncode(bookmarkSetsJson));
     } catch (e) {
-      Log.error('Failed to save bookmarks: $e',
+      Log.error('Failed to save bookmarks to SharedPreferences: $e',
           name: 'BookmarkService', category: LogCategory.system);
     }
+  }
+
+  /// Save bookmarks to local storage (backwards compatibility)
+  Future<void> _saveBookmarks() async {
+    await _saveBookmarksToSharedPreferences();
   }
 }

@@ -53,6 +53,21 @@ class RealIntegrationTestHelper {
         if (methodCall.method == 'setString' || methodCall.method == 'setStringList') {
           return true;
         }
+        if (methodCall.method == 'setBool') {
+          return true;
+        }
+        if (methodCall.method == 'setInt') {
+          return true;
+        }
+        if (methodCall.method == 'setDouble') {
+          return true;
+        }
+        if (methodCall.method == 'remove') {
+          return true;
+        }
+        if (methodCall.method == 'clear') {
+          return true;
+        }
         return null;
       },
     );
@@ -82,6 +97,24 @@ class RealIntegrationTestHelper {
         }
         if (methodCall.method == 'readAll') {
           return <String, String>{};
+        }
+        return null;
+      },
+    );
+
+    // Mock path_provider
+    const MethodChannel pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      pathProviderChannel,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return '/tmp/test_documents';
+        }
+        if (methodCall.method == 'getTemporaryDirectory') {
+          return '/tmp';
+        }
+        if (methodCall.method == 'getApplicationSupportDirectory') {
+          return '/tmp/test_support';
         }
         return null;
       },

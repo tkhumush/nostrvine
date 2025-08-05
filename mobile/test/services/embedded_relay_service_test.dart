@@ -1,22 +1,27 @@
-// ABOUTME: Tests for EmbeddedRelayService - embedded relay implementation
+// ABOUTME: Tests for NostrService - embedded relay implementation
 // ABOUTME: Verifies initialization, video event subscriptions, and publishing
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:nostr_sdk/event.dart';
 import 'package:nostr_sdk/filter.dart';
+import 'package:flutter_embedded_nostr_relay/flutter_embedded_nostr_relay.dart' as embedded;
 
 void main() {
   // Initialize Flutter bindings for tests that use platform channels
   TestWidgetsFlutterBinding.ensureInitialized();
-  group('EmbeddedRelayService', () {
-    late EmbeddedRelayService service;
+  
+  // Enable test mode for embedded relay to use in-memory database
+  embedded.DatabaseHelper.enableTestMode();
+  
+  group('NostrService', () {
+    late NostrService service;
     late NostrKeyManager keyManager;
 
     setUp(() {
       keyManager = NostrKeyManager();
-      service = EmbeddedRelayService(keyManager);
+      service = NostrService(keyManager);
     });
 
     tearDown(() async {

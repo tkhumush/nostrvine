@@ -31,6 +31,9 @@ import { ThumbnailService } from './services/ThumbnailService';
 // URL import handler
 import { handleURLImport, handleURLImportOptions } from './handlers/url-import';
 
+// Metadata API
+import { handleGetFileMetadata, handleBatchGetMetadata, handleMetadataOptions } from './handlers/metadata-api';
+
 // Feature flags
 import {
   handleListFeatureFlags,
@@ -680,6 +683,20 @@ export default {
 
 			if ((pathname === '/api/check' || pathname.startsWith('/api/check/')) && method === 'OPTIONS') {
 				return wrapResponse(Promise.resolve(handleFileCheckOptions()));
+			}
+
+			// Metadata API endpoints
+			if (pathname.startsWith('/api/metadata/') && pathname !== '/api/metadata/batch' && method === 'GET') {
+				const fileId = pathname.split('/api/metadata/')[1];
+				return wrapResponse(handleGetFileMetadata(fileId, env));
+			}
+
+			if (pathname === '/api/metadata/batch' && method === 'POST') {
+				return wrapResponse(handleBatchGetMetadata(request, env));
+			}
+
+			if ((pathname === '/api/metadata/batch' || pathname.startsWith('/api/metadata/')) && method === 'OPTIONS') {
+				return wrapResponse(Promise.resolve(handleMetadataOptions()));
 			}
 
 			// Event mapping endpoint
@@ -1812,6 +1829,8 @@ export default {
 					'/api/import-url (Import video from URL)',
 					'/api/status/{jobId}',
 					'/api/check-hash/{sha256} (Check if file exists by hash)',
+					'/api/metadata/{fileId} (Get file metadata including SHA-256)',
+					'/api/metadata/batch (POST: Get metadata for multiple files)',
 					'/api/set-vine-mapping (Set mapping from original Vine URL to fileId)',
 					'/admin/cleanup-duplicates (Admin: Clean up duplicate files)',
 					'/admin/cleanup-html?mode=scan (Admin: Scan for corrupted HTML files)',

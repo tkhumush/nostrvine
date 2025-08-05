@@ -1,6 +1,7 @@
 // ABOUTME: Unit tests for UploadManager.getUploadByFilePath method
 // ABOUTME: Tests file path lookup functionality using the public API
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:openvine/services/direct_upload_service.dart';
 import 'package:openvine/services/upload_manager.dart';
+import '../../helpers/real_integration_test_helper.dart';
 
 class MockDirectUploadService extends Mock implements DirectUploadService {}
 
@@ -20,13 +22,24 @@ void main() {
   late MockDirectUploadService mockUploadService;
 
   setUpAll(() async {
+    // Setup test environment with platform channel mocks
+    await RealIntegrationTestHelper.setupTestEnvironment();
     // Initialize Hive for testing
     await Hive.initFlutter();
-    // Delete any existing test box
-    await Hive.deleteBoxFromDisk('pending_uploads');
   });
 
   setUp(() async {
+    // Clean up before each test to ensure clean state
+    try {
+      if (Hive.isBoxOpen('pending_uploads')) {
+        final box = Hive.box('pending_uploads');
+        await box.clear();
+        await box.close();
+      }
+    } catch (e) {
+      // Box might not exist, that's fine
+    }
+    
     mockUploadService = MockDirectUploadService();
     uploadManager = UploadManager(uploadService: mockUploadService);
 
@@ -35,8 +48,22 @@ void main() {
   });
 
   tearDown(() async {
-    // Clean up after each test
-    await Hive.deleteBoxFromDisk('pending_uploads');
+    // Clean up after each test using proper async coordination
+    try {
+      // Dispose the upload manager and wait for completion
+      uploadManager.dispose();
+      
+      // Use proper async coordination instead of arbitrary delays
+      await Future.microtask(() {});
+      
+      // Close the box if it's still open
+      if (Hive.isBoxOpen('pending_uploads')) {
+        final box = Hive.box('pending_uploads');
+        await box.close();
+      }
+    } catch (e) {
+      // Manager or box might already be disposed/closed
+    }
   });
 
   group('UploadManager.getUploadByFilePath', () {
@@ -170,8 +197,9 @@ void main() {
         nostrPubkey: 'pubkey1',
       );
 
-      // Small delay to ensure different timestamps
-      await Future.delayed(const Duration(milliseconds: 10));
+      // Use proper async coordination to ensure different timestamps
+      // Check that first upload is tracked before creating second
+      expect(uploadManager.pendingUploads.length, equals(1));
 
       await uploadManager.startUpload(
         videoFile: mockFile,

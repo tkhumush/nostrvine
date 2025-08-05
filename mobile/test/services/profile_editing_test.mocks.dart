@@ -300,6 +300,23 @@ class MockINostrService extends _i1.Mock implements _i3.INostrService {
       ) as _i5.Future<void>);
 
   @override
+  _i5.Future<List<_i7.Event>> getEvents({
+    required List<_i8.Filter>? filters,
+    int? limit,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getEvents,
+          [],
+          {
+            #filters: filters,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i5.Future<List<_i7.Event>>.value(<_i7.Event>[]),
+      ) as _i5.Future<List<_i7.Event>>);
+
+  @override
   _i5.Stream<_i7.Event> searchVideos(
     String? query, {
     List<String>? authors,
@@ -322,13 +339,14 @@ class MockINostrService extends _i1.Mock implements _i3.INostrService {
       ) as _i5.Stream<_i7.Event>);
 
   @override
-  void dispose() => super.noSuchMethod(
+  _i5.Future<void> dispose() => (super.noSuchMethod(
         Invocation.method(
           #dispose,
           [],
         ),
-        returnValueForMissingStub: null,
-      );
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 }
 
 /// A class which mocks [AuthService].

@@ -1,10 +1,12 @@
-// ABOUTME: Secure Nostr key management with persistence and backup
-// ABOUTME: Handles key generation, storage, import/export, and security
+// ABOUTME: Secure Nostr key management with hardware-backed persistence and backup
+// ABOUTME: Handles key generation, secure storage using platform security, import/export, and security
 
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:nostr_sdk/client_utils/keys.dart';
+import 'package:openvine/services/secure_key_storage_service.dart';
+import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,17 +23,20 @@ class Keychain {
   }
 }
 
-/// Secure management of Nostr private keys with persistence
+/// Secure management of Nostr private keys with hardware-backed persistence
 /// REFACTORED: Removed ChangeNotifier - now uses pure state management via Riverpod
+/// SECURITY: Now uses SecureKeyStorageService for hardware-backed key storage
 class NostrKeyManager  {
   static const String _keyPairKey = 'nostr_keypair';
   static const String _keyVersionKey = 'nostr_key_version';
   static const String _backupHashKey = 'nostr_backup_hash';
-  static const int _currentKeyVersion = 1;
 
+  final SecureKeyStorageService _secureStorage;
   Keychain? _keyPair;
   bool _isInitialized = false;
   String? _backupHash;
+  
+  NostrKeyManager() : _secureStorage = SecureKeyStorageService();
 
   // Getters
   bool get isInitialized => _isInitialized;
@@ -44,32 +49,42 @@ class NostrKeyManager  {
   /// Initialize key manager and load existing keys
   Future<void> initialize() async {
     try {
-      Log.debug('🔧 Initializing Nostr key manager...',
+      Log.debug('🔧 Initializing Nostr key manager with secure storage...',
           name: 'NostrKeyManager', category: LogCategory.relay);
 
-      final prefs = await SharedPreferences.getInstance();
+      // Initialize secure storage service
+      await _secureStorage.initialize();
 
-      // Try to load existing keys
-      final existingKeyData = prefs.getString(_keyPairKey);
-      final keyVersion = prefs.getInt(_keyVersionKey) ?? 0;
-
-      if (existingKeyData != null && keyVersion >= _currentKeyVersion) {
-        Log.debug('📱 Loading existing Nostr keys...',
+      // Try to load existing keys from secure storage
+      if (await _secureStorage.hasKeys()) {
+        Log.debug('📱 Loading existing Nostr keys from secure storage...',
             name: 'NostrKeyManager', category: LogCategory.relay);
-        await _loadKeysFromStorage(existingKeyData);
+        
+        final secureContainer = await _secureStorage.getKeyContainer();
+        if (secureContainer != null) {
+          // Convert from secure container to our Keychain format
+          // Use withPrivateKey to safely access the private key
+          secureContainer.withPrivateKey((privateKeyHex) {
+            _keyPair = Keychain(privateKeyHex);
+          });
+          secureContainer.dispose(); // Clean up secure memory
+          
+          Log.info('Keys loaded from secure storage',
+              name: 'NostrKeyManager', category: LogCategory.relay);
+        }
       } else {
-        Log.info('📱 No existing keys found or version outdated',
-            name: 'NostrKeyManager', category: LogCategory.relay);
+        // Check for legacy keys in SharedPreferences for migration
+        await _migrateLegacyKeys();
       }
 
-      // Load backup hash
+      // Load backup hash (still using SharedPreferences for non-sensitive metadata)
+      final prefs = await SharedPreferences.getInstance();
       _backupHash = prefs.getString(_backupHashKey);
 
       _isInitialized = true;
 
-
       if (hasKeys) {
-        Log.info('Key manager initialized with existing identity',
+        Log.info('Key manager initialized with existing identity (secure storage)',
             name: 'NostrKeyManager', category: LogCategory.relay);
       } else {
         Log.info('Key manager initialized, ready for key generation',
@@ -89,14 +104,20 @@ class NostrKeyManager  {
     }
 
     try {
-      Log.debug('📱 Generating new Nostr key pair...',
+      Log.debug('📱 Generating new Nostr key pair with secure storage...',
           name: 'NostrKeyManager', category: LogCategory.relay);
 
-      // Generate new key pair
-      _keyPair = Keychain.generate();
-
-      // Save to persistent storage
-      await _saveKeysToStorage();
+      // Generate and store keys securely
+      final secureContainer = await _secureStorage.generateAndStoreKeys();
+      
+      // Keep a copy in memory for immediate use
+      // Use withPrivateKey to safely access the private key
+      secureContainer.withPrivateKey((privateKeyHex) {
+        _keyPair = Keychain(privateKeyHex);
+      });
+      
+      // Clean up secure container after extracting what we need
+      secureContainer.dispose();
 
 
 
@@ -120,7 +141,7 @@ class NostrKeyManager  {
     }
 
     try {
-      Log.debug('📱 Importing Nostr private key...',
+      Log.debug('📱 Importing Nostr private key to secure storage...',
           name: 'NostrKeyManager', category: LogCategory.relay);
 
       // Validate private key format (64 character hex)
@@ -128,11 +149,17 @@ class NostrKeyManager  {
         throw const NostrKeyException('Invalid private key format');
       }
 
-      // Create key pair from private key
+      // Convert to nsec format for secure storage
+      final nsec = _hexToNsec(privateKey);
+      
+      // Import and store in secure storage
+      final secureContainer = await _secureStorage.importFromNsec(nsec);
+      
+      // Keep a copy in memory for immediate use
       _keyPair = Keychain(privateKey);
-
-      // Save to persistent storage
-      await _saveKeysToStorage();
+      
+      // Clean up secure container
+      secureContainer.dispose();
 
 
 
@@ -257,9 +284,13 @@ class NostrKeyManager  {
   /// Clear all stored keys (logout)
   Future<void> clearKeys() async {
     try {
-      Log.debug('📱 Clearing stored Nostr keys...',
+      Log.debug('📱 Clearing stored Nostr keys from secure storage...',
           name: 'NostrKeyManager', category: LogCategory.relay);
 
+      // Clear from secure storage
+      await _secureStorage.deleteKeys();
+      
+      // Clear legacy keys from SharedPreferences if they exist
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keyPairKey);
       await prefs.remove(_keyVersionKey);
@@ -279,68 +310,57 @@ class NostrKeyManager  {
     }
   }
 
-  /// Save keys to persistent storage
-  Future<void> _saveKeysToStorage() async {
-    if (_keyPair == null) return;
-
+  /// Migrate legacy keys from SharedPreferences to secure storage
+  Future<void> _migrateLegacyKeys() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
-      // Create secure key data structure
-      final keyData = {
-        'private': _keyPair!.private,
-        'public': _keyPair!.public,
-        'created_at': DateTime.now().millisecondsSinceEpoch,
-        'version': _currentKeyVersion,
-      };
-
-      // Save encrypted in production, plain for prototype
-      final keyDataString = jsonEncode(keyData);
-
-      await prefs.setString(_keyPairKey, keyDataString);
-      await prefs.setInt(_keyVersionKey, _currentKeyVersion);
-
-      Log.info('Keys saved to persistent storage',
-          name: 'NostrKeyManager', category: LogCategory.relay);
+      final existingKeyData = prefs.getString(_keyPairKey);
+      
+      if (existingKeyData != null) {
+        Log.warning('⚠️ Found legacy keys in SharedPreferences, migrating to secure storage...',
+            name: 'NostrKeyManager', category: LogCategory.relay);
+        
+        try {
+          final keyData = jsonDecode(existingKeyData) as Map<String, dynamic>;
+          final privateKey = keyData['private'] as String?;
+          final publicKey = keyData['public'] as String?;
+          
+          if (privateKey != null && publicKey != null && 
+              _isValidPrivateKey(privateKey) && _isValidPublicKey(publicKey)) {
+            
+            // Convert to nsec and import to secure storage
+            final nsec = _hexToNsec(privateKey);
+            final secureContainer = await _secureStorage.importFromNsec(nsec);
+            
+            // Keep in memory
+            _keyPair = Keychain(privateKey);
+            
+            // Clean up secure container
+            secureContainer.dispose();
+            
+            // Remove legacy keys from SharedPreferences
+            await prefs.remove(_keyPairKey);
+            await prefs.remove(_keyVersionKey);
+            
+            Log.info('✅ Successfully migrated keys to secure storage',
+                name: 'NostrKeyManager', category: LogCategory.relay);
+          }
+        } catch (e) {
+          Log.error('Failed to migrate legacy keys: $e',
+              name: 'NostrKeyManager', category: LogCategory.relay);
+          // Don't throw - allow user to regenerate if migration fails
+        }
+      }
     } catch (e) {
-      Log.error('Failed to save keys: $e',
+      Log.error('Error checking for legacy keys: $e',
           name: 'NostrKeyManager', category: LogCategory.relay);
-      throw NostrKeyException('Failed to save keys: $e');
     }
   }
-
-  /// Load keys from persistent storage
-  Future<void> _loadKeysFromStorage(String keyDataString) async {
-    try {
-      final keyData = jsonDecode(keyDataString) as Map<String, dynamic>;
-
-      final privateKey = keyData['private'] as String?;
-      final publicKey = keyData['public'] as String?;
-
-      if (privateKey == null || publicKey == null) {
-        throw const NostrKeyException('Invalid key data structure');
-      }
-
-      // Validate key format
-      if (!_isValidPrivateKey(privateKey) || !_isValidPublicKey(publicKey)) {
-        throw const NostrKeyException('Invalid key format in storage');
-      }
-
-      _keyPair = Keychain(privateKey);
-
-      // Verify public key matches
-      if (_keyPair!.public != publicKey) {
-        throw const NostrKeyException(
-            'Public key mismatch - possible corruption');
-      }
-
-      Log.info('Keys loaded from storage',
-          name: 'NostrKeyManager', category: LogCategory.relay);
-    } catch (e) {
-      Log.error('Failed to load keys from storage: $e',
-          name: 'NostrKeyManager', category: LogCategory.relay);
-      throw NostrKeyException('Failed to load stored keys: $e');
-    }
+  
+  /// Convert hex private key to nsec (bech32) format
+  String _hexToNsec(String hexPrivateKey) {
+    // Use NostrEncoding utility for proper bech32 encoding
+    return NostrEncoding.encodePrivateKey(hexPrivateKey);
   }
 
   /// Validate private key format

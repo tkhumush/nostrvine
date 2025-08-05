@@ -1,18 +1,18 @@
-// ABOUTME: Unit test for EmbeddedRelayService - tests service interface without full initialization
+// ABOUTME: Unit test for NostrService - tests service interface without full initialization
 // ABOUTME: Validates service creation, state management, and basic functionality
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 
 void main() {
-  group('EmbeddedRelayService Unit Tests', () {
-    late EmbeddedRelayService embeddedRelayService;
+  group('NostrService Unit Tests', () {
+    late NostrService embeddedRelayService;
     late NostrKeyManager keyManager;
 
     setUp(() {
       keyManager = NostrKeyManager();
-      embeddedRelayService = EmbeddedRelayService(keyManager);
+      embeddedRelayService = NostrService(keyManager);
     });
 
     test('service can be instantiated', () {

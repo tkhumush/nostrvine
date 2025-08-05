@@ -103,6 +103,9 @@ dependencies:
   flutter_embedded_nostr_relay:
     path: ../flutter_embedded_nostr_relay/flutter_embedded_nostr_relay
   
+  # Logging
+  logging: ^1.2.0
+  
   # Missing dependencies required by nostr_sdk
   equatable: ^2.0.5
   

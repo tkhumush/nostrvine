@@ -83,6 +83,12 @@ abstract class INostrService {
   // Subscription management
   Future<void> closeAllSubscriptions();
 
+  // Event querying
+  Future<List<Event>> getEvents({
+    required List<Filter> filters,
+    int? limit,
+  });
+
   // NIP-50 Search functionality
   Stream<Event> searchVideos(String query, {
     List<String>? authors,
@@ -94,5 +100,5 @@ abstract class INostrService {
   // Primary relay for all client operations
   String get primaryRelay;
 
-  void dispose();
+  Future<void> dispose();
 }

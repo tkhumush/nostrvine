@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/user_profile.dart';
 import 'package:openvine/providers/app_providers.dart';
-import 'package:openvine/services/profile_websocket_service.dart';
 import 'package:openvine/state/user_profile_state.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -17,18 +16,6 @@ part 'user_profile_providers.g.dart';
 // Helper function for safe pubkey truncation in logs
 String _safePubkeyTrunc(String pubkey) => pubkey.length > 8 ? pubkey.substring(0, 8) : pubkey;
 
-/// ProfileWebSocketService provider - persistent WebSocket for profiles
-@Riverpod(keepAlive: true)
-ProfileWebSocketService profileWebSocketService(Ref ref) {
-  final nostrService = ref.watch(nostrServiceProvider);
-  final service = ProfileWebSocketService(nostrService);
-  
-  ref.onDispose(() {
-    service.dispose();
-  });
-  
-  return service;
-}
 
 // Cache for user profiles
 final Map<String, UserProfile> _userProfileCache = {};
@@ -119,15 +106,15 @@ Future<UserProfile?> userProfile(Ref ref, String pubkey) async {
     return null;
   }
 
-  // Get ProfileWebSocketService from app providers
-  final profileWebSocketService = ref.watch(profileWebSocketServiceProvider);
+  // Get UserProfileService from app providers
+  final userProfileService = ref.watch(userProfileServiceProvider);
 
   Log.debug('🔍 Loading profile for: ${_safePubkeyTrunc(pubkey)}...',
       name: 'UserProfileProvider', category: LogCategory.ui);
 
   try {
-    // Use the persistent ProfileWebSocketService instead of individual subscriptions
-    final profile = await profileWebSocketService.getProfile(pubkey);
+    // Use UserProfileService for proper profile fetching
+    final profile = await userProfileService.fetchProfile(pubkey);
 
     if (profile != null) {
       // Cache the profile
@@ -155,7 +142,7 @@ Future<UserProfile?> userProfile(Ref ref, String pubkey) async {
 // User profile state notifier with reactive state management
 @riverpod
 class UserProfileNotifier extends _$UserProfileNotifier {
-  // ProfileWebSocketService handles all subscription management
+  // UserProfileService handles all subscription management
   Timer? _batchDebounceTimer;
 
   @override
@@ -303,17 +290,16 @@ class UserProfileNotifier extends _$UserProfileNotifier {
         name: 'UserProfileNotifier', category: LogCategory.system);
 
     try {
-      // Use ProfileWebSocketService for immediate batch requests
-      final profileWebSocketService = ref.read(profileWebSocketServiceProvider);
+      // Use UserProfileService for immediate batch requests
+      final userProfileService = ref.read(userProfileServiceProvider);
       
-      // Get multiple profiles efficiently using the persistent WebSocket service
-      final results = await profileWebSocketService.getMultipleProfiles(pubkeysToFetch);
+      // Prefetch profiles using UserProfileService
+      await userProfileService.prefetchProfilesImmediately(pubkeysToFetch);
       
-      // Update cache and state with fetched profiles
+      // Get profiles from cache after prefetch
       final fetchedPubkeys = <String>{};
-      for (final entry in results.entries) {
-        final pubkey = entry.key;
-        final profile = entry.value;
+      for (final pubkey in pubkeysToFetch) {
+        final profile = userProfileService.getCachedProfile(pubkey);
         
         if (profile != null) {
           fetchedPubkeys.add(pubkey);
@@ -422,23 +408,22 @@ class UserProfileNotifier extends _$UserProfileNotifier {
     );
 
     try {
-      // Use ProfileWebSocketService for batch requests instead of individual subscriptions
-      final profileWebSocketService = ref.read(profileWebSocketServiceProvider);
+      // Use UserProfileService for batch requests instead of individual subscriptions
+      final userProfileService = ref.read(userProfileServiceProvider);
       
       Log.debug(
-        'Using ProfileWebSocketService for batch fetch...',
+        'Using UserProfileService for batch fetch...',
         name: 'UserProfileNotifier',
         category: LogCategory.system,
       );
       
-      // Get multiple profiles efficiently using the persistent WebSocket service
-      final results = await profileWebSocketService.getMultipleProfiles(pubkeysToFetch);
+      // Prefetch profiles using UserProfileService
+      await userProfileService.prefetchProfilesImmediately(pubkeysToFetch);
       
-      // Update cache and state with fetched profiles
+      // Get profiles from cache after prefetch
       final fetchedPubkeys = <String>{};
-      for (final entry in results.entries) {
-        final pubkey = entry.key;
-        final profile = entry.value;
+      for (final pubkey in pubkeysToFetch) {
+        final profile = userProfileService.getCachedProfile(pubkey);
         
         if (profile != null) {
           fetchedPubkeys.add(pubkey);
@@ -495,15 +480,15 @@ class UserProfileNotifier extends _$UserProfileNotifier {
   }
 
   Future<void> _cleanupProfileRequest(String pubkey) async {
-    // No longer needed - ProfileWebSocketService handles cleanup internally
+    // No longer needed - UserProfileService handles cleanup internally
     Log.debug('Profile request cleanup no longer needed for: ${_safePubkeyTrunc(pubkey)}',
         name: 'UserProfileNotifier', category: LogCategory.system);
   }
 
   void _cleanupAllSubscriptions() {
-    // ProfileWebSocketService handles all subscription cleanup automatically
+    // UserProfileService handles all subscription cleanup automatically
     // No manual cleanup needed here
-    Log.debug('Subscription cleanup delegated to ProfileWebSocketService',
+    Log.debug('Subscription cleanup delegated to UserProfileService',
         name: 'UserProfileNotifier', category: LogCategory.system);
   }
 

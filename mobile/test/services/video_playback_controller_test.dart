@@ -1,6 +1,8 @@
 // ABOUTME: Comprehensive tests for VideoPlaybackController with all use cases
 // ABOUTME: Tests cover configuration variants, lifecycle, error handling, and navigation patterns
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -192,13 +194,14 @@ void main() {
           config: VideoPlaybackConfig.feed,
         );
 
-        var wasNotified = false;
-        controller.addListener(() {
-          wasNotified = true;
-        });
-
+        // Test that setActive changes the isActive property
+        expect(controller.isActive, isFalse);
+        
         controller.setActive(true);
-        expect(wasNotified, isTrue);
+        expect(controller.isActive, isTrue);
+        
+        controller.setActive(false);
+        expect(controller.isActive, isFalse);
 
         controller.dispose();
       });

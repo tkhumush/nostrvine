@@ -346,10 +346,10 @@ void main() {
 
         // ASSERT
         expect(config.maxVideos, equals(100));
-        expect(config.preloadAhead, equals(5));
-        expect(config.preloadBehind, equals(2));
-        expect(config.maxRetries, equals(3));
-        expect(config.preloadTimeout, equals(const Duration(seconds: 10)));
+        expect(config.preloadAhead, equals(2));
+        expect(config.preloadBehind, equals(1));
+        expect(config.maxRetries, equals(2));
+        expect(config.preloadTimeout, equals(const Duration(seconds: 15)));
         expect(config.enableMemoryManagement, isTrue);
       });
 

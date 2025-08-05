@@ -171,13 +171,15 @@ class NostrVideoBridge  {
 
     await completer.future;
 
-    await start(
-      authors: authors,
-      hashtags: hashtags,
-      since: since,
-      until: until,
-      limit: limit,
-    );
+    // Don't start automatically after restart - let caller decide
+    // This ensures bridge is in stopped state after restart
+    // await start(
+    //   authors: authors,
+    //   hashtags: hashtags,
+    //   since: since,
+    //   until: until,
+    //   limit: limit,
+    // );
   }
 
   /// Manually process existing events (useful for initial load)

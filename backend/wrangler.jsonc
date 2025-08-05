@@ -108,7 +108,7 @@
 				"BASE_URL": "https://nostrvine-backend-staging.your-subdomain.workers.dev"
 			}
 		}
-	}
+	},
 
 	/**
 	 * Secrets to set with `wrangler secret put`:
@@ -128,8 +128,11 @@
 	 * Cron triggers for scheduled tasks
 	 */
 	"triggers": {
-		"crons": ["0 0 * * *"]  // Run cleanup daily at midnight UTC
-	},
+		"crons": [
+			"0 0 * * *",        // Run cleanup daily at midnight UTC
+			"*/5 * * * *"       // Run trending calculation every 5 minutes (also pre-computes)
+		]
+	}
 
 	/**
 	 * Smart Placement for edge optimization

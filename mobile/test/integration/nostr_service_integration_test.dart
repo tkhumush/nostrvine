@@ -1,16 +1,20 @@
 // ABOUTME: Integration test for NostrServiceV2 event reception
 // ABOUTME: Tests actual connection to relay and event subscription
 
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nostr_sdk/filter.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import '../helpers/real_integration_test_helper.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
   group('NostrServiceV2 Integration', () {
     test('receives events from relay', () async {
+      // Setup test environment with platform channel mocks
+      await RealIntegrationTestHelper.setupTestEnvironment();
+      
       // Create real key manager
       final keyManager = NostrKeyManager();
       await keyManager.initialize();
@@ -31,13 +35,13 @@ void main() {
 
         // Create subscription for video events
         final filter = Filter(
-          kinds: [22], // Video events
+          kinds: [32222], // Addressable video events (kind 32222)
           limit: 5,
         );
 
         final eventStream = service.subscribeToEvents(filters: [filter]);
 
-        // Collect events for 10 seconds
+        // Collect events for 3 seconds (embedded relay should respond quickly)
         final events = <dynamic>[];
         final subscription = eventStream.listen((event) {
           events.add(event);
@@ -45,8 +49,24 @@ void main() {
               'Received event: ${event.kind} - ${event.id.substring(0, 8)}...');
         });
 
-        // Wait for events
-        await Future.delayed(const Duration(seconds: 10));
+        // Wait for events using proper async pattern instead of arbitrary delay
+        final completer = Completer<void>();
+        Timer(const Duration(seconds: 3), () {
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+        });
+        
+        // Also complete early if we get events
+        if (events.isNotEmpty) {
+          Timer(const Duration(milliseconds: 100), () {
+            if (!completer.isCompleted) {
+              completer.complete();
+            }
+          });
+        }
+        
+        await completer.future;
 
         // Cancel subscription
         await subscription.cancel();

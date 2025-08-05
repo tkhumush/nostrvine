@@ -121,11 +121,15 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
   /// Build video status section showing what lists the video is in
   Widget _buildVideoStatusSection() => Consumer(
         builder: (context, ref, child) {
-          final curatedListService = ref.watch(curatedListServiceProvider);
-          final bookmarkService = ref.watch(bookmarkServiceProvider);
+          final curatedListServiceAsync = ref.watch(curatedListServiceProvider);
+          final bookmarkServiceAsync = ref.watch(bookmarkServiceProvider);
           
-          final listsContaining = curatedListService.getListsContainingVideo(widget.video.id);
-          final bookmarkStatus = bookmarkService.getVideoBookmarkSummary(widget.video.id);
+          return curatedListServiceAsync.when(
+            data: (curatedListService) {
+              return bookmarkServiceAsync.when(
+                data: (bookmarkService) {
+                  final listsContaining = curatedListService.getListsContainingVideo(widget.video.id);
+                  final bookmarkStatus = bookmarkService.getVideoBookmarkSummary(widget.video.id);
           
           final statusParts = <String>[];
           
@@ -212,6 +216,14 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
               ],
             ),
           );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          );
         },
       );
 
@@ -259,57 +271,64 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
 
   Widget _buildListSection() => Consumer(
         builder: (context, ref, child) {
-          final listService = ref.watch(curatedListServiceProvider);
-          final defaultList = listService.getDefaultList();
-          final isInDefaultList = defaultList != null &&
-              listService.isVideoInDefaultList(widget.video.id);
+          final listServiceAsync = ref.watch(curatedListServiceProvider);
+          
+          return listServiceAsync.when(
+            data: (listService) {
+              final defaultList = listService.getDefaultList();
+              final isInDefaultList = defaultList != null &&
+                  listService.isVideoInDefaultList(widget.video.id);
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Add to List',
-                style: TextStyle(
-                  color: VineTheme.whiteText,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 12),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Add to List',
+                      style: TextStyle(
+                        color: VineTheme.whiteText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-              // Add to My List (default list)
-              _buildActionTile(
-                icon: isInDefaultList
-                    ? Icons.playlist_add_check
-                    : Icons.playlist_add,
-                title:
-                    isInDefaultList ? 'Remove from My List' : 'Add to My List',
-                subtitle: 'Your public curated list',
-                iconColor: isInDefaultList ? VineTheme.vineGreen : null,
-                onTap: () => _toggleDefaultList(isInDefaultList),
-              ),
+                    // Add to My List (default list)
+                    _buildActionTile(
+                      icon: isInDefaultList
+                          ? Icons.playlist_add_check
+                          : Icons.playlist_add,
+                      title:
+                          isInDefaultList ? 'Remove from My List' : 'Add to My List',
+                      subtitle: 'Your public curated list',
+                      iconColor: isInDefaultList ? VineTheme.vineGreen : null,
+                      onTap: () => _toggleDefaultList(isInDefaultList),
+                    ),
 
-              const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-              // Create new list or add to existing
-              _buildActionTile(
-                icon: Icons.create_new_folder,
-                title: 'Create New List',
-                subtitle: 'Start a new curated collection',
-                onTap: _showCreateListDialog,
-              ),
+                    // Create new list or add to existing
+                    _buildActionTile(
+                      icon: Icons.create_new_folder,
+                      title: 'Create New List',
+                      subtitle: 'Start a new curated collection',
+                      onTap: _showCreateListDialog,
+                    ),
 
-              // Show existing lists if any
-              if (listService.lists.length > 1) ...[
-                const SizedBox(height: 8),
-                _buildActionTile(
-                  icon: Icons.folder,
-                  title: 'Add to Other List',
-                  subtitle: '${listService.lists.length - 1} other lists',
-                  onTap: _showSelectListDialog,
-                ),
-              ],
-            ],
+                    // Show existing lists if any
+                    if (listService.lists.length > 1) ...[
+                      const SizedBox(height: 8),
+                      _buildActionTile(
+                        icon: Icons.folder,
+                        title: 'Add to Other List',
+                        subtitle: '${listService.lists.length - 1} other lists',
+                        onTap: _showSelectListDialog,
+                      ),
+                    ],
+                  ],
+                );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           );
         },
       );
@@ -396,10 +415,13 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
 
   Widget _buildReportSection() => Consumer(
         builder: (context, ref, child) {
-          final reportService = ref.watch(contentReportingServiceProvider);
-          final hasReported = reportService.hasBeenReported(widget.video.id);
+          final reportServiceAsync = ref.watch(contentReportingServiceProvider);
+          
+          return reportServiceAsync.when(
+            data: (reportService) {
+              final hasReported = reportService.hasBeenReported(widget.video.id);
 
-          return Column(
+              return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
@@ -421,6 +443,10 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
                 onTap: hasReported ? null : _showReportDialog,
               ),
             ],
+          );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           );
         },
       );
@@ -469,7 +495,7 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
 
   Future<void> _addToGlobalBookmarks() async {
     try {
-      final bookmarkService = ref.read(bookmarkServiceProvider);
+      final bookmarkService = await ref.read(bookmarkServiceProvider.future);
       final success = await bookmarkService.addVideoToGlobalBookmarks(
         widget.video.id,
       );
@@ -572,7 +598,7 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
 
   Future<void> _toggleDefaultList(bool isCurrentlyInList) async {
     try {
-      final listService = ref.read(curatedListServiceProvider);
+      final listService = await ref.read(curatedListServiceProvider.future);
 
       bool success;
       if (isCurrentlyInList) {
@@ -787,7 +813,7 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
   Future<void> _deleteContent() async {
     try {
       final deletionService =
-          ref.read(contentDeletionServiceProvider);
+          await ref.read(contentDeletionServiceProvider.future);
 
       // Show loading snackbar
       if (mounted) {
@@ -1274,7 +1300,7 @@ class _CreateListDialogState extends ConsumerState<_CreateListDialog> {
     if (name.isEmpty) return;
 
     try {
-      final listService = ref.read(curatedListServiceProvider);
+      final listService = await ref.read(curatedListServiceProvider.future);
       final newList = await listService.createList(
         name: name,
         description: _descriptionController.text.trim().isEmpty
@@ -1318,12 +1344,15 @@ class _SelectListDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Consumer(
         builder: (context, ref, child) {
-          final listService = ref.watch(curatedListServiceProvider);
-          final availableLists = listService.lists
-              .where((list) => list.id != CuratedListService.defaultListId)
-              .toList();
+          final listServiceAsync = ref.watch(curatedListServiceProvider);
+          
+          return listServiceAsync.when(
+            data: (listService) {
+              final availableLists = listService.lists
+                  .where((list) => list.id != CuratedListService.defaultListId)
+                  .toList();
 
-          return AlertDialog(
+              return AlertDialog(
             backgroundColor: VineTheme.cardBackground,
             title: const Text('Add to List',
                 style: TextStyle(color: VineTheme.whiteText)),
@@ -1362,6 +1391,10 @@ class _SelectListDialog extends StatelessWidget {
                 child: const Text('Done'),
               ),
             ],
+          );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => const Center(child: Text('Error loading lists')),
           );
         },
       );
@@ -1497,7 +1530,7 @@ class _ReportContentDialogState extends ConsumerState<_ReportContentDialog> {
     if (_selectedReason == null) return;
 
     try {
-      final reportService = ref.read(contentReportingServiceProvider);
+      final reportService = await ref.read(contentReportingServiceProvider.future);
       final result = await reportService.reportContent(
         eventId: widget.video.id,
         authorPubkey: widget.video.pubkey,

@@ -406,12 +406,31 @@ class VideoEventService extends ChangeNotifier {
         Log.info('🚀 Creating subscription with filters: ${filters.map((f) => f.toJson()).toList()}',
             name: 'VideoEventService', category: LogCategory.video);
         
+        // Extra debug for home feed
+        if (subscriptionType == SubscriptionType.homeFeed) {
+          Log.info('🏠🏠🏠 HOME FEED SUBSCRIPTION DEBUG:', name: 'VideoEventService', category: LogCategory.video);
+          Log.info('  Authors requested: ${authors?.length ?? 0}', name: 'VideoEventService', category: LogCategory.video);
+          if (authors != null && authors.isNotEmpty) {
+            Log.info('  First 3 authors: ${authors.take(3).join(", ")}', name: 'VideoEventService', category: LogCategory.video);
+          }
+          Log.info('  Filters being sent to NostrService:', name: 'VideoEventService', category: LogCategory.video);
+          for (var i = 0; i < filters.length; i++) {
+            final f = filters[i];
+            Log.info('    Filter $i: kinds=${f.kinds}, authors=${f.authors?.length}, limit=${f.limit}', 
+                name: 'VideoEventService', category: LogCategory.video);
+          }
+        }
+        
         // Create direct subscription using NostrService with proper filters
         final eventStream = _nostrService.subscribeToEvents(filters: filters);
         final subscriptionId = '${subscriptionType.name}_${DateTime.now().millisecondsSinceEpoch}';
         
         final streamSubscription = eventStream.listen(
           (event) {
+            if (subscriptionType == SubscriptionType.homeFeed) {
+              Log.info('🏠📥 HOME FEED EVENT RECEIVED: kind=${event.kind}, author=${event.pubkey.substring(0, 8)}', 
+                  name: 'VideoEventService', category: LogCategory.video);
+            }
             _handleNewVideoEvent(event, subscriptionType);
           },
           onError: (error) {

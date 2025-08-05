@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/video_manager_providers.dart';
 import '../../builders/test_video_event_builder.dart';
+import '../../helpers/mock_video_manager_notifier.dart';
+import '../../helpers/service_init_helper.dart';
 import 'package:openvine/utils/unified_logger.dart';
 // Helper function to create test videos
 VideoEvent createTestVideo({String? id, String? title}) {
@@ -16,8 +18,16 @@ void main() {
   group('VideoManager Duplicate Bug Reproduction', () {
     late ProviderContainer container;
 
+    setUpAll(() {
+      ServiceInitHelper.initializeTestEnvironment();
+    });
+
     setUp(() {
-      container = ProviderContainer();
+      container = ServiceInitHelper.createTestContainer(
+        additionalOverrides: [
+          videoManagerProvider.overrideWith(() => MockVideoManager()),
+        ],
+      );
     });
 
     tearDown(() {
@@ -37,9 +47,19 @@ void main() {
       Log.debug('🔍 TEST: Calling preloadVideo multiple times for ${testVideo.id.substring(0, 8)}...', name: 'VideoManagerDuplicateTest', category: LogCategory.system);
       
       // This should not create multiple controllers
-      await videoManager.preloadVideo(testVideo.id);
-      await videoManager.preloadVideo(testVideo.id);
-      await videoManager.preloadVideo(testVideo.id);
+      try {
+        await videoManager.preloadVideo(testVideo.id);
+        Log.debug('🔍 TEST: First preload completed', name: 'VideoManagerDuplicateTest', category: LogCategory.system);
+        
+        await videoManager.preloadVideo(testVideo.id);
+        Log.debug('🔍 TEST: Second preload completed', name: 'VideoManagerDuplicateTest', category: LogCategory.system);
+        
+        await videoManager.preloadVideo(testVideo.id);
+        Log.debug('🔍 TEST: Third preload completed', name: 'VideoManagerDuplicateTest', category: LogCategory.system);
+      } catch (e) {
+        Log.error('🔍 TEST: Preload failed: $e', name: 'VideoManagerDuplicateTest', category: LogCategory.system);
+        rethrow;
+      }
       
       // Check final state
       currentState = container.read(videoManagerProvider);

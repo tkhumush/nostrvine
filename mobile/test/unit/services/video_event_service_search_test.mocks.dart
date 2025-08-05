@@ -326,6 +326,25 @@ class MockINostrService extends _i1.Mock implements _i3.INostrService {
       ) as _i4.Future<void>);
 
   @override
+  _i4.Future<List<_i6.Event>> getEvents({
+    required List<_i7.Filter>? filters,
+    int? limit,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getEvents,
+          [],
+          {
+            #filters: filters,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i4.Future<List<_i6.Event>>.value(<_i6.Event>[]),
+        returnValueForMissingStub:
+            _i4.Future<List<_i6.Event>>.value(<_i6.Event>[]),
+      ) as _i4.Future<List<_i6.Event>>);
+
+  @override
   _i4.Stream<_i6.Event> searchVideos(
     String? query, {
     List<String>? authors,
@@ -349,13 +368,14 @@ class MockINostrService extends _i1.Mock implements _i3.INostrService {
       ) as _i4.Stream<_i6.Event>);
 
   @override
-  void dispose() => super.noSuchMethod(
+  _i4.Future<void> dispose() => (super.noSuchMethod(
         Invocation.method(
           #dispose,
           [],
         ),
-        returnValueForMissingStub: null,
-      );
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
 
 /// A class which mocks [SubscriptionManager].

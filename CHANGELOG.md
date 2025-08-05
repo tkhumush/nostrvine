@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased Changes]
 
+### Added
+- **Embedded Relay Architecture**: Complete migration from external relays to embedded relay system
+  - Integrated `flutter_embedded_nostr_relay` dependency for local relay functionality
+  - Implemented local WebSocket server on port 7447 for direct app connections
+  - Added SQLite event storage for instant queries and offline support
+  - External relay proxy management through embedded relay
+  - P2P sync capabilities for decentralized content sharing
+  - All external relay URLs replaced with `ws://localhost:7447`
+  - Comprehensive architecture documentation in `mobile/docs/NOSTR_RELAY_ARCHITECTURE.md`
+
+### Changed
+- **BREAKING: Complete External Relay Demolition**: Systematically removed all external relay infrastructure
+  - Replaced all external relay references (relay.damus.io, nos.lol, relay3.openvine.co) with embedded relay
+  - NostrService now uses embedded relay by default
+  - Content reporting service updated to use embedded relay
+  - All test files updated to use localhost connections
+  - Deleted obsolete relay migration tests
+  - Clean separation between app layer (NostrService) and relay management (EmbeddedNostrRelay)
+
 ### Fixed
 - **Video Feed Display Issue**: Fixed critical issue where videos weren't appearing in the home feed despite successful Nostr event reception
   - Fixed VideoManager to listen to both discovery videos and home feed videos (homeFeedProvider)

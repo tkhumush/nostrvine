@@ -41,12 +41,11 @@ void main() {
       expect(initialState.controllers.isEmpty, isTrue);
       expect(initialState.config, isNotNull);
       
-      // Should accept videos directly via addVideoEvent
+      // Should be able to preload videos directly
       final testVideo = TestVideoEventBuilder.create(
         id: 'test_video_id',
         title: 'Test Video',
       );
-      videoManager.addVideoEvent(testVideo);
       
       // Should be able to preload the video
       await videoManager.preloadVideo(testVideo.id);
@@ -72,9 +71,6 @@ void main() {
       );
       final videoManager = container.read(videoManagerProvider.notifier);
       
-      // Add video event first
-      videoManager.addVideoEvent(testVideo);
-      
       // Multiple preload calls should be idempotent
       await videoManager.preloadVideo(testVideo.id);
       await videoManager.preloadVideo(testVideo.id);
@@ -96,8 +92,7 @@ void main() {
       );
       final videoManager = container.read(videoManagerProvider.notifier);
       
-      // Add and preload video
-      videoManager.addVideoEvent(testVideo);
+      // Preload video
       await videoManager.preloadVideo(testVideo.id);
       
       // Start playing

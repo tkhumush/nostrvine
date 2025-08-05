@@ -244,13 +244,13 @@ class TestNostrService implements INostrService {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     _isConnected = false;
     for (final controller in _subscriptions.values) {
-      controller.close();
+      await controller.close();
     }
     _subscriptions.clear();
-    _authStateController.close();
+    await _authStateController.close();
   }
   
   // Test helpers

@@ -9,7 +9,7 @@ import 'package:openvine/services/analytics_service.dart';
 import 'package:openvine/services/api_service.dart';
 import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/services/bookmark_service.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service_factory.dart';
 import 'package:openvine/services/connection_status_service.dart';
 import 'package:openvine/services/content_blocklist_service.dart';
 import 'package:openvine/services/content_deletion_service.dart';
@@ -18,13 +18,13 @@ import 'package:openvine/services/curated_list_service.dart';
 import 'package:openvine/services/curation_service.dart';
 import 'package:openvine/services/direct_upload_service.dart';
 import 'package:openvine/services/explore_video_manager.dart';
-import 'package:openvine/services/fake_shared_preferences.dart';
+import 'package:openvine/providers/analytics_providers.dart';
 import 'package:openvine/services/hashtag_service.dart';
 import 'package:openvine/services/mute_service.dart';
 import 'package:openvine/services/nip05_service.dart';
 import 'package:openvine/services/nip98_auth_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
-// import 'package:openvine/services/nostr_service.dart'; // Replaced with EmbeddedRelayService
+// NostrService now includes embedded relay functionality
 import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/notification_service_enhanced.dart';
 import 'package:openvine/services/personal_event_cache_service.dart';
@@ -185,15 +185,16 @@ AuthService authService(Ref ref) {
   return AuthService(keyStorage: keyStorage);
 }
 
-/// Core Nostr service using embedded relay
+/// Core Nostr service with platform-aware embedded relay functionality and P2P capabilities
 @Riverpod(keepAlive: true)
 INostrService nostrService(Ref ref) {
   final keyManager = ref.watch(nostrKeyManagerProvider);
-  print('AppProviders: Creating EmbeddedRelayService with embedded relay');
-  final service = EmbeddedRelayService(keyManager);
   
-  // Initialize the embedded relay asynchronously
-  service.initialize();
+  // Use factory to create platform-appropriate service
+  final service = NostrServiceFactory.create(keyManager);
+  
+  // Initialize the service with appropriate parameters
+  NostrServiceFactory.initialize(service);
   
   // Cleanup on disposal
   ref.onDispose(() {
@@ -397,52 +398,56 @@ ExploreVideoManager exploreVideoManager(Ref ref) {
   return manager;
 }
 
-/// Content reporting service for NIP-56 compliance (temporarily using FakeSharedPreferences)
+/// Content reporting service for NIP-56 compliance 
 @riverpod
-ContentReportingService contentReportingService(Ref ref) {
+Future<ContentReportingService> contentReportingService(Ref ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
   return ContentReportingService(
     nostrService: nostrService,
-    prefs: FakeSharedPreferences(),
+    prefs: prefs,
   );
 }
 
-/// Curated list service for NIP-51 lists (temporarily using FakeSharedPreferences)
+/// Curated list service for NIP-51 lists
 @riverpod
-CuratedListService curatedListService(Ref ref) {
+Future<CuratedListService> curatedListService(Ref ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
   final authService = ref.watch(authServiceProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
   
   return CuratedListService(
     nostrService: nostrService,
     authService: authService,
-    prefs: FakeSharedPreferences(),
+    prefs: prefs,
   );
 }
 
-/// Bookmark service for NIP-51 bookmarks (temporarily using FakeSharedPreferences)
+/// Bookmark service for NIP-51 bookmarks
 @riverpod
-BookmarkService bookmarkService(Ref ref) {
+Future<BookmarkService> bookmarkService(Ref ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
   final authService = ref.watch(authServiceProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
   
   return BookmarkService(
     nostrService: nostrService,
     authService: authService,
-    prefs: FakeSharedPreferences(),
+    prefs: prefs,
   );
 }
 
-/// Mute service for NIP-51 mute lists (temporarily using FakeSharedPreferences)
+/// Mute service for NIP-51 mute lists
 @riverpod
-MuteService muteService(Ref ref) {
+Future<MuteService> muteService(Ref ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
   final authService = ref.watch(authServiceProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
   
   return MuteService(
     nostrService: nostrService,
     authService: authService,
-    prefs: FakeSharedPreferences(),
+    prefs: prefs,
   );
 }
 
@@ -460,13 +465,14 @@ VideoSharingService videoSharingService(Ref ref) {
   );
 }
 
-/// Content deletion service for NIP-09 delete events (temporarily using FakeSharedPreferences)
+/// Content deletion service for NIP-09 delete events
 @riverpod
-ContentDeletionService contentDeletionService(Ref ref) {
+Future<ContentDeletionService> contentDeletionService(Ref ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
+  final prefs = await ref.watch(sharedPreferencesProvider.future);
   return ContentDeletionService(
     nostrService: nostrService,
-    prefs: FakeSharedPreferences(),
+    prefs: prefs,
   );
 }
 

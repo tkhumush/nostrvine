@@ -153,7 +153,7 @@ void main() {
         
         // Check that no exceptions were thrown during widget creation
         expect(tester.takeException(), isNull);
-      }, skip: 'Video player platform interface requires more complex mocking');
+      }, skip: true); // Video player platform interface requires more complex mocking
 
       testWidgets(
           'should show loading indicator when controller is not initialized',

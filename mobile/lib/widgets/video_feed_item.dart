@@ -2028,52 +2028,59 @@ class _RevineOptionsSheetState extends ConsumerState<_RevineOptionsSheet> {
             // List options
             Consumer(
               builder: (context, ref, child) {
-                final curatedListService = ref.watch(curatedListServiceProvider);
-                final defaultList = curatedListService.getDefaultList();
+                final curatedListServiceAsync = ref.watch(curatedListServiceProvider);
                 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Default "My List" option
-                    if (defaultList != null) ...[
-                      _buildRepostOption(
-                        icon: Icons.playlist_play,
-                        title: 'Add to "${defaultList.name}"',
-                        subtitle: 'Your main curated list (${defaultList.videoEventIds.length} videos)',
-                        onTap: () => _addToDefaultList(),
-                        isHighlighted: true,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                return curatedListServiceAsync.when(
+                  data: (curatedListService) {
+                    final defaultList = curatedListService.getDefaultList();
                     
-                    // Bookmarks option
-                    _buildRepostOption(
-                      icon: Icons.bookmark_outline,
-                      title: 'Add to Bookmarks',
-                      subtitle: 'Save for later viewing',
-                      onTap: () => _addToBookmarks(),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    // More lists option
-                    _buildRepostOption(
-                      icon: Icons.playlist_add,
-                      title: 'Choose List',
-                      subtitle: curatedListService.lists.isEmpty 
-                          ? 'Create or select curated lists'
-                          : 'Choose from ${curatedListService.lists.length} lists or create new',
-                      onTap: () => _showListSelectionDialog(),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    // Create new list option (bottom)
-                    _buildRepostOption(
-                      icon: Icons.add,
-                      title: 'Create New List',
-                      subtitle: 'Make a new curated list for this vine',
-                      onTap: () => _showCreateNewListDialog(),
-                    ),
-                  ],
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Default "My List" option
+                        if (defaultList != null) ...[
+                          _buildRepostOption(
+                            icon: Icons.playlist_play,
+                            title: 'Add to "${defaultList.name}"',
+                            subtitle: 'Your main curated list (${defaultList.videoEventIds.length} videos)',
+                            onTap: () => _addToDefaultList(),
+                            isHighlighted: true,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        
+                        // Bookmarks option
+                        _buildRepostOption(
+                          icon: Icons.bookmark_outline,
+                          title: 'Add to Bookmarks',
+                          subtitle: 'Save for later viewing',
+                          onTap: () => _addToBookmarks(),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // More lists option
+                        _buildRepostOption(
+                          icon: Icons.playlist_add,
+                          title: 'Choose List',
+                          subtitle: curatedListService.lists.isEmpty 
+                              ? 'Create or select curated lists'
+                              : 'Choose from ${curatedListService.lists.length} lists or create new',
+                          onTap: () => _showListSelectionDialog(),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // Create new list option (bottom)
+                        _buildRepostOption(
+                          icon: Icons.add,
+                          title: 'Create New List',
+                          subtitle: 'Make a new curated list for this vine',
+                          onTap: () => _showCreateNewListDialog(),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(child: Text('Error: $error')),
                 );
               },
             ),
@@ -2201,7 +2208,7 @@ class _RevineOptionsSheetState extends ConsumerState<_RevineOptionsSheet> {
     
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
-      final curatedListService = ref.read(curatedListServiceProvider);
+      final curatedListService = await ref.read(curatedListServiceProvider.future);
       final defaultList = curatedListService.getDefaultList();
       
       if (defaultList == null) {
@@ -2262,7 +2269,7 @@ class _RevineOptionsSheetState extends ConsumerState<_RevineOptionsSheet> {
     
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
-      final bookmarkService = ref.read(bookmarkServiceProvider);
+      final bookmarkService = await ref.read(bookmarkServiceProvider.future);
       
       // Check if already bookmarked
       if (bookmarkService.isVideoBookmarkedGlobally(widget.video.id)) {
@@ -2403,7 +2410,7 @@ class _RevineOptionsSheetState extends ConsumerState<_RevineOptionsSheet> {
 
               Navigator.of(dialogContext).pop(); // Close create dialog
 
-              final curatedListService = ref.read(curatedListServiceProvider);
+              final curatedListService = await ref.read(curatedListServiceProvider.future);
               final newList = await curatedListService.createList(
                 name: name,
                 description: descriptionController.text.trim().isEmpty 
@@ -2484,10 +2491,13 @@ class _ListSelectionDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final curatedListService = ref.watch(curatedListServiceProvider);
-    final lists = curatedListService.lists;
-
-    return AlertDialog(
+    final curatedListServiceAsync = ref.watch(curatedListServiceProvider);
+    
+    return curatedListServiceAsync.when(
+      data: (curatedListService) {
+        final lists = curatedListService.lists;
+        
+        return AlertDialog(
       backgroundColor: VineTheme.backgroundColor,
       title: const Text(
         'Add to List',
@@ -2584,6 +2594,10 @@ class _ListSelectionDialog extends ConsumerWidget {
         ),
       ],
     );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
+    );
   }
 
   Future<void> _addToListAndRepost(BuildContext context, WidgetRef ref, CuratedList list) async {
@@ -2592,7 +2606,7 @@ class _ListSelectionDialog extends ConsumerWidget {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       // Add video to the selected list
-      final curatedListService = ref.read(curatedListServiceProvider);
+      final curatedListService = await ref.read(curatedListServiceProvider.future);
       final success = await curatedListService.addVideoToList(list.id, video.id);
       
       if (!success) {
@@ -2716,7 +2730,7 @@ class _ListSelectionDialog extends ConsumerWidget {
               Navigator.of(dialogContext).pop(); // Close create dialog
               Navigator.of(context).pop(); // Close list selection dialog
 
-              final curatedListService = ref.read(curatedListServiceProvider);
+              final curatedListService = await ref.read(curatedListServiceProvider.future);
               final newList = await curatedListService.createList(
                 name: name,
                 description: descriptionController.text.trim().isEmpty 

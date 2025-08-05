@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:io' if (dart.library.html) 'stubs/platform_stub.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:openvine/services/nsec_bunker_client.dart';
 import 'package:openvine/services/platform_secure_storage.dart';
 import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/secure_key_container.dart';
@@ -82,6 +83,10 @@ class SecureKeyStorageService  {
 
   final PlatformSecureStorage _platformStorage = PlatformSecureStorage.instance;
   SecurityConfig _securityConfig = SecurityConfig.strict;
+  
+  // Bunker client for web platform
+  NsecBunkerClient? _bunkerClient;
+  bool _usingBunker = false;
 
   // Secure in-memory cache (automatically wiped)
   SecureKeyContainer? _cachedKeyContainer;
@@ -635,8 +640,10 @@ class SecureKeyStorageService  {
   /// Get security level description
   String _getSecurityLevelDescription() {
     final parts = <String>[];
-
-    if (_platformStorage.supportsHardwareSecurity) {
+    
+    if (_usingBunker) {
+      parts.add('Bunker (Remote signing)');
+    } else if (_platformStorage.supportsHardwareSecurity) {
       parts.add('Hardware-backed');
     } else {
       parts.add('Software-only');
@@ -662,6 +669,116 @@ class SecureKeyStorageService  {
     // Dispose cached container when service is disposed (app shutdown)
     _cachedKeyContainer?.dispose();
     _clearCache();
+    disconnectBunker();
+  }
+  
+  /// Authenticate with nsec bunker for web platform
+  Future<bool> authenticateWithBunker({
+    required String username,
+    required String password,
+    required String bunkerEndpoint,
+  }) async {
+    if (!kIsWeb) {
+      Log.warning('Bunker authentication is only for web platform',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return false;
+    }
     
+    try {
+      Log.debug('Authenticating with nsec bunker',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      
+      _bunkerClient = NsecBunkerClient(authEndpoint: bunkerEndpoint);
+      
+      final authResult = await _bunkerClient!.authenticate(
+        username: username,
+        password: password,
+      );
+      
+      if (!authResult.success) {
+        Log.error('Bunker authentication failed: ${authResult.error}',
+            name: 'SecureKeyStorageService', category: LogCategory.auth);
+        _bunkerClient = null;
+        return false;
+      }
+      
+      // Connect to the bunker relay
+      final connected = await _bunkerClient!.connect();
+      if (!connected) {
+        Log.error('Failed to connect to bunker relay',
+            name: 'SecureKeyStorageService', category: LogCategory.auth);
+        _bunkerClient = null;
+        return false;
+      }
+      
+      _usingBunker = true;
+      _isInitialized = true;
+      
+      // Get public key from bunker and create a pseudo-container
+      final pubkey = await _bunkerClient!.getPublicKey();
+      if (pubkey != null) {
+        // Create a special container for bunker-based keys
+        // This won't have the private key but will have the public key
+        _cachedKeyContainer = _createBunkerKeyContainer(pubkey);
+        _cacheTimestamp = DateTime.now();
+      }
+      
+      Log.info('Successfully authenticated with nsec bunker',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      
+      return true;
+    } catch (e) {
+      Log.error('Bunker authentication error: $e',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      _bunkerClient = null;
+      _usingBunker = false;
+      return false;
+    }
+  }
+  
+  /// Create a special key container for bunker-based keys
+  SecureKeyContainer _createBunkerKeyContainer(String publicKey) {
+    // For bunker, we create a container with only the public key
+    // The private key remains on the bunker server
+    // This is a special case where signing happens remotely
+    
+    // Note: This requires updating SecureKeyContainer to support
+    // public-key-only mode for bunker scenarios
+    // For now, return a placeholder
+    
+    // TODO: Implement proper bunker key container
+    throw UnimplementedError('Bunker key container not yet implemented');
+  }
+  
+  /// Sign an event using bunker (for web platform)
+  Future<Map<String, dynamic>?> signEventWithBunker(
+    Map<String, dynamic> event,
+  ) async {
+    if (!_usingBunker || _bunkerClient == null) {
+      Log.error('Bunker not available for signing',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return null;
+    }
+    
+    try {
+      return await _bunkerClient!.signEvent(event);
+    } catch (e) {
+      Log.error('Bunker signing error: $e',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return null;
+    }
+  }
+  
+  /// Check if using bunker for key management
+  bool get isUsingBunker => _usingBunker;
+  
+  /// Disconnect from bunker
+  void disconnectBunker() {
+    if (_bunkerClient != null) {
+      _bunkerClient!.disconnect();
+      _bunkerClient = null;
+      _usingBunker = false;
+      _clearCache();
+    }
   }
 }

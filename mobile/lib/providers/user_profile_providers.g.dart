@@ -6,28 +6,7 @@ part of 'user_profile_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileWebSocketServiceHash() =>
-    r'e0e7349f66a64e12fe0912be4f2b0d98ee8a066c';
-
-/// ProfileWebSocketService provider - persistent WebSocket for profiles
-///
-/// Copied from [profileWebSocketService].
-@ProviderFor(profileWebSocketService)
-final profileWebSocketServiceProvider =
-    Provider<ProfileWebSocketService>.internal(
-  profileWebSocketService,
-  name: r'profileWebSocketServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$profileWebSocketServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ProfileWebSocketServiceRef = ProviderRef<ProfileWebSocketService>;
-String _$userProfileHash() => r'9c6dc5f716ae56ceaefd2ee4323ece2704f313ca';
+String _$userProfileHash() => r'a6461cf27b08de537baa21ffc0aa8614f65152b2';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -191,7 +170,7 @@ class _UserProfileProviderElement
 }
 
 String _$userProfileNotifierHash() =>
-    r'2a770cd076da119a5deee5de48941a536bedb9b1';
+    r'0806c848455028ab63a13a46bdc45efb22921750';
 
 /// See also [UserProfileNotifier].
 @ProviderFor(UserProfileNotifier)

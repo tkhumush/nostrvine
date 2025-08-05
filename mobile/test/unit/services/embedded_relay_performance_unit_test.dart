@@ -1,19 +1,19 @@
-// ABOUTME: Performance unit test for EmbeddedRelayService - validates speed improvements
+// ABOUTME: Performance unit test for NostrService - validates speed improvements
 // ABOUTME: Tests service operation timing without requiring full embedded relay initialization
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:nostr_sdk/filter.dart' as nostr;
 
 void main() {
-  group('EmbeddedRelayService Performance Unit Tests', () {
-    late EmbeddedRelayService embeddedRelayService;
+  group('NostrService Performance Unit Tests', () {
+    late NostrService embeddedRelayService;
     late NostrKeyManager keyManager;
 
     setUp(() {
       keyManager = NostrKeyManager();
-      embeddedRelayService = EmbeddedRelayService(keyManager);
+      embeddedRelayService = NostrService(keyManager);
     });
 
     tearDown(() {
@@ -24,7 +24,7 @@ void main() {
       final stopwatch = Stopwatch()..start();
       
       final keyMgr = NostrKeyManager();
-      final service = EmbeddedRelayService(keyMgr);
+      final service = NostrService(keyMgr);
       
       stopwatch.stop();
       final instantiationTime = stopwatch.elapsedMilliseconds;
@@ -171,7 +171,7 @@ void main() {
     });
 
     test('service disposal is fast', () {
-      final testService = EmbeddedRelayService(NostrKeyManager());
+      final testService = NostrService(NostrKeyManager());
       
       final stopwatch = Stopwatch()..start();
       testService.dispose();

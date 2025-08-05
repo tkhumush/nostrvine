@@ -313,9 +313,9 @@ final authServiceProvider = Provider<AuthService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AuthServiceRef = ProviderRef<AuthService>;
-String _$nostrServiceHash() => r'79d79799f7bfe28736f6c01eda7365573acafe49';
+String _$nostrServiceHash() => r'f1cef7f66cb0adc4a1486f6a48f5bc36e5f2debd';
 
-/// Core Nostr service using embedded relay
+/// Core Nostr service with platform-aware embedded relay functionality and P2P capabilities
 ///
 /// Copied from [nostrService].
 @ProviderFor(nostrService)
@@ -587,14 +587,14 @@ final exploreVideoManagerProvider = Provider<ExploreVideoManager>.internal(
 // ignore: unused_element
 typedef ExploreVideoManagerRef = ProviderRef<ExploreVideoManager>;
 String _$contentReportingServiceHash() =>
-    r'62e845d7423eaa38e92ab4614ca7659c9e973f22';
+    r'a7ab20421fc0c2534226e595c97238a0267e12ae';
 
-/// Content reporting service for NIP-56 compliance (temporarily using FakeSharedPreferences)
+/// Content reporting service for NIP-56 compliance
 ///
 /// Copied from [contentReportingService].
 @ProviderFor(contentReportingService)
 final contentReportingServiceProvider =
-    AutoDisposeProvider<ContentReportingService>.internal(
+    AutoDisposeFutureProvider<ContentReportingService>.internal(
   contentReportingService,
   name: r'contentReportingServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -607,16 +607,16 @@ final contentReportingServiceProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ContentReportingServiceRef
-    = AutoDisposeProviderRef<ContentReportingService>;
+    = AutoDisposeFutureProviderRef<ContentReportingService>;
 String _$curatedListServiceHash() =>
-    r'db1399f4b2475c4e7e1c599e62ff21232002f2ed';
+    r'678b47d1162b8e89a469ccc91518fdcbc1e53577';
 
-/// Curated list service for NIP-51 lists (temporarily using FakeSharedPreferences)
+/// Curated list service for NIP-51 lists
 ///
 /// Copied from [curatedListService].
 @ProviderFor(curatedListService)
 final curatedListServiceProvider =
-    AutoDisposeProvider<CuratedListService>.internal(
+    AutoDisposeFutureProvider<CuratedListService>.internal(
   curatedListService,
   name: r'curatedListServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -628,14 +628,16 @@ final curatedListServiceProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef CuratedListServiceRef = AutoDisposeProviderRef<CuratedListService>;
-String _$bookmarkServiceHash() => r'0c1dceed1b58fd881204e8f9d2e2f31a6819899a';
+typedef CuratedListServiceRef
+    = AutoDisposeFutureProviderRef<CuratedListService>;
+String _$bookmarkServiceHash() => r'76b3bef0f2b4f8ddd0f84feac179f7b3b62cdcab';
 
-/// Bookmark service for NIP-51 bookmarks (temporarily using FakeSharedPreferences)
+/// Bookmark service for NIP-51 bookmarks
 ///
 /// Copied from [bookmarkService].
 @ProviderFor(bookmarkService)
-final bookmarkServiceProvider = AutoDisposeProvider<BookmarkService>.internal(
+final bookmarkServiceProvider =
+    AutoDisposeFutureProvider<BookmarkService>.internal(
   bookmarkService,
   name: r'bookmarkServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -647,14 +649,14 @@ final bookmarkServiceProvider = AutoDisposeProvider<BookmarkService>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef BookmarkServiceRef = AutoDisposeProviderRef<BookmarkService>;
-String _$muteServiceHash() => r'5c47d4d12a0931b6bb46a76f2d00db1dc0c6e50e';
+typedef BookmarkServiceRef = AutoDisposeFutureProviderRef<BookmarkService>;
+String _$muteServiceHash() => r'43392295e4b533da11963085bd0afb4dae5ec3d7';
 
-/// Mute service for NIP-51 mute lists (temporarily using FakeSharedPreferences)
+/// Mute service for NIP-51 mute lists
 ///
 /// Copied from [muteService].
 @ProviderFor(muteService)
-final muteServiceProvider = AutoDisposeProvider<MuteService>.internal(
+final muteServiceProvider = AutoDisposeFutureProvider<MuteService>.internal(
   muteService,
   name: r'muteServiceProvider',
   debugGetCreateSourceHash:
@@ -665,7 +667,7 @@ final muteServiceProvider = AutoDisposeProvider<MuteService>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef MuteServiceRef = AutoDisposeProviderRef<MuteService>;
+typedef MuteServiceRef = AutoDisposeFutureProviderRef<MuteService>;
 String _$videoSharingServiceHash() =>
     r'143e8562ab0f2c7df911141f5fcc53ec13a5b82a';
 
@@ -688,14 +690,14 @@ final videoSharingServiceProvider =
 // ignore: unused_element
 typedef VideoSharingServiceRef = AutoDisposeProviderRef<VideoSharingService>;
 String _$contentDeletionServiceHash() =>
-    r'92df6f54d6153fc95cf1f42d01c467132bb06aeb';
+    r'9db4cbcc145288695a319a2424269529f26ba33e';
 
-/// Content deletion service for NIP-09 delete events (temporarily using FakeSharedPreferences)
+/// Content deletion service for NIP-09 delete events
 ///
 /// Copied from [contentDeletionService].
 @ProviderFor(contentDeletionService)
 final contentDeletionServiceProvider =
-    AutoDisposeProvider<ContentDeletionService>.internal(
+    AutoDisposeFutureProvider<ContentDeletionService>.internal(
   contentDeletionService,
   name: r'contentDeletionServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -708,6 +710,6 @@ final contentDeletionServiceProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ContentDeletionServiceRef
-    = AutoDisposeProviderRef<ContentDeletionService>;
+    = AutoDisposeFutureProviderRef<ContentDeletionService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

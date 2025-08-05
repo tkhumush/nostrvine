@@ -3,16 +3,16 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/services/p2p_discovery_service.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/providers/app_providers.dart';
 
 /// Provider for P2P discovery service
 final p2pDiscoveryServiceProvider = Provider<P2PDiscoveryService?>((ref) {
   final nostrService = ref.watch(nostrServiceProvider);
   
-  // Check if the Nostr service is EmbeddedRelayService with P2P capabilities
-  if (nostrService is EmbeddedRelayService) {
-    // The P2P service is managed internally by EmbeddedRelayService
+  // Check if the Nostr service is NostrService with P2P capabilities
+  if (nostrService is NostrService) {
+    // The P2P service is managed internally by NostrService
     // We'll access it through the relay service methods
     return null; // Handled internally
   }
@@ -24,7 +24,7 @@ final p2pDiscoveryServiceProvider = Provider<P2PDiscoveryService?>((ref) {
 final p2pPeersProvider = StreamProvider<List<P2PPeer>>((ref) {
   final nostrService = ref.watch(nostrServiceProvider);
   
-  if (nostrService is EmbeddedRelayService) {
+  if (nostrService is NostrService) {
     // Create a stream that emits peer updates
     return Stream.periodic(const Duration(seconds: 2), (_) {
       return nostrService.getP2PPeers();
@@ -38,7 +38,7 @@ final p2pPeersProvider = StreamProvider<List<P2PPeer>>((ref) {
 final p2pSyncStatusProvider = FutureProvider<P2PSyncStatus>((ref) async {
   final nostrService = ref.watch(nostrServiceProvider);
   
-  if (nostrService is EmbeddedRelayService) {
+  if (nostrService is NostrService) {
     final stats = await nostrService.getRelayStats();
     
     return P2PSyncStatus(
@@ -65,35 +65,35 @@ final p2pActionsProvider = Provider<P2PActions>((ref) {
   
   return P2PActions(
     startDiscovery: () async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         return await nostrService.startP2PDiscovery();
       }
       return false;
     },
     stopDiscovery: () async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         await nostrService.stopP2PDiscovery();
       }
     },
     startAdvertising: () async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         return await nostrService.startP2PAdvertising();
       }
       return false;
     },
     stopAdvertising: () async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         await nostrService.stopP2PAdvertising();
       }
     },
     connectToPeer: (peer) async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         return await nostrService.connectToP2PPeer(peer);
       }
       return false;
     },
     syncWithPeers: () async {
-      if (nostrService is EmbeddedRelayService) {
+      if (nostrService is NostrService) {
         await nostrService.syncWithP2PPeers();
       }
     },

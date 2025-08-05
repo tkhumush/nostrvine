@@ -14,6 +14,23 @@ OpenVine is a decentralized vine-like video sharing application powered by Nostr
 - **Protocol**: Nostr (decentralized social network)
 - **Media Processing**: Real-time frame capture → GIF creation
 
+## Nostr Architecture
+
+**CRITICAL**: OpenVine uses an embedded relay architecture. The app does NOT connect directly to external relays.
+
+### Architecture Overview
+1. **NostrService** (app layer) uses `nostr_sdk` to connect to `ws://localhost:7447`
+2. **EmbeddedNostrRelay** runs inside the app, providing:
+   - Local WebSocket server on port 7447
+   - SQLite event storage for instant queries
+   - External relay proxy management
+   - P2P sync capabilities
+3. **External Relays** (like `wss://relay3.openvine.co`) are managed by the embedded relay
+
+**Key Point**: NostrService should NEVER use `nostr_sdk/relay/Relay` to connect to external relays. Instead, the embedded relay handles external connections via `addExternalRelay()`.
+
+See `mobile/docs/NOSTR_RELAY_ARCHITECTURE.md` for detailed architecture documentation.
+
 ## Nostr Event Requirements
 OpenVine requires specific Nostr event types for proper functionality:
 - **Kind 0**: User profiles (NIP-01) - Required for user display names and avatars

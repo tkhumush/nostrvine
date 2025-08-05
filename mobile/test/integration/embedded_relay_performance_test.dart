@@ -3,7 +3,7 @@
 
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openvine/services/embedded_relay_service.dart';
+import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/services/subscription_manager.dart';
@@ -11,21 +11,21 @@ import 'package:openvine/utils/unified_logger.dart';
 
 void main() {
   group('Embedded Relay Performance Tests', () {
-    late EmbeddedRelayService embeddedRelay;
+    late NostrService embeddedRelay;
     late VideoEventService videoEventService;
     late SubscriptionManager subscriptionManager;
     late NostrKeyManager keyManager;
 
     setUpAll(() async {
-      Log.init(LogLevel.debug);
+      UnifiedLogger.setLogLevel(LogLevel.debug);
       Log.info('Starting embedded relay performance tests', 
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
 
     setUp(() async {
       // Initialize services
       keyManager = NostrKeyManager();
-      embeddedRelay = EmbeddedRelayService(keyManager);
+      embeddedRelay = NostrService(keyManager);
       subscriptionManager = SubscriptionManager(embeddedRelay);
       videoEventService = VideoEventService(
         embeddedRelay, 
@@ -33,7 +33,7 @@ void main() {
       );
       
       Log.debug('Performance test setup complete', 
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
 
     tearDown(() async {
@@ -42,7 +42,7 @@ void main() {
       await subscriptionManager.dispose();
       
       Log.debug('Performance test teardown complete', 
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
 
     test('embedded relay initializes quickly', () async {
@@ -57,7 +57,7 @@ void main() {
       expect(initTime, lessThan(1000)); // Should initialize within 1 second
       
       Log.info('Embedded relay initialized in ${initTime}ms',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
 
     test('video feed subscription performance < 100ms', () async {
@@ -80,7 +80,7 @@ void main() {
       expect(videoEventService.isSubscribed(SubscriptionType.discovery), isTrue);
       
       Log.info('Video feed subscription completed in ${subscribeTime}ms',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
       
       // Target: < 100ms (vs old 500-2000ms with external relays)
       expect(subscribeTime, lessThan(100));
@@ -119,7 +119,7 @@ void main() {
       expect(videoEventService.isSubscribed(SubscriptionType.hashtag), isTrue);
       
       Log.info('Multiple concurrent subscriptions completed in ${totalTime}ms',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
       
       // Should handle multiple subscriptions efficiently
       expect(totalTime, lessThan(200));
@@ -146,10 +146,10 @@ void main() {
                'relays=${embeddedRelay.relayCount}, '
                'connected=${embeddedRelay.connectedRelayCount}, '
                'urls=${embeddedRelay.relays}',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
       
       Log.info('✅ Embedded relay connection status verified',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
 
     test('subscription manager with embedded relay performs efficiently', () async {
@@ -163,7 +163,7 @@ void main() {
         filters: [], // Empty filters for basic test
         onEvent: (event) {
           Log.debug('Received event: ${event.id}',
-              name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+              name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
         },
       );
       
@@ -175,7 +175,7 @@ void main() {
       expect(subscriptionManager.activeSubscriptionCount, greaterThan(0));
       
       Log.info('Subscription created in ${createTime}ms',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
       
       // Should create subscriptions quickly
       expect(createTime, lessThan(50));
@@ -204,13 +204,13 @@ void main() {
       final totalTime = stopwatch.elapsedMilliseconds;
       
       Log.info('Rapid subscription changes completed in ${totalTime}ms',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
       
       // Should handle rapid changes efficiently
       expect(totalTime, lessThan(500));
       
       Log.info('✅ Embedded relay handled rapid subscription changes efficiently',
-          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.debug);
+          name: 'EmbeddedRelayPerformanceTest', category: LogCategory.system);
     });
   });
 }
