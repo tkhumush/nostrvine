@@ -39,6 +39,10 @@ class UserProfileService  {
   final Set<String> _knownMissingProfiles = {};
   final Map<String, DateTime> _missingProfileRetryAfter = {};
 
+  // Prefetch tracking
+  bool _prefetchActive = false;
+  DateTime? _lastPrefetchAt;
+
   final SubscriptionManager _subscriptionManager;
   ProfileCacheService? _persistentCache;
 
@@ -373,6 +377,21 @@ class UserProfileService  {
     Log.debug('⚡ Immediate pre-fetch for ${pubkeysToFetch.length} profiles',
         name: 'UserProfileService', category: LogCategory.system);
 
+    // Prevent flooding: if a prefetch is currently active, skip co-incident calls
+    if (_prefetchActive) {
+      Log.debug('Prefetch suppressed: another prefetch is active',
+          name: 'UserProfileService', category: LogCategory.system);
+      return;
+    }
+
+    // Simple rate-limit: ignore if last prefetch finished very recently (< 1s)
+    if (_lastPrefetchAt != null &&
+        DateTime.now().difference(_lastPrefetchAt!) < const Duration(seconds: 1)) {
+      Log.debug('Prefetch suppressed: rate limit within 1s',
+          name: 'UserProfileService', category: LogCategory.system);
+      return;
+    }
+
     // Add to pending requests
     _pendingRequests.addAll(pubkeysToFetch);
 
@@ -388,6 +407,7 @@ class UserProfileService  {
       final thisBatchPubkeys = Set<String>.from(pubkeysToFetch);
 
       // Subscribe to profile events using SubscriptionManager with highest priority
+      _prefetchActive = true;
       await _subscriptionManager.createSubscription(
         name: 'profile_prefetch_${DateTime.now().millisecondsSinceEpoch}',
         filters: [filter],
@@ -404,6 +424,8 @@ class UserProfileService  {
       Log.error('Failed to prefetch profiles: $e',
           name: 'UserProfileService', category: LogCategory.system);
       _pendingRequests.removeAll(pubkeysToFetch);
+      _prefetchActive = false;
+      _lastPrefetchAt = DateTime.now();
     }
   }
 
@@ -433,6 +455,10 @@ class UserProfileService  {
 
     // Clean up pending requests for this batch
     _pendingRequests.removeAll(batchPubkeys);
+
+    // Mark cycle done and set last timestamp
+    _prefetchActive = false;
+    _lastPrefetchAt = DateTime.now();
   }
 
   /// Batch fetch profiles for multiple users

@@ -172,7 +172,7 @@ class NostrService implements INostrService {
   }
 
   @override
-  Stream<Event> subscribeToEvents({required List<nostr.Filter> filters, bool bypassLimits = false}) {
+  Stream<Event> subscribeToEvents({required List<nostr.Filter> filters, bool bypassLimits = false, void Function()? onEose}) {
     if (_isDisposed) throw StateError('NostrService is disposed');
     if (!_isInitialized) throw StateError('NostrService not initialized');
     if (_embeddedRelay == null) throw StateError('Embedded relay not initialized');
@@ -246,6 +246,14 @@ class NostrService implements INostrService {
             Log.debug('Received home feed event - kind: ${event.kind}, author: ${event.pubkey.substring(0, 8)}...', name: 'NostrService', category: LogCategory.relay);
           }
           controller.add(event);
+        }
+      },
+      onEose: () {
+        UnifiedLogger.debug('EOSE received for subscription $id', name: 'NostrService');
+        try {
+          onEose?.call();
+        } catch (e) {
+          UnifiedLogger.error('Error in onEose callback for $id: $e', name: 'NostrService');
         }
       },
       onError: (error) {

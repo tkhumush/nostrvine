@@ -34,6 +34,7 @@ SubscriptionManager videoEventsSubscriptionManager(
 @Riverpod(keepAlive: false)
 class VideoEvents extends _$VideoEvents {
   StreamController<List<VideoEvent>>? _controller;
+  bool get _canEmit => _controller != null && !(_controller!.isClosed);
 
   @override
   Stream<List<VideoEvent>> build() {
@@ -65,7 +66,9 @@ class VideoEvents extends _$VideoEvents {
     
     // Emit current events immediately from discovery list
     final currentEvents = List<VideoEvent>.from(videoEventService.discoveryVideos);
-    _controller!.add(currentEvents);
+    if (_canEmit) {
+      _controller!.add(currentEvents);
+    }
 
     // Listen to VideoEventService changes reactively (proper Riverpod way)
     void onVideoEventServiceChange() {
@@ -75,7 +78,12 @@ class VideoEvents extends _$VideoEvents {
         name: 'VideoEventsProvider',
         category: LogCategory.video,
       );
-      _controller!.add(newEvents);
+      if (_canEmit) {
+        _controller!.add(newEvents);
+      } else {
+        // Controller was closed; detach listener to avoid Bad state errors
+        videoEventService.removeListener(onVideoEventServiceChange);
+      }
     }
     
     // Add listener for reactive updates
@@ -84,7 +92,9 @@ class VideoEvents extends _$VideoEvents {
     // Clean up on dispose
     ref.onDispose(() {
       videoEventService.removeListener(onVideoEventServiceChange);
+      // Close and null out the controller to signal no further emits
       _controller?.close();
+      _controller = null;
       // Ensure discovery subscription is torn down when provider is disposed
       videoEventService.unsubscribeFromVideoFeed();
     });

@@ -403,6 +403,32 @@ class VideoEvent {
   final int? originalLoops; // Original loop count from classic Vine
   final int? originalLikes; // Original like count from classic Vine
 
+  /// Comparator: items with no loop count first (new vines),
+  /// then items with loop count sorted by amount desc.
+  /// Within groups, break ties by most recent createdAt.
+  static int compareByLoopsThenTime(VideoEvent a, VideoEvent b) {
+    final aLoops = a.originalLoops;
+    final bLoops = b.originalLoops;
+
+    final aHasLoops = aLoops != null;
+    final bHasLoops = bLoops != null;
+
+    if (aHasLoops != bHasLoops) {
+      // Items without loop count should come first
+      return aHasLoops ? 1 : -1;
+    }
+
+    if (!aHasLoops && !bHasLoops) {
+      // Both have no loops: newest first
+      return b.createdAt.compareTo(a.createdAt);
+    }
+
+    // Both have loops: sort by loops desc, then newest first
+    final loopsCompare = bLoops!.compareTo(aLoops!);
+    if (loopsCompare != 0) return loopsCompare;
+    return b.createdAt.compareTo(a.createdAt);
+  }
+
   /// Parse imeta tag which contains space-separated key-value pairs
   /// NIP-32222 format: ["imeta", "key1 value1", "key2 value2", ...]
   static void _parseImetaTag(

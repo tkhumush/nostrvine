@@ -124,15 +124,16 @@ class UserProfileTile extends ConsumerWidget {
 
   Future<void> _toggleFollow(WidgetRef ref, String pubkey, bool isCurrentlyFollowing) async {
     try {
-      final socialService = ref.read(socialServiceProvider);
-      
+      // Use optimistic follow methods so UI updates immediately via provider
+      final optimisticMethods = ref.read(optimisticFollowMethodsProvider);
+
       if (isCurrentlyFollowing) {
-        await socialService.unfollowUser(pubkey);
-        Log.info('👤 Unfollowed user: ${pubkey.substring(0, 8)}', 
+        await optimisticMethods.unfollowUser(pubkey);
+        Log.info('👤 Unfollowed user: ${pubkey.substring(0, 8)}',
             name: 'UserProfileTile', category: LogCategory.ui);
       } else {
-        await socialService.followUser(pubkey);
-        Log.info('👤 Followed user: ${pubkey.substring(0, 8)}', 
+        await optimisticMethods.followUser(pubkey);
+        Log.info('👤 Followed user: ${pubkey.substring(0, 8)}',
             name: 'UserProfileTile', category: LogCategory.ui);
       }
     } catch (e) {

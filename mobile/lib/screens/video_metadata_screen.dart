@@ -8,6 +8,8 @@ import 'package:openvine/main.dart';
 import 'package:openvine/models/pending_upload.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/profile_videos_provider.dart';
+import 'package:openvine/providers/profile_stats_provider.dart';
+import 'package:openvine/providers/user_profile_providers.dart';
 import 'package:openvine/providers/video_manager_providers.dart';
 import 'package:openvine/services/video_manager_interface.dart';
 import 'package:openvine/theme/vine_theme.dart';
@@ -890,11 +892,13 @@ class _VideoMetadataScreenState extends ConsumerState<VideoMetadataScreen> {
           ),
         );
         
-        // Clear profile videos cache to force refresh when profile loads
+        // Clear all profile caches to force complete refresh
         clearAllProfileVideosCache();
         
-        // Force refresh of profile videos provider
+        // Force refresh of all profile-related providers
         ref.invalidate(profileVideosNotifierProvider);
+        ref.invalidate(profileStatsNotifierProvider);
+        ref.invalidate(userProfileNotifierProvider);
         
         // Navigate to profile tab (index 3) to show user their new video
         Navigator.of(context).pushAndRemoveUntil(

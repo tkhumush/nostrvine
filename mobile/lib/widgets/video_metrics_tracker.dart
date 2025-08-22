@@ -77,14 +77,29 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
 
   void _addControllerListeners() {
     final controller = widget.controller;
-    if (controller == null || !controller.value.isInitialized) return;
-    
-    // Listen for video completion (loops)
-    controller.addListener(_onControllerUpdate);
+    if (controller == null) return;
+    // Controller.value access can still succeed after dispose; guard addListener
+    if (!controller.value.isInitialized) return;
+    try {
+      // Listen for video completion (loops)
+      controller.addListener(_onControllerUpdate);
+    } catch (e) {
+      // If controller was disposed between checks, skip attaching listeners
+      Log.warning(
+        'VideoMetricsTracker: controller not usable (disposed?) - $e',
+        name: 'VideoMetricsTracker',
+        category: LogCategory.video,
+      );
+    }
   }
 
   void _removeControllerListeners(VideoPlayerController? controller) {
-    controller?.removeListener(_onControllerUpdate);
+    if (controller == null) return;
+    try {
+      controller.removeListener(_onControllerUpdate);
+    } catch (_) {
+      // Ignore if already disposed
+    }
   }
 
   void _onControllerUpdate() {

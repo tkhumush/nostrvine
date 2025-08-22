@@ -64,8 +64,11 @@ abstract class INostrService {
 
   // Methods
   Future<void> initialize({List<String>? customRelays});
-  Stream<Event> subscribeToEvents(
-      {required List<Filter> filters, bool bypassLimits = false});
+  Stream<Event> subscribeToEvents({
+    required List<Filter> filters,
+    bool bypassLimits = false,
+    void Function()? onEose,
+  });
   Future<NostrBroadcastResult> broadcastEvent(Event event);
   Future<NostrBroadcastResult> publishFileMetadata({
     required NIP94Metadata metadata,

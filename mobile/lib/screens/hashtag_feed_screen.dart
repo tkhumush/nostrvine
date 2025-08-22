@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/models/video_event.dart';
 import 'package:openvine/screens/explore_video_screen.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
@@ -50,7 +51,9 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
           builder: (context) {
             final videoService = ref.watch(videoEventServiceProvider);
             final hashtagService = ref.watch(hashtagServiceProvider);
-            final videos = hashtagService.getVideosByHashtags([widget.hashtag]);
+            final videos = List<VideoEvent>.from(
+              hashtagService.getVideosByHashtags([widget.hashtag]),
+            )..sort(VideoEvent.compareByLoopsThenTime);
             final stats = hashtagService.getHashtagStats(widget.hashtag);
 
             if (videoService.isLoading && videos.isEmpty) {
@@ -169,6 +172,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
                           child: VideoFeedItem(
                             video: video,
                             isActive: false, // Never active in list view
+                            forceInfoBelow: true,
                           ),
                         ),
                       );

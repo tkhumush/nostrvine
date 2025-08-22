@@ -243,6 +243,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
       
       final sortedHashtags = hashtagResults.toList()..sort();
 
+      // Apply loops-first sorting to video results
+      searchResults.sort(VideoEvent.compareByLoopsThenTime);
       setState(() {
         _videoResults = searchResults;
         _hashtagResults = sortedHashtags;

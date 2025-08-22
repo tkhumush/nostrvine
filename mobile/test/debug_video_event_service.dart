@@ -27,6 +27,7 @@ class TestableNostrService extends NostrService {
   Stream<Event> subscribeToEvents({
     required List<Filter> filters,
     bool bypassLimits = false,
+    void Function()? onEose,
   }) {
     Log.info(
         '🔍 TestableNostrService.subscribeToEvents called with ${filters.length} filters',

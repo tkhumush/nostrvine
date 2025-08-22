@@ -24,6 +24,7 @@ import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/providers/optimistic_follow_provider.dart';
+import 'package:openvine/providers/tab_visibility_provider.dart';
 import 'package:openvine/screens/followers_screen.dart';
 import 'package:openvine/screens/following_screen.dart';
 
@@ -56,6 +57,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeProfile();
     });
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Force refresh when returning to profile tab after publishing
+    if (_isOwnProfile && _targetPubkey != null) {
+      final tabIndex = ref.watch(tabVisibilityProvider);
+      if (tabIndex == 3) { // Profile tab is index 3
+        // Refresh profile data when tab becomes active
+        _refreshProfileData();
+      }
+    }
   }
 
   Future<void> _initializeProfile() async {
@@ -150,10 +164,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       _loadProfileStats();
       _loadProfileVideos();
 
-      // If viewing another user's profile, fetch their profile data
-      if (!_isOwnProfile) {
-        _loadUserProfile();
-      }
+      // Always load user profile to ensure we have display name
+      _loadUserProfile();
 
       // Note: Video events are managed globally by Riverpod providers
       // Profile-specific video loading is handled by ProfileVideosProvider
@@ -179,6 +191,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         name: 'ProfileScreen',
         category: LogCategory.ui);
     try {
+      // Clear cache first to force fresh load
+      clearAllProfileVideosCache();
+      
       final profileVideosNotifier = ref.read(profileVideosNotifierProvider.notifier);
       profileVideosNotifier.loadVideosForUser(_targetPubkey!).then((_) {
         Log.info(
@@ -195,6 +210,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       Log.error('Error initiating profile videos load: $e',
           name: 'ProfileScreen', category: LogCategory.ui);
     }
+  }
+
+  // Compact formatter for counts (e.g., 12.3K, 1.2M)
+  String _formatCount(int count) {
+    if (count >= 1000000000) {
+      return '${(count / 1000000000).toStringAsFixed(1)}B';
+    } else if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+
+  void _refreshProfileData() {
+    if (_targetPubkey == null) return;
+    
+    Log.info('🔄 Refreshing profile data for ${_targetPubkey!.substring(0, 8)}',
+        name: 'ProfileScreen', category: LogCategory.ui);
+    
+    // Clear caches and reload everything
+    clearAllProfileVideosCache();
+    ref.invalidate(profileVideosNotifierProvider);
+    ref.invalidate(profileStatsNotifierProvider);
+    ref.invalidate(userProfileNotifierProvider);
+    
+    // Reload data
+    _loadProfileStats();
+    _loadProfileVideos();
+    _loadUserProfile();
   }
 
   void _loadUserProfile() {
@@ -258,9 +303,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ? profileState.getCachedProfile(_targetPubkey!)
           : null;
       
-      final userName = cachedProfile?.bestDisplayName ??
-          authProfile?.displayName ??
-          'Loading user information';
+      // Better fallback for display name
+      String userName;
+      if (cachedProfile?.bestDisplayName != null && 
+          !cachedProfile!.bestDisplayName.startsWith('npub1')) {
+        userName = cachedProfile!.bestDisplayName;
+      } else if (authProfile?.displayName != null && 
+                 authProfile!.displayName!.isNotEmpty) {
+        userName = authProfile!.displayName!;
+      } else if (_targetPubkey != null) {
+        // Use shortened pubkey while loading instead of showing npub
+        userName = '${_targetPubkey!.substring(0, 8)}...';
+      } else {
+        userName = 'Loading...';
+      }
 
           return Scaffold(
             key: ValueKey('profile_screen_${_targetPubkey ?? 'unknown'}'),
@@ -382,11 +438,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         authProfile?.picture ?? cachedProfile?.picture;
     // Always prefer cachedProfile (UserProfileService) over authProfile for display name
     // because UserProfileService has the most up-to-date data from the relay
-    final displayName = cachedProfile?.bestDisplayName ??
-        authProfile?.displayName ??
-        'Loading user information';
-    final hasCustomName =
-        displayName != 'Loading user information' && !displayName.startsWith('npub1');
+    String displayName;
+    if (cachedProfile?.bestDisplayName != null && 
+        !cachedProfile!.bestDisplayName.startsWith('npub1')) {
+      displayName = cachedProfile!.bestDisplayName;
+    } else if (authProfile?.displayName != null && 
+               authProfile!.displayName!.isNotEmpty) {
+      displayName = authProfile!.displayName!;
+    } else if (_targetPubkey != null) {
+      // Use shortened pubkey while loading instead of showing npub
+      displayName = '${_targetPubkey!.substring(0, 8)}...';
+    } else {
+      displayName = 'Loading...';
+    }
+    
+    final hasCustomName = displayName != 'Loading...' && 
+                         !displayName.contains('...') && 
+                         !displayName.startsWith('npub1');
 
     return Padding(
             padding: const EdgeInsets.all(20),
@@ -838,17 +906,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
 
     return content;
-  }
-
-  /// Format large numbers (e.g., 1234 -> "1.2K")
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    } else {
-      return count.toString();
-    }
   }
 
   Widget _buildStatsRow(ProfileStatsState profileStatsState) => Container(
@@ -1339,6 +1396,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                            ),
+                          ),
+
+                        // Metrics badges (loops/likes) bottom-left if available
+                        if ((videoEvent.originalLoops != null && videoEvent.originalLoops! > 0) ||
+                            (videoEvent.originalLikes != null && videoEvent.originalLikes! > 0))
+                          Positioned(
+                            bottom: 4,
+                            left: 4,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (videoEvent.originalLoops != null && videoEvent.originalLoops! > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.loop, size: 12, color: Colors.white70),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          _formatCount(videoEvent.originalLoops!),
+                                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (videoEvent.originalLikes != null && videoEvent.originalLikes! > 0) ...[
+                                  if (videoEvent.originalLoops != null && videoEvent.originalLoops! > 0)
+                                    const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.favorite, size: 12, color: Colors.redAccent),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          _formatCount(videoEvent.originalLikes!),
+                                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                       ],
@@ -3420,4 +3529,3 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_StickyTabBarDelegate oldDelegate) =>
       tabBar != oldDelegate.tabBar;
 }
-

@@ -19,6 +19,7 @@ import 'package:openvine/providers/video_manager_providers.dart';
 import 'package:openvine/screens/comments_screen.dart';
 import 'package:openvine/services/global_video_registry.dart';
 import 'package:openvine/screens/hashtag_feed_screen.dart';
+import 'package:openvine/screens/profile_screen.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/clickable_hashtag_text.dart';
@@ -46,11 +47,13 @@ class VideoFeedItem extends ConsumerStatefulWidget {
     super.key,
     this.onVideoError,
     this.tabContext = TabContext.feed,
+    this.forceInfoBelow = false,
   });
   final VideoEvent video;
   final bool isActive;
   final Function(String)? onVideoError;
   final TabContext tabContext;
+  final bool forceInfoBelow;
 
   @override
   ConsumerState<VideoFeedItem> createState() => _VideoFeedItemState();
@@ -742,6 +745,13 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
           const SizedBox(height: 16),
         ],
 
+        // Metrics (loops/likes) if available
+        if (_hasAnyMetrics)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildMetricsRow(),
+          ),
+
         // Social action buttons
         _buildSocialActions(),
       ],
@@ -759,15 +769,15 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
         final availableHeight = constraints.maxHeight;
         final availableWidth = constraints.maxWidth;
         
-        // For portrait-like aspect ratios (height > width), prefer column layout when video is ready
-        final isPortraitLayout = availableHeight > availableWidth * 1.2;
+    // For portrait-like aspect ratios (height > width), prefer column layout when video is ready
+    final isPortraitLayout = availableHeight > availableWidth * 1.2;
         final estimatedTextHeight = _estimateTextHeight();
         final videoHeight = availableWidth; // Square video
         final requiredHeight = videoHeight + estimatedTextHeight + 48; // 48px padding
         final hasEnoughSpace = requiredHeight <= availableHeight;
         
-        // Use column layout for portrait screens with enough space when video is ready
-        final useColumnLayout = isVideoReady && isPortraitLayout && hasEnoughSpace;
+    // Use column layout if forced or for portrait screens with enough space when video is ready
+    final useColumnLayout = widget.forceInfoBelow || (isVideoReady && isPortraitLayout && hasEnoughSpace);
         
         Log.debug('Layout: availableH=$availableHeight, availableW=$availableWidth, '
             'isPortrait=$isPortraitLayout, hasSpace=$hasEnoughSpace, useColumn=$useColumnLayout',
@@ -1302,12 +1312,65 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
                 const SizedBox(height: 8),
               ],
 
+              // Metrics (loops/likes) if available
+              if (_hasAnyMetrics) ...[
+                _buildMetricsRow(),
+                const SizedBox(height: 8),
+              ],
+
               // Social action buttons
               _buildSocialActions(),
             ],
           ),
         ),
       );
+
+  bool get _hasAnyMetrics =>
+      (widget.video.originalLoops != null && widget.video.originalLoops! > 0) ||
+      (widget.video.originalLikes != null && widget.video.originalLikes! > 0);
+
+  Widget _buildMetricsRow() {
+    final loops = widget.video.originalLoops;
+    final likes = widget.video.originalLikes;
+    final items = <Widget>[];
+
+    if (loops != null && loops > 0) {
+      items.add(Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.loop, size: 14, color: Colors.white70),
+          const SizedBox(width: 4),
+          Text('${_formatCount(loops)} loops',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ));
+    }
+    if (likes != null && likes > 0) {
+      if (items.isNotEmpty) items.add(const SizedBox(width: 16));
+      items.add(Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.favorite, size: 14, color: Colors.redAccent),
+          const SizedBox(width: 4),
+          Text('${_formatCount(likes)} likes',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ));
+    }
+
+    return Row(children: items);
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000000) {
+      return '${(count / 1000000000).toStringAsFixed(1)}B';
+    } else if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
 
   Widget _buildVideoInfoBelow() => Container(
         color: Colors.black,
@@ -1460,8 +1523,25 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
                       name: 'VideoFeedItem', category: LogCategory.ui);
                   // Pause video before navigating
                   _pauseVideo();
-                  // Use main navigation to switch to profile tab
-                  mainNavigationKey.currentState?.navigateToProfile(widget.video.pubkey);
+                  // Prefer main navigation if available; otherwise push directly
+                  final mainNavState = mainNavigationKey.currentState;
+                  if (mainNavState != null) {
+                    mainNavState.navigateToProfile(widget.video.pubkey);
+                  } else {
+                    Navigator.of(context, rootNavigator: true)
+                        .push(
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(
+                          profilePubkey: widget.video.pubkey,
+                        ),
+                      ),
+                    )
+                        .then((_) {
+                      if (widget.isActive && _controller != null) {
+                        _playVideo();
+                      }
+                    });
+                  }
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1500,7 +1580,7 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
               ),
               const SizedBox(width: 8),
               Text(
-                '• ${_formatTimestamp(widget.video.timestamp)}',
+                '• ${_formatTimestamp(_getDisplayTimestamp())}',
                 style: const TextStyle(
                   color: Colors.white54,
                   fontSize: 12,
@@ -1535,9 +1615,26 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
                 ),
               ],
             ],
-          );
-        },
       );
+    },
+  );
+
+  // Prefer original published time if provided; fall back to nostr createdAt
+  DateTime _getDisplayTimestamp() {
+    final published = widget.video.publishedAt;
+    if (published != null && published.isNotEmpty) {
+      // Try epoch seconds
+      final seconds = int.tryParse(published);
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+      // Try ISO8601 or other parseable formats
+      try {
+        return DateTime.parse(published);
+      } catch (_) {}
+    }
+    return widget.video.timestamp;
+  }
 
   Widget _buildRepostAttribution() => Consumer(
         builder: (context, ref, child) {
@@ -1569,8 +1666,26 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem>
                       category: LogCategory.ui);
                   // Pause video before navigating
                   _pauseVideo();
-                  // Use main navigation to switch to profile tab
-                  mainNavigationKey.currentState?.navigateToProfile(widget.video.reposterPubkey);
+                  // Prefer main navigation if available; otherwise push directly
+                  final mainNavState = mainNavigationKey.currentState;
+                  final repubkey = widget.video.reposterPubkey;
+                  if (mainNavState != null) {
+                    mainNavState.navigateToProfile(repubkey);
+                  } else if (repubkey != null) {
+                    Navigator.of(context, rootNavigator: true)
+                        .push(
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(
+                          profilePubkey: repubkey,
+                        ),
+                      ),
+                    )
+                        .then((_) {
+                      if (widget.isActive && _controller != null) {
+                        _playVideo();
+                      }
+                    });
+                  }
                 },
                 child: Text(
                   'Reposted by $reposterName',

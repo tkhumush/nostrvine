@@ -18,6 +18,7 @@ import 'package:openvine/providers/curation_providers.dart' as curation_provider
 import 'package:openvine/providers/video_events_providers.dart';
 import 'package:openvine/providers/video_manager_providers.dart';
 import 'package:openvine/providers/user_profile_providers.dart';
+import 'package:openvine/providers/tab_visibility_provider.dart';
 import 'package:openvine/services/video_event_service.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {

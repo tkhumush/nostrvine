@@ -92,63 +92,33 @@ class VideoEventPublisher  {
       }
 
       // Use the existing Nostr service to broadcast
-      await _nostrService.broadcastEvent(event);
+      final broadcastResult = await _nostrService.broadcastEvent(event);
 
-      Log.info('✅ Event broadcast completed, verifying publication...',
+      Log.info('✅ Event broadcast completed with result: successful=${broadcastResult.successCount}, failed=${broadcastResult.failedRelays.length}',
           name: 'VideoEventPublisher', category: LogCategory.video);
       
-      // Wait a moment for relay to process the event
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Try to fetch the event back from the relay to verify it was stored
-      try {
-        Log.debug('Fetching event ${event.id} from relay to verify...',
+      // Check if broadcast was successful
+      if (broadcastResult.successCount > 0) {
+        Log.info('✅ Event successfully published to ${broadcastResult.successCount} relay(s)',
             name: 'VideoEventPublisher', category: LogCategory.video);
         
-        // Import Filter class
-        final filter = Filter(
-          ids: [event.id],
-          kinds: [32222],
-        );
-        
-        // Subscribe temporarily to fetch the event
-        final eventStream = _nostrService.subscribeToEvents(
-          filters: [filter],
-          bypassLimits: true,
-        );
-        
-        // Wait for the event to come back
-        Event? verifiedEvent;
-        await for (final receivedEvent in eventStream.timeout(
-          const Duration(seconds: 5),
-          onTimeout: (sink) {
-            Log.warning('Timeout waiting for event verification',
+        // Log any relay-specific errors
+        if (broadcastResult.errors.isNotEmpty) {
+          for (final entry in broadcastResult.errors.entries) {
+            Log.warning('Relay ${entry.key} error: ${entry.value}',
                 name: 'VideoEventPublisher', category: LogCategory.video);
-            sink.close();
-          },
-        )) {
-          if (receivedEvent.id == event.id) {
-            verifiedEvent = receivedEvent;
-            Log.info('✅ Event verified on relay: ${event.id}',
-                name: 'VideoEventPublisher', category: LogCategory.video);
-            break;
           }
         }
         
-        if (verifiedEvent != null) {
-          Log.info('Event successfully verified on relay',
-              name: 'VideoEventPublisher', category: LogCategory.video);
-          return true;
-        } else {
-          Log.error('❌ Event not found on relay after publishing',
-              name: 'VideoEventPublisher', category: LogCategory.video);
-          return false;
-        }
-      } catch (e) {
-        Log.warning('Could not verify event on relay (relay might not support fetching): $e',
-            name: 'VideoEventPublisher', category: LogCategory.video);
-        // Return true anyway as broadcast succeeded
         return true;
+      } else {
+        Log.error('❌ Event broadcast failed to all relays',
+            name: 'VideoEventPublisher', category: LogCategory.video);
+        for (final entry in broadcastResult.errors.entries) {
+          Log.error('Relay ${entry.key} error: ${entry.value}',
+              name: 'VideoEventPublisher', category: LogCategory.video);
+        }
+        return false;
       }
     } catch (e) {
       Log.error('Failed to publish event to relays: $e',

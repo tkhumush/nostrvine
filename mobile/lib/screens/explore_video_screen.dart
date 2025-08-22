@@ -240,12 +240,13 @@ class _ExploreVideoScreenState extends ConsumerState<ExploreVideoScreen> {
                     width: double.infinity,
                     height: double.infinity,
                     color: Colors.black,
-                    child: VideoFeedItem(
-                      video: video,
-                      isActive: isActive,
-                    ),
-                  );
-                },
-              ),
+                  child: VideoFeedItem(
+                    video: video,
+                    isActive: isActive,
+                    forceInfoBelow: true,
+                  ),
+                );
+              },
+            ),
       );
 }

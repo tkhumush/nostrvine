@@ -7,7 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased Changes]
 
+### Fixed
+- **Video Publishing and Profile Refresh Issues**: Comprehensive fix for video publishing workflow
+  - **Profile Screen Refresh**: Profile now automatically refreshes when returning from video publishing
+    - Added `didChangeDependencies()` lifecycle method to detect tab activation
+    - Implemented `_refreshProfileData()` method to force reload all profile data
+    - Clear caches and invalidate providers after successful video publish
+  - **Username Display**: Fixed profile showing raw npub IDs instead of usernames
+    - Corrected null-aware operator usage with proper bang operators
+    - Improved fallback logic to show shortened pubkey while loading actual username
+  - **Relay Subscription Limits**: Resolved "ERROR: too many concurrent REQs" during video publishing
+    - Removed redundant event verification that created extra subscription (14th concurrent request)
+    - Now uses broadcast result directly without verification query
+    - Videos publish successfully despite previous false-negative error messages
+  - **Compilation Errors**: Fixed multiple compilation issues
+    - Removed duplicate `_formatCount` method in profile_screen.dart
+    - Fixed `NostrBroadcastResult.failureCount` reference to use `failedRelays.length`
+    - Removed unused import of `Filter` in video_event_publisher.dart
+  - **Test File Compatibility**: Updated test mock interfaces to match new `onEose` parameter
+
 ### Added
+- Mobile: show original Vine metrics in UI when available
+  - `VideoFeedItem` displays compact metrics row: loops and likes
+  - Profile grid tiles show bottom-left badges for loops/likes
+  - Metrics hidden when values are not available (new vines)
+
+### Changed
+- Mobile: global loops-first sorting for all video lists
+  - New comparator `VideoEvent.compareByLoopsThenTime`
+  - Policy: items with no loop count first (new vines), then by loop count desc; ties by newest
+  - Applied to: home feed, hashtag feeds, profile videos (streaming and cached), and search video results
+- Mobile: creator/follow/time moved below video (non-overlapping) in explore viewer and hashtag feed
+  - New `forceInfoBelow` option in `VideoFeedItem`; enabled for Explore and Hashtag screens
+  - Time now prefers original publish time (`published_at`) when present; falls back to relay `createdAt`
 - **Embedded Relay Architecture**: Complete migration from external relays to embedded relay system
   - Integrated `flutter_embedded_nostr_relay` dependency for local relay functionality
   - Implemented local WebSocket server on port 7447 for direct app connections

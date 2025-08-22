@@ -161,6 +161,13 @@ Future<List<VideoEvent>> profileVideos(Ref ref, String pubkey) async {
 
     final subscription = nostrService.subscribeToEvents(
       filters: [filter],
+      onEose: () {
+        Log.info('📱 Streaming EOSE: received ${videos.length} events for ${pubkey.substring(0, 8)}',
+            name: 'ProfileVideosProvider', category: LogCategory.ui);
+        if (!completer.isCompleted) {
+          completer.complete(videos);
+        }
+      },
     );
 
     subscription.listen(
@@ -212,8 +219,8 @@ Future<List<VideoEvent>> profileVideos(Ref ref, String pubkey) async {
 
     final finalVideos = await completer.future;
 
-    // Sort by creation time (newest first)
-    finalVideos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Sort using loops-first policy
+    finalVideos.sort(VideoEvent.compareByLoopsThenTime);
 
     // Cache the results
     _cacheProfileVideos(pubkey, finalVideos, finalVideos.length >= _profileVideosPageSize);
@@ -311,7 +318,7 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
       
       // Sort and update UI immediately with cached videos
       final sortedCached = List<VideoEvent>.from(cachedVideos);
-      sortedCached.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      sortedCached.sort(VideoEvent.compareByLoopsThenTime);
       
       state = state.copyWith(
         videos: sortedCached,
@@ -335,6 +342,14 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
 
     final subscription = nostrService.subscribeToEvents(
       filters: [filter],
+      onEose: () {
+        Log.info('📱 Streaming EOSE: received ${receivedVideos.length} events for ${pubkey.substring(0, 8)}',
+            name: 'ProfileVideosProvider', category: LogCategory.ui);
+        if (!completer.isCompleted) {
+          _finalizeStreamingLoad(pubkey, receivedVideos);
+          completer.complete();
+        }
+      },
     );
 
     subscription.listen(
@@ -380,15 +395,7 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
       },
     );
 
-    // Timeout for streaming - finalize with whatever we have
-    Timer(const Duration(seconds: 10), () {
-      if (!completer.isCompleted) {
-        Log.info('📱 Streaming timeout reached: finalizing with ${receivedVideos.length} videos for ${pubkey.substring(0, 8)}',
-            name: 'ProfileVideosProvider', category: LogCategory.ui);
-        _finalizeStreamingLoad(pubkey, receivedVideos);
-        completer.complete();
-      }
-    });
+    // Completion is driven by EOSE; no timer fallback
 
     await completer.future;
   }
@@ -399,8 +406,8 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
     final currentVideos = List<VideoEvent>.from(state.videos);
     currentVideos.add(newVideo);
     
-    // Sort by creation time (newest first)
-    currentVideos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Sort using loops-first policy
+    currentVideos.sort(VideoEvent.compareByLoopsThenTime);
     
     // Update state with progressive loading
     state = state.copyWith(
@@ -414,8 +421,8 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
 
   /// Finalize the streaming load and update cache
   void _finalizeStreamingLoad(String pubkey, List<VideoEvent> allVideos) {
-    // Final sort
-    allVideos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Final sort using loops-first policy
+    allVideos.sort(VideoEvent.compareByLoopsThenTime);
     
     // Update final state
     state = state.copyWith(
@@ -477,6 +484,14 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
 
     final subscription = nostrService.subscribeToEvents(
       filters: [filter],
+      onEose: () {
+        Log.info('📱 Load more EOSE: received ${newVideos.length} additional events for ${_currentPubkey!.substring(0, 8)}',
+            name: 'ProfileVideosProvider', category: LogCategory.ui);
+        if (!completer.isCompleted) {
+          _finalizeLoadMoreStreaming(newVideos);
+          completer.complete();
+        }
+      },
     );
 
     subscription.listen(
@@ -515,15 +530,7 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
       },
     );
 
-    // Timeout for streaming - finalize with whatever we have
-    Timer(const Duration(seconds: 10), () {
-      if (!completer.isCompleted) {
-        Log.info('📱 Load more streaming timeout: finalizing with ${newVideos.length} additional videos for ${_currentPubkey!.substring(0, 8)}',
-            name: 'ProfileVideosProvider', category: LogCategory.ui);
-        _finalizeLoadMoreStreaming(newVideos);
-        completer.complete();
-      }
-    });
+    // Completion is driven by EOSE; no timer fallback
 
     await completer.future;
   }
@@ -534,8 +541,8 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
     final currentVideos = List<VideoEvent>.from(state.videos);
     currentVideos.add(newVideo);
     
-    // Sort by creation time (newest first)
-    currentVideos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Sort using loops-first policy
+    currentVideos.sort(VideoEvent.compareByLoopsThenTime);
     
     // Update state with progressive loading
     state = state.copyWith(

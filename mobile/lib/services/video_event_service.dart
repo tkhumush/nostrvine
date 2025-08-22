@@ -1313,6 +1313,14 @@ class VideoEventService extends ChangeNotifier {
     SubscriptionType subscriptionType = SubscriptionType.discovery,
     int limit = 300
   }) async {
+    // Prevent overlapping unlimited queries and runaway streaming
+    if ((_eventLists[subscriptionType]?.length ?? 0) >= 120) {
+      Log.debug('Skipping unlimited content: already have >=120 videos',
+          name: 'VideoEventService', category: LogCategory.video);
+      return;
+    }
+
+    // Use a simple in-flight guard
     _isLoading = true;
 
 
@@ -1500,6 +1508,8 @@ class VideoEventService extends ChangeNotifier {
         }
       }
     }
+    // Apply loops-first sort for any assembled set
+    result.sort(VideoEvent.compareByLoopsThenTime);
     return result;
   }
 
@@ -1934,13 +1944,11 @@ class VideoEventService extends ChangeNotifier {
         break;
     }
 
-    // Sort lists to maintain proper order
-    if (subscriptionType == SubscriptionType.homeFeed || 
-        subscriptionType == SubscriptionType.profile ||
-        subscriptionType == SubscriptionType.hashtag ||
-        subscriptionType == SubscriptionType.search) {
-      eventList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    }
+    // Sort lists using loops-first policy globally:
+    // - Items without loop count first (new vines)
+    // - Then items with loop count by amount desc
+    // - Tie-breaker by newest first
+    eventList.sort(VideoEvent.compareByLoopsThenTime);
 
     // Update pagination state for this subscription type
     final paginationState = _paginationStates[subscriptionType];
@@ -2062,8 +2070,7 @@ class VideoEventService extends ChangeNotifier {
       _activeHashtagFilters.remove(subscriptionType);
       _activeGroupFilters.remove(subscriptionType);
       
-      // Add a small delay to ensure the relay processes the cancellation
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Proceed immediately; rely on relay/stream guarantees instead of sleeps
       Log.info('✅ Finished cancelling $subscriptionType subscription',
           name: 'VideoEventService', category: LogCategory.video);
     } else {
