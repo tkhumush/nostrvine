@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/screens/key_import_screen.dart';
 import 'package:openvine/screens/profile_setup_screen.dart';
@@ -26,11 +27,10 @@ class WelcomeScreen extends ConsumerWidget {
                   color: Colors.purple,
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Welcome to diVine',
-                  style: TextStyle(
+                  style: GoogleFonts.pacifico(
                     fontSize: 32,
-                    fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                   textAlign: TextAlign.center,

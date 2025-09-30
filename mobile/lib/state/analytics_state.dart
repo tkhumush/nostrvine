@@ -7,7 +7,7 @@ part 'analytics_state.freezed.dart';
 part 'analytics_state.g.dart';
 
 @freezed
-class AnalyticsState with _$AnalyticsState {
+sealed class AnalyticsState with _$AnalyticsState {
   const factory AnalyticsState({
     @Default(true) bool analyticsEnabled,
     @Default(false) bool isInitialized,
@@ -22,5 +22,5 @@ class AnalyticsState with _$AnalyticsState {
   const AnalyticsState._();
 
   /// Create initial state
-  static const AnalyticsState initial = AnalyticsState();
+  static final AnalyticsState initial = AnalyticsState();
 }

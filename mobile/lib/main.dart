@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'package:openvine/models/video_event.dart';
@@ -16,6 +16,7 @@ import 'package:openvine/screens/pure/search_screen_pure.dart';
 import 'package:openvine/screens/pure/universal_camera_screen_pure.dart';
 import 'package:openvine/screens/video_feed_screen.dart';
 import 'package:openvine/screens/web_auth_screen.dart';
+import 'package:openvine/screens/settings_screen.dart';
 import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/services/background_activity_manager.dart';
 import 'package:openvine/services/crash_reporting_service.dart';
@@ -28,10 +29,12 @@ import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/utils/log_message_batcher.dart';
 import 'package:openvine/widgets/age_verification_dialog.dart';
 import 'package:openvine/widgets/app_lifecycle_handler.dart';
-// Temporarily disabled: import 'package:openvine/widgets/video_metrics_overlay.dart';
+import 'package:openvine/widgets/video_metrics_overlay.dart';
+import 'package:openvine/widgets/camera_fab.dart';
+import 'package:openvine/widgets/vine_bottom_nav.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io' as io;
-import 'package:openvine/network/vine_cdn_http_overrides.dart';
+import 'dart:io' if (dart.library.html) 'package:openvine/utils/platform_io_web.dart' as io;
+import 'package:openvine/network/vine_cdn_http_overrides.dart' if (dart.library.html) 'package:openvine/utils/platform_io_web.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 // Global navigation key for hashtag navigation
@@ -76,16 +79,18 @@ Future<void> _startOpenVineApp() async {
   CrashReportingService.instance.logInitializationStep('Bindings initialized');
   StartupPerformanceService.instance.checkpoint('crash_reporting_ready');
 
-  // Enable DNS override for legacy Vine CDN domains if configured
-  const bool enableVineCdnFix = bool.fromEnvironment('VINE_CDN_DNS_FIX', defaultValue: true);
-  const String cdnIp = String.fromEnvironment('VINE_CDN_IP', defaultValue: '151.101.244.157');
-  if (enableVineCdnFix) {
-    final ip = io.InternetAddress.tryParse(cdnIp);
-    if (ip != null) {
-      io.HttpOverrides.global = VineCdnHttpOverrides(overrideAddress: ip);
-      Log.info('Enabled Vine CDN DNS override to $cdnIp', name: 'Networking');
-    } else {
-      Log.warning('Invalid VINE_CDN_IP "$cdnIp". DNS override not applied.', name: 'Networking');
+  // Enable DNS override for legacy Vine CDN domains if configured (not supported on web)
+  if (!kIsWeb) {
+    const bool enableVineCdnFix = bool.fromEnvironment('VINE_CDN_DNS_FIX', defaultValue: true);
+    const String cdnIp = String.fromEnvironment('VINE_CDN_IP', defaultValue: '151.101.244.157');
+    if (enableVineCdnFix) {
+      final ip = io.InternetAddress.tryParse(cdnIp);
+      if (ip != null) {
+        io.HttpOverrides.global = VineCdnHttpOverrides(overrideAddress: ip);
+        Log.info('Enabled Vine CDN DNS override to $cdnIp', name: 'Networking');
+      } else {
+        Log.warning('Invalid VINE_CDN_IP "$cdnIp". DNS override not applied.', name: 'Networking');
+      }
     }
   }
 
@@ -264,11 +269,10 @@ class DivineApp extends StatelessWidget {
     // Determine the home widget - wrap with VideoMetricsOverlay if debug mode
     Widget homeWidget = const ResponsiveWrapper(child: AppInitializer());
 
-    // Temporarily disabled VideoMetricsOverlay to fix Stack Overflow errors
-    // TODO: Re-implement with safer rebuild logic
-    // if (kDebugMode) {
-    //   homeWidget = VideoMetricsOverlay(child: homeWidget);
-    // }
+    // VideoMetricsOverlay fixed with StreamBuilder to prevent Stack Overflow errors
+    if (kDebugMode) {
+      homeWidget = VideoMetricsOverlay(child: homeWidget);
+    }
 
     final app = MaterialApp(
       title: 'divine',
@@ -516,7 +520,7 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
             () async {
               CrashReportingService.instance.logInitializationStep('Starting SocialProvider (deferred)');
               await ref
-                  .read(social_providers.socialNotifierProvider.notifier)
+                  .read(social_providers.socialProvider.notifier)
                   .initialize();
               CrashReportingService.instance.logInitializationStep('✓ SocialProvider initialized (deferred)');
             }
@@ -892,6 +896,9 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   void _onTabTapped(int index) {
+    Log.info('🔄 Tab navigation: current=$_currentIndex, new=$index',
+        name: 'MainNavigation', category: LogCategory.system);
+
     // Update tab visibility provider FIRST to trigger reactive video pausing
     ref.read(tabVisibilityProvider.notifier).setActiveTab(index);
 
@@ -900,10 +907,20 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     // Notify screens of visibility changes (schedule to avoid provider re-entrancy)
     if (_currentIndex == 2 && index != 2) {
-      // Leaving explore screen
-      Future.microtask(() => (_exploreScreenKey.currentState as dynamic)?.onScreenHidden());
+      // Leaving explore screen - exit feed mode if active
+      final exploreState = _exploreScreenKey.currentState as dynamic;
+      Log.info('🚪 Leaving explore tab: exploreState=$exploreState, isInFeedMode=${exploreState?.isInFeedMode}',
+          name: 'MainNavigation', category: LogCategory.system);
+      if (exploreState != null && exploreState.isInFeedMode == true) {
+        Log.info('✅ Exiting feed mode in explore screen',
+            name: 'MainNavigation', category: LogCategory.system);
+        exploreState.exitFeedMode();
+      }
+      Future.microtask(() => exploreState?.onScreenHidden());
     } else if (_currentIndex != 2 && index == 2) {
       // Entering explore screen
+      Log.info('📍 Entering explore tab',
+          name: 'MainNavigation', category: LogCategory.system);
       Future.microtask(() => (_exploreScreenKey.currentState as dynamic)?.onScreenVisible());
     }
 
@@ -1050,7 +1067,7 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         name: 'MainNavigation', category: LogCategory.ui);
 
     // React to social data readiness
-    ref.listen(social_providers.socialNotifierProvider, (prev, next) {
+    ref.listen(social_providers.socialProvider, (prev, next) {
       if (mounted &&
           next.isInitialized &&
           next.followingPubkeys.isEmpty &&
@@ -1071,115 +1088,94 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       }
     });
 
+    // Determine title based on current tab
+    String title;
+    Widget titleWidget;
+    switch (_currentIndex) {
+      case 0:
+        title = 'Feed';
+        titleWidget = Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Pacifico',
+            color: VineTheme.whiteText,
+            fontSize: 24,
+          ),
+        );
+        break;
+      case 1:
+        title = 'Activity';
+        titleWidget = Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Pacifico',
+            color: VineTheme.whiteText,
+            fontSize: 24,
+          ),
+        );
+        break;
+      case 2:
+        title = 'Explore';
+        titleWidget = Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Pacifico',
+            color: VineTheme.whiteText,
+            fontSize: 24,
+          ),
+        );
+        break;
+      case 3:
+        title = 'Profile';
+        titleWidget = Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Pacifico',
+            color: VineTheme.whiteText,
+            fontSize: 24,
+          ),
+        );
+        break;
+      default:
+        title = 'diVine';
+        titleWidget = Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Pacifico',
+            color: VineTheme.whiteText,
+            fontSize: 24,
+          ),
+        );
+    }
+
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: VineTheme.vineGreen,
+        title: titleWidget,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: VineTheme.whiteText),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: VineBottomNav(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        backgroundColor: VineTheme.vineGreen,
-        selectedItemColor: VineTheme.whiteText,
-        unselectedItemColor: VineTheme.whiteText.withValues(alpha: 0.7),
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'FEED',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'ACTIVITY',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'EXPLORE',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'PROFILE',
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Capture context before async operations
-          final scaffoldContext = context;
-
-          // IMMEDIATELY clear current video before opening camera to prevent interference
-          // Clear active video before opening camera to avoid interference
-          ref.read(activeVideoProvider.notifier).clearActiveVideo();
-          Log.info('⏸️ Cleared current video before camera to prevent recording interference',
-              name: 'Main', category: LogCategory.system);
-
-          // Check age verification before opening camera
-          final ageVerificationService =
-              ref.read(ageVerificationServiceProvider);
-          final isVerified =
-              await ageVerificationService.checkAgeVerification();
-
-          if (!isVerified && mounted) {
-            // Show age verification dialog
-            if (!scaffoldContext.mounted) return;
-            final result = await AgeVerificationDialog.show(scaffoldContext);
-            if (result) {
-              // User confirmed they are 16+
-              await ageVerificationService.setAgeVerified(true);
-              if (mounted) {
-                // Use universal camera screen that works on all platforms
-                if (scaffoldContext.mounted) {
-                  await Navigator.push(
-                    scaffoldContext,
-                    MaterialPageRoute(
-                        builder: (context) => const UniversalCameraScreenPure()),
-                  );
-                }
-
-                // After returning from camera, refresh profile if on profile tab
-                if (mounted && _currentIndex == 3) {
-                  Log.debug('Refreshing profile after camera return',
-                      name: 'Main', category: LogCategory.system);
-                  // Profile videos will auto-refresh when screen is rebuilt
-                }
-              }
-            } else {
-              // User is under 16 or declined
-              if (mounted) {
-                if (scaffoldContext.mounted) {
-                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('You must be 16 or older to create content'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            }
-          } else if (mounted) {
-            // Already verified, go to camera
-            if (scaffoldContext.mounted) {
-              await Navigator.push(
-                scaffoldContext,
-                MaterialPageRoute(
-                    builder: (context) => const UniversalCameraScreenPure()),
-              );
-            }
-
-            // After returning from camera, refresh profile if on profile tab
-            if (mounted && _currentIndex == 3) {
-              Log.debug('Refreshing profile after camera return',
-                  name: 'Main', category: LogCategory.system);
-              // Profile videos will auto-refresh when screen is rebuilt
-            }
-          }
-        },
-        backgroundColor: VineTheme.vineGreen,
-        foregroundColor: VineTheme.whiteText,
-        child: const Icon(Icons.videocam, size: 32),
-      ),
+      floatingActionButton: const CameraFAB(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }

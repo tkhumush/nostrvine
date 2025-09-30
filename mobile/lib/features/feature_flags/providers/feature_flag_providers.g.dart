@@ -6,249 +6,300 @@ part of 'feature_flag_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sharedPreferencesHash() => r'c086d2a68e1f0a688c061970ea89a5573fdd2265';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// SharedPreferences provider for dependency injection
+
+@ProviderFor(sharedPreferences)
+const sharedPreferencesProvider = SharedPreferencesProvider._();
 
 /// SharedPreferences provider for dependency injection
-///
-/// Copied from [sharedPreferences].
-@ProviderFor(sharedPreferences)
-final sharedPreferencesProvider =
-    AutoDisposeProvider<SharedPreferences>.internal(
-  sharedPreferences,
-  name: r'sharedPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sharedPreferencesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SharedPreferencesRef = AutoDisposeProviderRef<SharedPreferences>;
+final class SharedPreferencesProvider
+    extends
+        $FunctionalProvider<
+          SharedPreferences,
+          SharedPreferences,
+          SharedPreferences
+        >
+    with $Provider<SharedPreferences> {
+  /// SharedPreferences provider for dependency injection
+  const SharedPreferencesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sharedPreferencesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sharedPreferencesHash();
+
+  @$internal
+  @override
+  $ProviderElement<SharedPreferences> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SharedPreferences create(Ref ref) {
+    return sharedPreferences(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SharedPreferences value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SharedPreferences>(value),
+    );
+  }
+}
+
+String _$sharedPreferencesHash() => r'c086d2a68e1f0a688c061970ea89a5573fdd2265';
+
+/// Build configuration provider
+
+@ProviderFor(buildConfiguration)
+const buildConfigurationProvider = BuildConfigurationProvider._();
+
+/// Build configuration provider
+
+final class BuildConfigurationProvider
+    extends
+        $FunctionalProvider<
+          BuildConfiguration,
+          BuildConfiguration,
+          BuildConfiguration
+        >
+    with $Provider<BuildConfiguration> {
+  /// Build configuration provider
+  const BuildConfigurationProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'buildConfigurationProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$buildConfigurationHash();
+
+  @$internal
+  @override
+  $ProviderElement<BuildConfiguration> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  BuildConfiguration create(Ref ref) {
+    return buildConfiguration(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(BuildConfiguration value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BuildConfiguration>(value),
+    );
+  }
+}
+
 String _$buildConfigurationHash() =>
     r'a62d4699f2242a50e8b591df8d9c62496bbb0123';
 
-/// Build configuration provider
-///
-/// Copied from [buildConfiguration].
-@ProviderFor(buildConfiguration)
-final buildConfigurationProvider =
-    AutoDisposeProvider<BuildConfiguration>.internal(
-  buildConfiguration,
-  name: r'buildConfigurationProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$buildConfigurationHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+/// Feature flag service provider
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef BuildConfigurationRef = AutoDisposeProviderRef<BuildConfiguration>;
+@ProviderFor(featureFlagService)
+const featureFlagServiceProvider = FeatureFlagServiceProvider._();
+
+/// Feature flag service provider
+
+final class FeatureFlagServiceProvider
+    extends
+        $FunctionalProvider<
+          FeatureFlagService,
+          FeatureFlagService,
+          FeatureFlagService
+        >
+    with $Provider<FeatureFlagService> {
+  /// Feature flag service provider
+  const FeatureFlagServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'featureFlagServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$featureFlagServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<FeatureFlagService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  FeatureFlagService create(Ref ref) {
+    return featureFlagService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FeatureFlagService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FeatureFlagService>(value),
+    );
+  }
+}
+
 String _$featureFlagServiceHash() =>
     r'f46cff92b5b08bd9517ffa18792018ed99b9350c';
 
-/// Feature flag service provider
-///
-/// Copied from [featureFlagService].
-@ProviderFor(featureFlagService)
-final featureFlagServiceProvider =
-    AutoDisposeProvider<FeatureFlagService>.internal(
-  featureFlagService,
-  name: r'featureFlagServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$featureFlagServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+/// Feature flag state provider (reactive to service changes)
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FeatureFlagServiceRef = AutoDisposeProviderRef<FeatureFlagService>;
-String _$featureFlagStateHash() => r'47719db282465c7229d72b8ab05761246937d6be';
+@ProviderFor(featureFlagState)
+const featureFlagStateProvider = FeatureFlagStateProvider._();
 
 /// Feature flag state provider (reactive to service changes)
-///
-/// Copied from [featureFlagState].
-@ProviderFor(featureFlagState)
-final featureFlagStateProvider =
-    AutoDisposeProvider<Map<FeatureFlag, bool>>.internal(
-  featureFlagState,
-  name: r'featureFlagStateProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$featureFlagStateHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FeatureFlagStateRef = AutoDisposeProviderRef<Map<FeatureFlag, bool>>;
-String _$isFeatureEnabledHash() => r'706cae00a5cf7bf715bcb31deb6840a98727e80e';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// Individual feature flag check provider family
-///
-/// Copied from [isFeatureEnabled].
-@ProviderFor(isFeatureEnabled)
-const isFeatureEnabledProvider = IsFeatureEnabledFamily();
-
-/// Individual feature flag check provider family
-///
-/// Copied from [isFeatureEnabled].
-class IsFeatureEnabledFamily extends Family<bool> {
-  /// Individual feature flag check provider family
-  ///
-  /// Copied from [isFeatureEnabled].
-  const IsFeatureEnabledFamily();
-
-  /// Individual feature flag check provider family
-  ///
-  /// Copied from [isFeatureEnabled].
-  IsFeatureEnabledProvider call(
-    FeatureFlag flag,
-  ) {
-    return IsFeatureEnabledProvider(
-      flag,
-    );
-  }
-
-  @override
-  IsFeatureEnabledProvider getProviderOverride(
-    covariant IsFeatureEnabledProvider provider,
-  ) {
-    return call(
-      provider.flag,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'isFeatureEnabledProvider';
-}
-
-/// Individual feature flag check provider family
-///
-/// Copied from [isFeatureEnabled].
-class IsFeatureEnabledProvider extends AutoDisposeProvider<bool> {
-  /// Individual feature flag check provider family
-  ///
-  /// Copied from [isFeatureEnabled].
-  IsFeatureEnabledProvider(
-    FeatureFlag flag,
-  ) : this._internal(
-          (ref) => isFeatureEnabled(
-            ref as IsFeatureEnabledRef,
-            flag,
-          ),
-          from: isFeatureEnabledProvider,
-          name: r'isFeatureEnabledProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$isFeatureEnabledHash,
-          dependencies: IsFeatureEnabledFamily._dependencies,
-          allTransitiveDependencies:
-              IsFeatureEnabledFamily._allTransitiveDependencies,
-          flag: flag,
-        );
-
-  IsFeatureEnabledProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.flag,
-  }) : super.internal();
-
-  final FeatureFlag flag;
-
-  @override
-  Override overrideWith(
-    bool Function(IsFeatureEnabledRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: IsFeatureEnabledProvider._internal(
-        (ref) => create(ref as IsFeatureEnabledRef),
-        from: from,
-        name: null,
+final class FeatureFlagStateProvider
+    extends
+        $FunctionalProvider<
+          Map<FeatureFlag, bool>,
+          Map<FeatureFlag, bool>,
+          Map<FeatureFlag, bool>
+        >
+    with $Provider<Map<FeatureFlag, bool>> {
+  /// Feature flag state provider (reactive to service changes)
+  const FeatureFlagStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'featureFlagStateProvider',
+        isAutoDispose: true,
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        flag: flag,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+      );
 
   @override
-  AutoDisposeProviderElement<bool> createElement() {
-    return _IsFeatureEnabledProviderElement(this);
+  String debugGetCreateSourceHash() => _$featureFlagStateHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<FeatureFlag, bool>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<FeatureFlag, bool> create(Ref ref) {
+    return featureFlagState(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<FeatureFlag, bool> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<FeatureFlag, bool>>(value),
+    );
+  }
+}
+
+String _$featureFlagStateHash() => r'47719db282465c7229d72b8ab05761246937d6be';
+
+/// Individual feature flag check provider family
+
+@ProviderFor(isFeatureEnabled)
+const isFeatureEnabledProvider = IsFeatureEnabledFamily._();
+
+/// Individual feature flag check provider family
+
+final class IsFeatureEnabledProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Individual feature flag check provider family
+  const IsFeatureEnabledProvider._({
+    required IsFeatureEnabledFamily super.from,
+    required FeatureFlag super.argument,
+  }) : super(
+         retry: null,
+         name: r'isFeatureEnabledProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isFeatureEnabledHash();
+
+  @override
+  String toString() {
+    return r'isFeatureEnabledProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as FeatureFlag;
+    return isFeatureEnabled(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return other is IsFeatureEnabledProvider && other.flag == flag;
+    return other is IsFeatureEnabledProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, flag.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin IsFeatureEnabledRef on AutoDisposeProviderRef<bool> {
-  /// The parameter `flag` of this provider.
-  FeatureFlag get flag;
-}
+String _$isFeatureEnabledHash() => r'706cae00a5cf7bf715bcb31deb6840a98727e80e';
 
-class _IsFeatureEnabledProviderElement extends AutoDisposeProviderElement<bool>
-    with IsFeatureEnabledRef {
-  _IsFeatureEnabledProviderElement(super.provider);
+/// Individual feature flag check provider family
+
+final class IsFeatureEnabledFamily extends $Family
+    with $FunctionalFamilyOverride<bool, FeatureFlag> {
+  const IsFeatureEnabledFamily._()
+    : super(
+        retry: null,
+        name: r'isFeatureEnabledProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Individual feature flag check provider family
+
+  IsFeatureEnabledProvider call(FeatureFlag flag) =>
+      IsFeatureEnabledProvider._(argument: flag, from: this);
 
   @override
-  FeatureFlag get flag => (origin as IsFeatureEnabledProvider).flag;
+  String toString() => r'isFeatureEnabledProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

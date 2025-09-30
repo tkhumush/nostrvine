@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
+import 'package:openvine/providers/video_overlay_manager_provider.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
 
@@ -29,7 +30,7 @@ class VideoOverlayModal extends ConsumerStatefulWidget {
 class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
   late PageController _pageController;
   late int _currentIndex;
-  // VideoManager? _videoManager; // TODO: Restore when VideoManager is available
+  VideoOverlayManager? _videoManager;
 
   @override
   void initState() {
@@ -71,7 +72,7 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
 
     // Initialize video manager
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // _initializeVideoManager(); // TODO: Restore when VideoManager is available
+      _initializeVideoManager();
     });
   }
 
@@ -82,15 +83,13 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
     super.dispose();
   }
 
-  // TODO: Restore when VideoManager is available
-  /*
   Future<void> _initializeVideoManager() async {
     Log.debug(
         'VideoOverlayModal._initializeVideoManager: Starting initialization',
         name: 'VideoOverlayModal',
         category: LogCategory.ui);
     try {
-      _videoManager = ref.read(videoManagerProvider.notifier);
+      _videoManager = ref.read(videoOverlayManagerProvider);
       Log.debug(
           'VideoOverlayModal._initializeVideoManager: VideoManager obtained',
           name: 'VideoOverlayModal',
@@ -117,7 +116,7 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
             'VideoOverlayModal._initializeVideoManager: Preloading starting video at index $_currentIndex: ${currentVideo.id.substring(0, 8)}...',
             name: 'VideoOverlayModal',
             category: LogCategory.ui);
-        _videoManager!.preloadVideo(currentVideo.id);
+        await _videoManager!.preloadVideo(currentVideo.id);
       } else {
         Log.error(
             'VideoOverlayModal._initializeVideoManager: Current index $_currentIndex is out of bounds for ${widget.videoList.length} videos',
@@ -131,11 +130,8 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
           category: LogCategory.ui);
     }
   }
-  */ // End of commented _initializeVideoManager method
 
   void _pauseAllVideos() {
-    // TODO: Restore when VideoManager is available
-    /*
     if (_videoManager != null) {
       try {
         _videoManager!.pauseAllVideos();
@@ -144,7 +140,6 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
             name: 'VideoOverlayModal', category: LogCategory.ui);
       }
     }
-    */
   }
 
   Future<void> _onPageChanged(int index) async {
@@ -152,8 +147,6 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
       _currentIndex = index;
     });
 
-    // TODO: Restore when VideoManager is available
-    /*
     // Manage video playback for the new current video
     if (_videoManager != null && index < widget.videoList.length) {
       final newVideo = widget.videoList[index];
@@ -165,9 +158,8 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
 
       // Ensure video is registered and preload it
       _videoManager!.addVideoEvent(newVideo);
-      _videoManager!.preloadVideo(newVideo.id);
+      await _videoManager!.preloadVideo(newVideo.id);
     }
-    */
   }
 
   @override
@@ -282,6 +274,7 @@ class _VideoOverlayModalState extends ConsumerState<VideoOverlayModal> {
                   child: VideoFeedItem(
                     video: video,
                     index: index,
+                    hasBottomNavigation: false, // Modal overlay has no bottom navigation
                   ),
                 );
               },

@@ -8,7 +8,7 @@ part 'video_feed_state.freezed.dart';
 
 /// State model for video lists
 @freezed
-class VideoFeedState with _$VideoFeedState {
+sealed class VideoFeedState with _$VideoFeedState {
   const factory VideoFeedState({
     /// List of videos in the feed
     required List<VideoEvent> videos,
@@ -28,4 +28,6 @@ class VideoFeedState with _$VideoFeedState {
     /// Timestamp of last update
     DateTime? lastUpdated,
   }) = _VideoFeedState;
+
+  const VideoFeedState._();
 }

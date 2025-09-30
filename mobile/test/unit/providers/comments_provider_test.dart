@@ -78,7 +78,7 @@ void main() {
 
     CommentsNotifier createNotifier() {
       final notifier = container.read(
-        commentsNotifierProvider(testVideoEventId, testVideoAuthorPubkey)
+        commentsProvider(testVideoEventId, testVideoAuthorPubkey)
             .notifier,
       );
       return notifier;
@@ -86,7 +86,7 @@ void main() {
 
     CommentsState getState() {
       return container.read(
-        commentsNotifierProvider(testVideoEventId, testVideoAuthorPubkey),
+        commentsProvider(testVideoEventId, testVideoAuthorPubkey),
       );
     }
 

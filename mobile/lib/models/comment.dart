@@ -1,7 +1,7 @@
 // ABOUTME: Comment model representing a single comment or reply in a video thread
 // ABOUTME: Contains metadata for threading, author info, and Nostr event relationships
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 part 'comment.g.dart';
 

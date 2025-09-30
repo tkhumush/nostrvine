@@ -270,7 +270,7 @@ class _VideoMetadataScreenPureState extends ConsumerState<VideoMetadataScreenPur
                           _isExpiringPost = value;
                         });
                       },
-                      activeColor: Colors.green,
+                      activeThumbColor: Colors.green,
                     ),
 
                     if (_isExpiringPost) ...[

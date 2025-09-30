@@ -8,7 +8,7 @@ part of 'pending_upload.dart';
 
 class PendingUploadAdapter extends TypeAdapter<PendingUpload> {
   @override
-  final int typeId = 2;
+  final typeId = 2;
 
   @override
   PendingUpload read(BinaryReader reader) {
@@ -26,17 +26,17 @@ class PendingUploadAdapter extends TypeAdapter<PendingUpload> {
       videoId: fields[15] as String?,
       cdnUrl: fields[16] as String?,
       errorMessage: fields[6] as String?,
-      uploadProgress: fields[7] as double?,
+      uploadProgress: (fields[7] as num?)?.toDouble(),
       thumbnailPath: fields[8] as String?,
       title: fields[9] as String?,
       description: fields[10] as String?,
       hashtags: (fields[11] as List?)?.cast<String>(),
       nostrEventId: fields[12] as String?,
       completedAt: fields[13] as DateTime?,
-      retryCount: fields[14] as int?,
-      videoWidth: fields[17] as int?,
-      videoHeight: fields[18] as int?,
-      videoDurationMillis: fields[19] as int?,
+      retryCount: fields[14] == null ? 0 : (fields[14] as num?)?.toInt(),
+      videoWidth: (fields[17] as num?)?.toInt(),
+      videoHeight: (fields[18] as num?)?.toInt(),
+      videoDurationMillis: (fields[19] as num?)?.toInt(),
     );
   }
 
@@ -56,10 +56,6 @@ class PendingUploadAdapter extends TypeAdapter<PendingUpload> {
       ..write(obj.createdAt)
       ..writeByte(5)
       ..write(obj.cloudinaryPublicId)
-      ..writeByte(15)
-      ..write(obj.videoId)
-      ..writeByte(16)
-      ..write(obj.cdnUrl)
       ..writeByte(6)
       ..write(obj.errorMessage)
       ..writeByte(7)
@@ -78,6 +74,10 @@ class PendingUploadAdapter extends TypeAdapter<PendingUpload> {
       ..write(obj.completedAt)
       ..writeByte(14)
       ..write(obj.retryCount)
+      ..writeByte(15)
+      ..write(obj.videoId)
+      ..writeByte(16)
+      ..write(obj.cdnUrl)
       ..writeByte(17)
       ..write(obj.videoWidth)
       ..writeByte(18)
@@ -99,7 +99,7 @@ class PendingUploadAdapter extends TypeAdapter<PendingUpload> {
 
 class UploadStatusAdapter extends TypeAdapter<UploadStatus> {
   @override
-  final int typeId = 1;
+  final typeId = 1;
 
   @override
   UploadStatus read(BinaryReader reader) {
@@ -130,28 +130,20 @@ class UploadStatusAdapter extends TypeAdapter<UploadStatus> {
     switch (obj) {
       case UploadStatus.pending:
         writer.writeByte(0);
-        break;
       case UploadStatus.uploading:
         writer.writeByte(1);
-        break;
       case UploadStatus.retrying:
         writer.writeByte(2);
-        break;
       case UploadStatus.processing:
         writer.writeByte(3);
-        break;
       case UploadStatus.readyToPublish:
         writer.writeByte(4);
-        break;
       case UploadStatus.published:
         writer.writeByte(5);
-        break;
       case UploadStatus.failed:
         writer.writeByte(6);
-        break;
       case UploadStatus.paused:
         writer.writeByte(7);
-        break;
     }
   }
 

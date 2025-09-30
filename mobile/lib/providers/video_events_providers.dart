@@ -178,5 +178,7 @@ bool videoEventsLoading(Ref ref) => ref.watch(videoEventsProvider).isLoading;
 
 /// Provider to get video event count
 @riverpod
-int videoEventCount(Ref ref) =>
-    ref.watch(videoEventsProvider).valueOrNull?.length ?? 0;
+int videoEventCount(Ref ref) {
+  final asyncState = ref.watch(videoEventsProvider);
+  return asyncState.hasValue ? (asyncState.value?.length ?? 0) : 0;
+}

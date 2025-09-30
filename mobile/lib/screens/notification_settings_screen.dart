@@ -4,7 +4,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
-import 'package:openvine/theme/app_theme.dart';
+import 'package:openvine/theme/vine_theme.dart';
+import 'package:openvine/widgets/camera_fab.dart';
+import 'package:openvine/widgets/vine_bottom_nav.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -27,220 +29,201 @@ class _NotificationSettingsScreenState
   bool _vibrationEnabled = true;
 
   @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDarkMode ? Colors.black : Colors.white,
-      appBar: AppBar(
-        backgroundColor: isDarkMode ? Colors.black : Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDarkMode ? Colors.white : Colors.black,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Notification Settings',
-          style: TextStyle(
-            color: isDarkMode ? Colors.white : Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.refresh,
-              color: isDarkMode ? Colors.white : Colors.black,
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: VineTheme.backgroundColor,
+        appBar: AppBar(
+          backgroundColor: VineTheme.vineGreen,
+          foregroundColor: VineTheme.whiteText,
+          elevation: 0,
+          title: const Text(
+            'Notification Settings',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            onPressed: () {
-              setState(() {
-                _likesEnabled = true;
-                _commentsEnabled = true;
-                _followsEnabled = true;
-                _mentionsEnabled = true;
-                _repostsEnabled = true;
-                _systemEnabled = true;
-                _pushNotificationsEnabled = true;
-                _soundEnabled = true;
-                _vibrationEnabled = true;
-              });
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {
+                  _likesEnabled = true;
+                  _commentsEnabled = true;
+                  _followsEnabled = true;
+                  _mentionsEnabled = true;
+                  _repostsEnabled = true;
+                  _systemEnabled = true;
+                  _pushNotificationsEnabled = true;
+                  _soundEnabled = true;
+                  _vibrationEnabled = true;
+                });
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Settings reset to defaults'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Notification Types Section
-          _buildSectionHeader('Notification Types', isDarkMode),
-          const SizedBox(height: 8),
-          _buildNotificationCard(
-            icon: Icons.favorite,
-            iconColor: Colors.red,
-            title: 'Likes',
-            subtitle: 'When someone likes your videos',
-            value: _likesEnabled,
-            onChanged: (value) => setState(() => _likesEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.chat_bubble,
-            iconColor: Colors.blue,
-            title: 'Comments',
-            subtitle: 'When someone comments on your videos',
-            value: _commentsEnabled,
-            onChanged: (value) => setState(() => _commentsEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.person_add,
-            iconColor: DivineTheme.primaryPurple,
-            title: 'Follows',
-            subtitle: 'When someone follows you',
-            value: _followsEnabled,
-            onChanged: (value) => setState(() => _followsEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.alternate_email,
-            iconColor: Colors.orange,
-            title: 'Mentions',
-            subtitle: 'When you are mentioned',
-            value: _mentionsEnabled,
-            onChanged: (value) => setState(() => _mentionsEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.repeat,
-            iconColor: Colors.green,
-            title: 'Reposts',
-            subtitle: 'When someone reposts your videos',
-            value: _repostsEnabled,
-            onChanged: (value) => setState(() => _repostsEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.phone_android,
-            iconColor: Colors.grey,
-            title: 'System',
-            subtitle: 'App updates and system messages',
-            value: _systemEnabled,
-            onChanged: (value) => setState(() => _systemEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-
-          const SizedBox(height: 24),
-
-          // Push Notification Settings
-          _buildSectionHeader('Push Notifications', isDarkMode),
-          const SizedBox(height: 8),
-          _buildNotificationCard(
-            icon: Icons.notifications,
-            iconColor: DivineTheme.primaryPurple,
-            title: 'Push Notifications',
-            subtitle: 'Receive notifications when app is closed',
-            value: _pushNotificationsEnabled,
-            onChanged: (value) =>
-                setState(() => _pushNotificationsEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.volume_up,
-            iconColor: Colors.blue,
-            title: 'Sound',
-            subtitle: 'Play sound for notifications',
-            value: _soundEnabled,
-            onChanged: (value) => setState(() => _soundEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-          _buildNotificationCard(
-            icon: Icons.vibration,
-            iconColor: Colors.purple,
-            title: 'Vibration',
-            subtitle: 'Vibrate for notifications',
-            value: _vibrationEnabled,
-            onChanged: (value) => setState(() => _vibrationEnabled = value),
-            isDarkMode: isDarkMode,
-          ),
-
-          const SizedBox(height: 24),
-
-          // Actions
-          _buildSectionHeader('Actions', isDarkMode),
-          const SizedBox(height: 8),
-
-          Builder(
-            builder: (context) {
-              final service = ref.watch(notificationServiceEnhancedProvider);
-              return Column(
-                children: [
-                  _buildActionCard(
-                    icon: Icons.check_circle,
-                    iconColor: Colors.green,
-                    title: 'Mark All as Read',
-                    subtitle: 'Mark all notifications as read',
-                    onTap: () async {
-                      await service.markAllAsRead();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('All notifications marked as read'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                    isDarkMode: isDarkMode,
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Settings reset to defaults'),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: VineTheme.vineGreen,
                   ),
-                  _buildActionCard(
-                    icon: Icons.delete_sweep,
-                    iconColor: Colors.red,
-                    title: 'Clear Old Notifications',
-                    subtitle: 'Remove notifications older than 30 days',
-                    onTap: () async {
-                      await service.clearOlderThan(const Duration(days: 30));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Old notifications cleared'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                    isDarkMode: isDarkMode,
-                  ),
-                ],
-              );
-            },
-          ),
+                );
+              },
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Notification Types Section
+            _buildSectionHeader('Notification Types'),
+            const SizedBox(height: 8),
+            _buildNotificationCard(
+              icon: Icons.favorite,
+              iconColor: VineTheme.likeRed,
+              title: 'Likes',
+              subtitle: 'When someone likes your videos',
+              value: _likesEnabled,
+              onChanged: (value) => setState(() => _likesEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.chat_bubble,
+              iconColor: VineTheme.commentBlue,
+              title: 'Comments',
+              subtitle: 'When someone comments on your videos',
+              value: _commentsEnabled,
+              onChanged: (value) => setState(() => _commentsEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.person_add,
+              iconColor: VineTheme.vineGreen,
+              title: 'Follows',
+              subtitle: 'When someone follows you',
+              value: _followsEnabled,
+              onChanged: (value) => setState(() => _followsEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.alternate_email,
+              iconColor: Colors.orange,
+              title: 'Mentions',
+              subtitle: 'When you are mentioned',
+              value: _mentionsEnabled,
+              onChanged: (value) => setState(() => _mentionsEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.repeat,
+              iconColor: VineTheme.vineGreenLight,
+              title: 'Reposts',
+              subtitle: 'When someone reposts your videos',
+              value: _repostsEnabled,
+              onChanged: (value) => setState(() => _repostsEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.phone_android,
+              iconColor: VineTheme.lightText,
+              title: 'System',
+              subtitle: 'App updates and system messages',
+              value: _systemEnabled,
+              onChanged: (value) => setState(() => _systemEnabled = value),
+            ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Info Section
-          _buildInfoCard(isDarkMode),
-        ],
-      ),
-    );
-  }
+            // Push Notification Settings
+            _buildSectionHeader('Push Notifications'),
+            const SizedBox(height: 8),
+            _buildNotificationCard(
+              icon: Icons.notifications,
+              iconColor: VineTheme.vineGreen,
+              title: 'Push Notifications',
+              subtitle: 'Receive notifications when app is closed',
+              value: _pushNotificationsEnabled,
+              onChanged: (value) =>
+                  setState(() => _pushNotificationsEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.volume_up,
+              iconColor: VineTheme.commentBlue,
+              title: 'Sound',
+              subtitle: 'Play sound for notifications',
+              value: _soundEnabled,
+              onChanged: (value) => setState(() => _soundEnabled = value),
+            ),
+            _buildNotificationCard(
+              icon: Icons.vibration,
+              iconColor: VineTheme.vineGreen,
+              title: 'Vibration',
+              subtitle: 'Vibrate for notifications',
+              value: _vibrationEnabled,
+              onChanged: (value) => setState(() => _vibrationEnabled = value),
+            ),
 
-  Widget _buildSectionHeader(String title, bool isDarkMode) => Text(
+            const SizedBox(height: 24),
+
+            // Actions
+            _buildSectionHeader('Actions'),
+            const SizedBox(height: 8),
+
+            Builder(
+              builder: (context) {
+                final service = ref.watch(notificationServiceEnhancedProvider);
+                return Column(
+                  children: [
+                    _buildActionCard(
+                      icon: Icons.check_circle,
+                      iconColor: VineTheme.vineGreenLight,
+                      title: 'Mark All as Read',
+                      subtitle: 'Mark all notifications as read',
+                      onTap: () async {
+                        await service.markAllAsRead();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('All notifications marked as read'),
+                              duration: Duration(seconds: 2),
+                              backgroundColor: VineTheme.vineGreen,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    _buildActionCard(
+                      icon: Icons.delete_sweep,
+                      iconColor: VineTheme.likeRed,
+                      title: 'Clear Old Notifications',
+                      subtitle: 'Remove notifications older than 30 days',
+                      onTap: () async {
+                        await service.clearOlderThan(const Duration(days: 30));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Old notifications cleared'),
+                              duration: Duration(seconds: 2),
+                              backgroundColor: VineTheme.vineGreen,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Info Section
+            _buildInfoCard(),
+          ],
+        ),
+        floatingActionButton: const CameraFAB(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: VineBottomNav(),
+      );
+
+  Widget _buildSectionHeader(String title) => Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: isDarkMode ? Colors.white : Colors.black,
+          color: VineTheme.primaryText,
         ),
       );
 
@@ -251,10 +234,9 @@ class _NotificationSettingsScreenState
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
-    required bool isDarkMode,
   }) =>
       Card(
-        color: isDarkMode ? Colors.grey[900] : Colors.white,
+        color: VineTheme.cardBackground,
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
           leading: Container(
@@ -267,22 +249,22 @@ class _NotificationSettingsScreenState
           ),
           title: Text(
             title,
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black,
+            style: const TextStyle(
+              color: VineTheme.primaryText,
               fontWeight: FontWeight.w600,
             ),
           ),
           subtitle: Text(
             subtitle,
-            style: TextStyle(
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            style: const TextStyle(
+              color: VineTheme.secondaryText,
               fontSize: 12,
             ),
           ),
           trailing: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: DivineTheme.primaryPurple,
+            activeTrackColor: VineTheme.vineGreen,
           ),
         ),
       );
@@ -293,10 +275,9 @@ class _NotificationSettingsScreenState
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    required bool isDarkMode,
   }) =>
       Card(
-        color: isDarkMode ? Colors.grey[900] : Colors.white,
+        color: VineTheme.cardBackground,
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
           leading: Container(
@@ -309,31 +290,31 @@ class _NotificationSettingsScreenState
           ),
           title: Text(
             title,
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black,
+            style: const TextStyle(
+              color: VineTheme.primaryText,
               fontWeight: FontWeight.w600,
             ),
           ),
           subtitle: Text(
             subtitle,
-            style: TextStyle(
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            style: const TextStyle(
+              color: VineTheme.secondaryText,
               fontSize: 12,
             ),
           ),
-          trailing: Icon(
+          trailing: const Icon(
             Icons.arrow_forward_ios,
-            color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+            color: VineTheme.lightText,
             size: 16,
           ),
           onTap: onTap,
         ),
       );
 
-  Widget _buildInfoCard(bool isDarkMode) => Card(
-        color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+  Widget _buildInfoCard() => Card(
+        color: VineTheme.cardBackground,
+        child: const Padding(
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -341,26 +322,26 @@ class _NotificationSettingsScreenState
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: isDarkMode ? Colors.blue[300] : Colors.blue,
+                    color: VineTheme.commentBlue,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'About Notifications',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : Colors.black,
+                      color: VineTheme.primaryText,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Notifications are powered by the Nostr protocol. Real-time updates depend on your connection to Nostr relays. Some notifications may have delays.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  color: VineTheme.secondaryText,
                   height: 1.4,
                 ),
               ),

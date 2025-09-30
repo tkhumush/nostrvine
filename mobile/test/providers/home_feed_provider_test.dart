@@ -65,7 +65,7 @@ void main() {
           nostrServiceProvider.overrideWithValue(mockNostrService),
           subscriptionManagerProvider
               .overrideWithValue(mockSubscriptionManager),
-          social.socialNotifierProvider.overrideWith(() {
+          social.socialProvider.overrideWith(() {
             return social.SocialNotifier()
               ..state = const SocialState(
                 followingPubkeys: [],
@@ -101,7 +101,7 @@ void main() {
       ];
 
       container.updateOverrides([
-        social.socialNotifierProvider.overrideWith(() {
+        social.socialProvider.overrideWith(() {
           return social.SocialNotifier()
             ..state = SocialState(
               followingPubkeys: followingPubkeys,
@@ -152,7 +152,7 @@ void main() {
       final followingPubkeys = ['pubkey1', 'pubkey2'];
 
       container.updateOverrides([
-        social.socialNotifierProvider.overrideWith(() {
+        social.socialProvider.overrideWith(() {
           return social.SocialNotifier()
             ..state = SocialState(
               followingPubkeys: followingPubkeys,
@@ -200,7 +200,7 @@ void main() {
       final followingPubkeys = ['pubkey1'];
 
       container.updateOverrides([
-        social.socialNotifierProvider.overrideWith(() {
+        social.socialProvider.overrideWith(() {
           return social.SocialNotifier()
             ..state = SocialState(
               followingPubkeys: followingPubkeys,
@@ -233,7 +233,7 @@ void main() {
       final followingPubkeys = ['pubkey1'];
 
       container.updateOverrides([
-        social.socialNotifierProvider.overrideWith(() {
+        social.socialProvider.overrideWith(() {
           return social.SocialNotifier()
             ..state = SocialState(
               followingPubkeys: followingPubkeys,
@@ -260,7 +260,7 @@ void main() {
       final followingPubkeys = ['pubkey1', 'pubkey2'];
 
       container.updateOverrides([
-        social.socialNotifierProvider.overrideWith(() {
+        social.socialProvider.overrideWith(() {
           return social.SocialNotifier()
             ..state = SocialState(
               followingPubkeys: followingPubkeys,

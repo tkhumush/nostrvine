@@ -2,19 +2,18 @@
 // ABOUTME: Enables immediate UI feedback when following/unfollowing users
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:openvine/providers/app_providers.dart';
 
 /// Tracks optimistic follow states that haven't been confirmed yet
 /// Maps pubkey to follow state (true = following, false = not following, null = no optimistic state)
 final optimisticFollowStateProvider =
-    StateNotifierProvider<OptimisticFollowNotifier, Map<String, bool>>((ref) {
-  return OptimisticFollowNotifier(ref);
-});
+    NotifierProvider<OptimisticFollowNotifier, Map<String, bool>>(
+        OptimisticFollowNotifier.new);
 
-class OptimisticFollowNotifier extends StateNotifier<Map<String, bool>> {
-  OptimisticFollowNotifier(this.ref) : super({});
-
-  final Ref ref;
+class OptimisticFollowNotifier extends Notifier<Map<String, bool>> {
+  @override
+  Map<String, bool> build() => {};
 
   /// Set optimistic follow state for a user
   void setOptimisticState(String pubkey, bool isFollowing) {
@@ -52,13 +51,13 @@ final optimisticFollowMethodsProvider = Provider((ref) {
 });
 
 class OptimisticFollowMethods {
-  OptimisticFollowMethods(this.ref);
+  OptimisticFollowMethods(this._ref);
 
-  final Ref ref;
+  final Ref _ref;
 
   Future<void> followUser(String pubkey) async {
-    final socialService = ref.read(socialServiceProvider);
-    final optimisticNotifier = ref.read(optimisticFollowStateProvider.notifier);
+    final socialService = _ref.read(socialServiceProvider);
+    final optimisticNotifier = _ref.read(optimisticFollowStateProvider.notifier);
 
     // Set optimistic state immediately
     optimisticNotifier.setOptimisticState(pubkey, true);
@@ -77,8 +76,8 @@ class OptimisticFollowMethods {
   }
 
   Future<void> unfollowUser(String pubkey) async {
-    final socialService = ref.read(socialServiceProvider);
-    final optimisticNotifier = ref.read(optimisticFollowStateProvider.notifier);
+    final socialService = _ref.read(socialServiceProvider);
+    final optimisticNotifier = _ref.read(optimisticFollowStateProvider.notifier);
 
     // Set optimistic state immediately
     optimisticNotifier.setOptimisticState(pubkey, false);

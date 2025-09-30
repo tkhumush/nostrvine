@@ -46,88 +46,67 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen>
       return _buildUnauthenticatedState();
     }
 
-    return Scaffold(
-      backgroundColor: VineTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: VineTheme.vineGreen,
-        elevation: 0,
-        title: const Text(
-          'Activity',
-          style: TextStyle(
-            color: VineTheme.whiteText,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+    return Column(
+      children: [
+        Container(
+          color: VineTheme.vineGreen,
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: VineTheme.whiteText,
+            indicatorWeight: 2,
+            labelColor: VineTheme.whiteText,
+            unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
+            labelStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            tabs: const [
+              Tab(text: 'ALL'),
+              Tab(text: 'FOLLOWING'),
+              Tab(text: 'YOU'),
+            ],
           ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: VineTheme.whiteText,
-          indicatorWeight: 2,
-          labelColor: VineTheme.whiteText,
-          unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
-          labelStyle:
-              const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          tabs: const [
-            Tab(text: 'ALL'),
-            Tab(text: 'FOLLOWING'),
-            Tab(text: 'YOU'),
-          ],
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildAllActivity(),
+              _buildFollowingActivity(),
+              _buildPersonalActivity(),
+            ],
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAllActivity(),
-          _buildFollowingActivity(),
-          _buildPersonalActivity(),
-        ],
-      ),
+      ],
     );
   }
 
-  Widget _buildUnauthenticatedState() => Scaffold(
-        backgroundColor: VineTheme.backgroundColor,
-        appBar: AppBar(
-          backgroundColor: VineTheme.vineGreen,
-          elevation: 0,
-          title: const Text(
-            'Activity',
-            style: TextStyle(
-              color: VineTheme.whiteText,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+  Widget _buildUnauthenticatedState() => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lock_outlined,
+              size: 64,
+              color: VineTheme.secondaryText,
             ),
-          ),
-        ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.lock_outlined,
-                size: 64,
+            SizedBox(height: 16),
+            Text(
+              'Sign in to see activity',
+              style: TextStyle(
+                color: VineTheme.primaryText,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Connect your Nostr keys to see\nlikes, follows, and comments.',
+              style: TextStyle(
                 color: VineTheme.secondaryText,
+                fontSize: 14,
               ),
-              SizedBox(height: 16),
-              Text(
-                'Sign in to see activity',
-                style: TextStyle(
-                  color: VineTheme.primaryText,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Connect your Nostr keys to see\nlikes, follows, and comments.',
-                style: TextStyle(
-                  color: VineTheme.secondaryText,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
 

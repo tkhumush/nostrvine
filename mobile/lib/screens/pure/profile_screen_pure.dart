@@ -116,7 +116,7 @@ class _ProfileScreenPureState extends ConsumerState<ProfileScreenPure>
 
   Widget _buildVideosTab() {
     // Watch user's videos from profile provider
-    final videosAsync = ref.watch(profileVideosProvider(_targetPubkey!));
+    final videosAsync = ref.watch(fetchProfileVideosProvider(_targetPubkey!));
 
     return videosAsync.when(
       loading: () => const Center(

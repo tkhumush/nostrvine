@@ -13,7 +13,7 @@ typedef VideoControllerFactory = VideoPlayerController Function(String url);
 class TestSetup {
   /// Create a provider container with test-appropriate overrides
   static ProviderContainer createContainer({
-    List<Override>? overrides,
+    List? overrides,
     VideoControllerFactory? videoControllerFactory,
   }) {
     return ProviderContainer(

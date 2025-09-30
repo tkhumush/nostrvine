@@ -73,7 +73,8 @@ export async function handleNIP96Upload(
     }
 
     // Validate NIP-98 authentication first to get user plan
-    const authResult = await validateNIP98Auth(request);
+    // Extended timeout for video uploads - users may record and upload later
+    const authResult = await validateNIP98Auth(request, 300000); // 5 minutes
     if (!authResult.valid) {
       console.error('NIP-98 authentication failed:', authResult.error);
       return createAuthErrorResponse(

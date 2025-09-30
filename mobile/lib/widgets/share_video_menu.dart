@@ -32,11 +32,9 @@ class ShareVideoMenu extends ConsumerStatefulWidget {
 
 class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(
-          color: VineTheme.backgroundColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+  Widget build(BuildContext context) => Material(
+        color: VineTheme.backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1472,22 +1470,24 @@ class _ReportContentDialogState extends ConsumerState<_ReportContentDialog> {
               SizedBox(
                 height: 200,
                 child: SingleChildScrollView(
-                  child: Column(
-                    children: ContentFilterReason.values
-                        .map(
-                          (reason) => RadioListTile<ContentFilterReason>(
-                            title: Text(
-                              _getReasonDisplayName(reason),
-                              style:
-                                  const TextStyle(color: VineTheme.whiteText),
+                  child: RadioGroup<ContentFilterReason>(
+                    groupValue: _selectedReason,
+                    onChanged: (value) =>
+                        setState(() => _selectedReason = value),
+                    child: Column(
+                      children: ContentFilterReason.values
+                          .map(
+                            (reason) => RadioListTile<ContentFilterReason>(
+                              title: Text(
+                                _getReasonDisplayName(reason),
+                                style: const TextStyle(
+                                    color: VineTheme.whiteText),
+                              ),
+                              value: reason,
                             ),
-                            value: reason,
-                            groupValue: _selectedReason,
-                            onChanged: (value) =>
-                                setState(() => _selectedReason = value),
-                          ),
-                        )
-                        .toList(),
+                          )
+                          .toList(),
+                    ),
                   ),
                 ),
               ),

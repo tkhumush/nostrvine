@@ -502,6 +502,12 @@ class NostrService implements INostrService {
       // Convert nostr_sdk event to embedded relay event
       final embeddedEvent = _convertToEmbeddedEvent(event);
 
+      // Debug logging for contact list events
+      if (event.kind == 3) {
+        Log.info('📋 Publishing contact list event to embedded relay',
+            name: 'NostrService', category: LogCategory.relay);
+      }
+
       // Try to publish with stream closure recovery
       bool success = false;
       try {

@@ -11,7 +11,6 @@ import 'package:openvine/providers/user_profile_providers.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/state/video_feed_state.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'home_feed_provider.g.dart';
@@ -36,7 +35,7 @@ class HomeFeed extends _$HomeFeed {
 
     // Wait for social data to be ready before proceeding
     // This prevents unnecessary rebuilds during app startup
-    final socialData = ref.watch(social.socialNotifierProvider);
+    final socialData = ref.watch(social.socialProvider);
     final followingPubkeys = socialData.followingPubkeys;
 
     Log.info(
@@ -47,7 +46,7 @@ class HomeFeed extends _$HomeFeed {
 
     if (followingPubkeys.isEmpty) {
       // Return empty state if not following anyone
-      return const VideoFeedState(
+      return VideoFeedState(
         videos: [],
         hasMoreContent: false,
         isLoadingMore: false,
@@ -127,7 +126,7 @@ class HomeFeed extends _$HomeFeed {
     _profileFetchTimer?.cancel();
 
     // Fetch profiles immediately - no delay needed as provider handles batching internally
-    final profilesProvider = ref.read(userProfileNotifierProvider.notifier);
+    final profilesProvider = ref.read(userProfileProvider.notifier);
 
     final newPubkeys = videos
         .map((v) => v.pubkey)
@@ -178,7 +177,7 @@ class HomeFeed extends _$HomeFeed {
 
     try {
       final videoEventService = ref.read(videoEventServiceProvider);
-      final socialData = ref.read(social.socialNotifierProvider);
+      final socialData = ref.read(social.socialProvider);
       final followingPubkeys = socialData.followingPubkeys;
 
       if (followingPubkeys.isEmpty) {
@@ -249,7 +248,7 @@ bool homeFeedLoading(Ref ref) {
   final asyncState = ref.watch(homeFeedProvider);
   if (asyncState.isLoading) return true;
 
-  final state = asyncState.valueOrNull;
+  final state = asyncState.hasValue ? asyncState.value : null;
   if (state == null) return false;
 
   return state.isLoadingMore;
@@ -257,8 +256,10 @@ bool homeFeedLoading(Ref ref) {
 
 /// Provider to get current home feed video count
 @riverpod
-int homeFeedCount(Ref ref) =>
-    ref.watch(homeFeedProvider).valueOrNull?.videos.length ?? 0;
+int homeFeedCount(Ref ref) {
+  final asyncState = ref.watch(homeFeedProvider);
+  return asyncState.hasValue ? (asyncState.value?.videos.length ?? 0) : 0;
+}
 
 /// Provider to check if we have home feed videos
 @riverpod

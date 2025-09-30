@@ -7,6 +7,8 @@ import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
 import 'package:openvine/providers/video_events_providers.dart';
 import 'package:openvine/screens/pure/explore_video_screen_pure.dart';
+import 'package:openvine/screens/hashtag_feed_screen.dart';
+import 'package:openvine/services/top_hashtags_service.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/video_thumbnail_widget.dart';
@@ -25,6 +27,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
   bool _isInFeedMode = false;
   List<VideoEvent>? _feedVideos;
   int _feedStartIndex = 0;
+  String? _hashtagMode;  // When non-null, showing hashtag feed
 
   @override
   void initState() {
@@ -32,8 +35,27 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
     _tabController = TabController(length: 3, vsync: this, initialIndex: 1); // Start on Popular Now
     _tabController.addListener(_onTabChanged);
 
+    // Load top hashtags for trending navigation
+    _loadHashtags();
+
     Log.info('🎯 ExploreScreenPure: Initialized with revolutionary architecture',
         category: LogCategory.video);
+  }
+
+  Future<void> _loadHashtags() async {
+    Log.info('🏷️ ExploreScreen: Starting hashtag load',
+        category: LogCategory.video);
+    await TopHashtagsService.instance.loadTopHashtags();
+    final count = TopHashtagsService.instance.topHashtags.length;
+    Log.info('🏷️ ExploreScreen: Hashtags loaded: $count total, isLoaded=${TopHashtagsService.instance.isLoaded}',
+        category: LogCategory.video);
+    if (mounted) {
+      setState(() {
+        // Trigger rebuild after hashtags are loaded
+        Log.info('🏷️ ExploreScreen: Triggering rebuild with $count hashtags',
+            category: LogCategory.video);
+      });
+    }
   }
 
   @override
@@ -52,46 +74,18 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
     Log.debug('🎯 ExploreScreenPure: Switched to tab ${_tabController.index}',
         category: LogCategory.video);
 
-    // When in feed mode, update feed videos based on current tab
-    if (_isInFeedMode) {
-      _updateFeedForCurrentTab();
+    // Exit feed or hashtag mode when user switches tabs
+    if (_isInFeedMode || _hashtagMode != null) {
+      setState(() {
+        _isInFeedMode = false;
+        _feedVideos = null;
+        _hashtagMode = null;
+      });
+      Log.info('🎯 ExploreScreenPure: Exited feed/hashtag mode via tab change',
+          category: LogCategory.video);
     }
   }
 
-  void _updateFeedForCurrentTab() {
-    if (!_isInFeedMode) return;
-
-    final videoEventsAsync = ref.read(videoEventsProvider);
-    videoEventsAsync.whenData((videos) {
-      List<VideoEvent> tabVideos;
-      switch (_tabController.index) {
-        case 0: // Popular Now
-          tabVideos = videos;
-          break;
-        case 1: // Trending
-          tabVideos = videos.reversed.toList();
-          break;
-        case 2: // Editor's Pick
-          tabVideos = []; // Empty for now
-          break;
-        default:
-          tabVideos = videos;
-      }
-
-      if (tabVideos.isNotEmpty) {
-        setState(() {
-          _feedVideos = tabVideos;
-          _feedStartIndex = 0; // Start from beginning when switching tabs
-        });
-
-        // Set new active video
-        ref.read(activeVideoProvider.notifier).setActiveVideo(tabVideos[0].id);
-
-        Log.info('🎯 Updated feed for tab ${_tabController.index} with ${tabVideos.length} videos',
-            category: LogCategory.video);
-      }
-    });
-  }
 
   void _enterFeedMode(List<VideoEvent> videos, int startIndex) {
     if (!mounted) return;
@@ -126,97 +120,85 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
         category: LogCategory.video);
   }
 
+  void _enterHashtagMode(String hashtag) {
+    if (!mounted) return;
+
+    setState(() {
+      _hashtagMode = hashtag;
+    });
+
+    Log.info('🎯 ExploreScreenPure: Entered hashtag mode for #$hashtag',
+        category: LogCategory.video);
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    if (_isInFeedMode) {
-      return _buildFeedMode();
-    }
-
-    return Scaffold(
-      backgroundColor: VineTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: VineTheme.vineGreen,
-        title: Text(
-          'Explore',
-          style: TextStyle(
-            color: VineTheme.whiteText,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+    // Always show Column with TabBar + content
+    return Column(
+      children: [
+        // Tabs always visible
+        Container(
+          color: VineTheme.vineGreen,
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: VineTheme.whiteText,
+            indicatorWeight: 3,
+            labelColor: VineTheme.whiteText,
+            unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            tabs: const [
+              Tab(text: 'Popular Now'),
+              Tab(text: 'Trending'),
+              Tab(text: "Editor's Pick"),
+            ],
           ),
         ),
-        elevation: 1,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: VineTheme.whiteText,
-          indicatorWeight: 3,
-          labelColor: VineTheme.whiteText,
-          unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
-          labelStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          tabs: const [
-            Tab(text: 'Popular Now'),
-            Tab(text: 'Trending'),
-            Tab(text: "Editor's Pick"),
-          ],
+        // Content changes based on mode
+        Expanded(
+          child: _buildContent(),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPopularNowTab(),
-          _buildTrendingTab(),
-          _buildEditorsPickTab(),
-        ],
-      ),
+      ],
     );
   }
 
-  Widget _buildFeedMode() {
-    final videos = _feedVideos ?? const <VideoEvent>[];
-    return Scaffold(
-      backgroundColor: VineTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: VineTheme.vineGreen,
-        leading: IconButton(
-          key: const Key('back-button'),
-          icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-          onPressed: _exitFeedMode,
-        ),
-        title: Text(
-          'Explore',
-          style: TextStyle(
-            color: VineTheme.whiteText,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        elevation: 1,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: VineTheme.whiteText,
-          indicatorWeight: 3,
-          labelColor: VineTheme.whiteText,
-          unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
-          labelStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          tabs: const [
-            Tab(text: 'Popular Now'),
-            Tab(text: 'Trending'),
-            Tab(text: "Editor's Pick"),
-          ],
-        ),
-      ),
-      body: ExploreVideoScreenPure(
-        startingVideo: videos[_feedStartIndex],
-        videoList: videos,
-        contextTitle: 'Videos',
-        startingIndex: _feedStartIndex,
-      ),
+  Widget _buildContent() {
+    if (_isInFeedMode) {
+      return _buildFeedModeContent();
+    }
+
+    if (_hashtagMode != null) {
+      return _buildHashtagModeContent(_hashtagMode!);
+    }
+
+    // Default: show tab view
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildPopularNowTab(),
+        _buildTrendingTab(),
+        _buildEditorsPickTab(),
+      ],
     );
+  }
+
+  Widget _buildFeedModeContent() {
+    final videos = _feedVideos ?? const <VideoEvent>[];
+    // Just return the video screen - tabs are shown above
+    return ExploreVideoScreenPure(
+      startingVideo: videos[_feedStartIndex],
+      videoList: videos,
+      contextTitle: 'Videos',
+      startingIndex: _feedStartIndex,
+    );
+  }
+
+  Widget _buildHashtagModeContent(String hashtag) {
+    // Just return the hashtag feed content - tabs are shown above
+    return HashtagFeedScreen(hashtag: hashtag, embedded: true);
   }
 
   Widget _buildEditorsPickTab() {
@@ -281,7 +263,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
   }
 
   Widget _buildTrendingTab() {
-    // For now, use the same videos as Popular Now but with different sorting
+    // Sort videos by loop count (most loops first)
     final videoEventsAsync = ref.watch(videoEventsProvider);
 
     return videoEventsAsync.when(
@@ -301,7 +283,102 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
           ],
         ),
       ),
-      data: (videos) => _buildVideoGrid(videos.reversed.toList(), 'Trending'),
+      data: (videos) {
+        // Sort by loop count (descending order - most popular first)
+        final sortedVideos = List<VideoEvent>.from(videos);
+        sortedVideos.sort((a, b) {
+          final aLoops = a.originalLoops ?? 0;
+          final bLoops = b.originalLoops ?? 0;
+          return bLoops.compareTo(aLoops); // Descending order
+        });
+        return _buildTrendingTabWithHashtags(sortedVideos);
+      },
+    );
+  }
+
+  Widget _buildTrendingTabWithHashtags(List<VideoEvent> videos) {
+    return Column(
+      children: [
+        // Hashtag navigation section
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Trending Hashtags',
+                  style: TextStyle(
+                    color: VineTheme.primaryText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: Builder(
+                  builder: (context) {
+                    final hashtags = TopHashtagsService.instance.getTopHashtags(limit: 20);
+
+                    if (hashtags.isEmpty) {
+                      // Show placeholder while loading
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Loading hashtags...',
+                          style: TextStyle(
+                            color: VineTheme.secondaryText,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: hashtags.length,
+                      itemBuilder: (context, index) {
+                        final hashtag = hashtags[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          _enterHashtagMode(hashtag);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: VineTheme.vineGreen,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '#$hashtag',
+                            style: const TextStyle(
+                              color: VineTheme.whiteText,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Videos grid
+        Expanded(
+          child: _buildVideoGrid(videos, 'Trending'),
+        ),
+      ],
     );
   }
 

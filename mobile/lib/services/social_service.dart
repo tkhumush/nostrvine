@@ -183,13 +183,13 @@ class SocialService {
       }
 
       // Load cached reposts (Kind 6 events) to populate _repostedEventIds
-      final cachedReposts = _personalEventCache!.getEventsByKind(6);
+      final cachedReposts = _personalEventCache.getEventsByKind(6);
       for (final repostEvent in cachedReposts) {
         _processRepostEvent(repostEvent);
       }
 
       // Load cached contact lists (Kind 3 events) to populate following data
-      final cachedContactLists = _personalEventCache!.getEventsByKind(3);
+      final cachedContactLists = _personalEventCache.getEventsByKind(3);
       if (cachedContactLists.isNotEmpty) {
         // Use the most recent contact list event
         final latestContactList =
@@ -211,7 +211,7 @@ class SocialService {
         }
       }
 
-      final stats = _personalEventCache!.getCacheStats();
+      final stats = _personalEventCache.getCacheStats();
       Log.info('📋 Loaded cached personal events on startup:',
           name: 'SocialService', category: LogCategory.system);
       Log.info('  - Total events: ${stats['total_events']}',

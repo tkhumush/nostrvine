@@ -1,7 +1,7 @@
 // ABOUTME: Comprehensive cache for ALL of the current user's own Nostr events
 // ABOUTME: Stores every event the user creates/publishes for instant access and offline availability
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:nostr_sdk/event.dart';
 import 'package:openvine/utils/unified_logger.dart';
 

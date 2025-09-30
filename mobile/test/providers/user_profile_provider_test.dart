@@ -50,7 +50,7 @@ void main() {
     });
 
     test('should start with initial state', () {
-      final state = container.read(userProfileNotifierProvider);
+      final state = container.read(userProfileProvider);
 
       expect(state, equals(UserProfileState.initial));
       expect(state.profileCache, isEmpty);
@@ -66,9 +66,9 @@ void main() {
           .thenReturn(1); // FIX: Add missing mock
 
       // Initialize
-      await container.read(userProfileNotifierProvider.notifier).initialize();
+      await container.read(userProfileProvider.notifier).initialize();
 
-      final state = container.read(userProfileNotifierProvider);
+      final state = container.read(userProfileProvider);
       expect(state.isInitialized, isTrue);
     });
 
@@ -97,7 +97,7 @@ void main() {
 
       // Test the async provider directly
       final profileAsyncValue =
-          await container.read(userProfileProvider(pubkey).future);
+          await container.read(fetchUserProfileProvider(pubkey).future);
 
       expect(profileAsyncValue, isNotNull);
       expect(profileAsyncValue!.pubkey, equals(pubkey));
@@ -107,7 +107,7 @@ void main() {
 
       // Test that it's cached by calling again (should not hit network again)
       final cachedProfile =
-          await container.read(userProfileProvider(pubkey).future);
+          await container.read(fetchUserProfileProvider(pubkey).future);
       expect(cachedProfile, equals(profileAsyncValue));
 
       // Verify only one network call was made
@@ -138,7 +138,7 @@ void main() {
 
       // Test notifier fetch method - this is what matters
       final profile = await container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profile, isNotNull);
@@ -147,7 +147,7 @@ void main() {
 
       // Test that getCachedProfile works (this tests the actual caching mechanism)
       final cachedProfile = container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .getCachedProfile(pubkey);
       expect(cachedProfile, isNotNull);
       expect(cachedProfile!.name, equals('Notifier Test User'));
@@ -171,12 +171,12 @@ void main() {
       );
 
       container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .updateCachedProfile(testProfile);
 
       // Fetch should return cached profile without network call
       final profile = await container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profile, equals(testProfile));
@@ -212,7 +212,7 @@ void main() {
 
         // Fetch this profile
         final profile = await container
-            .read(userProfileNotifierProvider.notifier)
+            .read(userProfileProvider.notifier)
             .fetchProfile(pubkey);
 
         expect(profile, isNotNull);
@@ -221,7 +221,7 @@ void main() {
 
         // Verify it's cached
         final cachedProfile = container
-            .read(userProfileNotifierProvider.notifier)
+            .read(userProfileProvider.notifier)
             .getCachedProfile(pubkey);
         expect(cachedProfile, isNotNull);
         expect(cachedProfile!.name, equals('User $pubkey'));
@@ -243,7 +243,7 @@ void main() {
 
       // Fetch profile
       final profile = await container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profile, isNull);
@@ -253,7 +253,7 @@ void main() {
 
       // Try to fetch again - should skip due to missing marker
       final profileAgain = await container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profileAgain, isNull);
@@ -277,7 +277,7 @@ void main() {
       );
 
       container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .updateCachedProfile(oldProfile);
 
       // Setup new profile event
@@ -296,7 +296,7 @@ void main() {
 
       // Force refresh
       final profile = await container
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey, forceRefresh: true);
 
       expect(profile, isNotNull);
@@ -333,7 +333,7 @@ void main() {
 
       // Fetch profile should handle error gracefully
       final profile = await errorContainer
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profile, isNull);
@@ -342,7 +342,7 @@ void main() {
       // and the profile is marked as missing rather than stored in state.error
       // Let's verify the profile is marked as missing by trying to fetch again
       final profileAgain = await errorContainer
-          .read(userProfileNotifierProvider.notifier)
+          .read(userProfileProvider.notifier)
           .fetchProfile(pubkey);
 
       expect(profileAgain, isNull);

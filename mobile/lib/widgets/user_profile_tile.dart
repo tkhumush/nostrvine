@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/optimistic_follow_provider.dart';
 import 'package:openvine/theme/vine_theme.dart';
-import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/helpers/follow_actions_helper.dart';
 
 class UserProfileTile extends ConsumerWidget {
   const UserProfileTile({
@@ -93,7 +93,7 @@ class UserProfileTile extends ConsumerWidget {
                       height: 32,
                       child: ElevatedButton(
                         onPressed: () =>
-                            _toggleFollow(ref, pubkey, isFollowing),
+                            _toggleFollow(context, ref, pubkey, isFollowing),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               isFollowing ? Colors.grey[700] : Colors.purple,
@@ -119,24 +119,14 @@ class UserProfileTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _toggleFollow(
-      WidgetRef ref, String pubkey, bool isCurrentlyFollowing) async {
-    try {
-      // Use optimistic follow methods so UI updates immediately via provider
-      final optimisticMethods = ref.read(optimisticFollowMethodsProvider);
-
-      if (isCurrentlyFollowing) {
-        await optimisticMethods.unfollowUser(pubkey);
-        Log.info('👤 Unfollowed user: ${pubkey.substring(0, 8)}',
-            name: 'UserProfileTile', category: LogCategory.ui);
-      } else {
-        await optimisticMethods.followUser(pubkey);
-        Log.info('👤 Followed user: ${pubkey.substring(0, 8)}',
-            name: 'UserProfileTile', category: LogCategory.ui);
-      }
-    } catch (e) {
-      Log.error('Failed to toggle follow: $e',
-          name: 'UserProfileTile', category: LogCategory.ui);
-    }
+  Future<void> _toggleFollow(BuildContext context, WidgetRef ref, String pubkey,
+      bool isCurrentlyFollowing) async {
+    await FollowActionsHelper.toggleFollow(
+      ref: ref,
+      context: context,
+      pubkey: pubkey,
+      isCurrentlyFollowing: isCurrentlyFollowing,
+      contextName: 'UserProfileTile',
+    );
   }
 }

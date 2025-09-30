@@ -6,8 +6,8 @@ part of 'analytics_state.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$AnalyticsStateImpl _$$AnalyticsStateImplFromJson(Map<String, dynamic> json) =>
-    _$AnalyticsStateImpl(
+_AnalyticsState _$AnalyticsStateFromJson(Map<String, dynamic> json) =>
+    _AnalyticsState(
       analyticsEnabled: json['analyticsEnabled'] as bool? ?? true,
       isInitialized: json['isInitialized'] as bool? ?? false,
       isLoading: json['isLoading'] as bool? ?? false,
@@ -15,8 +15,7 @@ _$AnalyticsStateImpl _$$AnalyticsStateImplFromJson(Map<String, dynamic> json) =>
       error: json['error'] as String?,
     );
 
-Map<String, dynamic> _$$AnalyticsStateImplToJson(
-        _$AnalyticsStateImpl instance) =>
+Map<String, dynamic> _$AnalyticsStateToJson(_AnalyticsState instance) =>
     <String, dynamic>{
       'analyticsEnabled': instance.analyticsEnabled,
       'isInitialized': instance.isInitialized,

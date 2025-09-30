@@ -4,9 +4,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:openvine/providers/video_overlay_manager_provider.dart';
 import 'package:openvine/providers/vine_recording_provider.dart';
 import 'package:openvine/screens/pure/video_metadata_screen_pure.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/widgets/macos_camera_preview.dart' show CameraPreviewPlaceholder;
 
 /// Pure universal camera screen using revolutionary single-controller Riverpod architecture
 class UniversalCameraScreenPure extends ConsumerStatefulWidget {
@@ -24,6 +26,17 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
   void initState() {
     super.initState();
     _initializeServices();
+
+    // Pause all background videos when entering camera screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final videoManager = ref.read(videoOverlayManagerProvider);
+        videoManager.pauseAllVideos();
+        Log.info('📹 UniversalCameraScreenPure: Paused background videos', category: LogCategory.video);
+      } catch (e) {
+        Log.warning('📹 Failed to pause background videos: $e', category: LogCategory.video);
+      }
+    });
 
     Log.info('📹 UniversalCameraScreenPure: Initialized', category: LogCategory.video);
   }
@@ -127,6 +140,15 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
         builder: (context, ref, child) {
           final recordingState = ref.watch(vineRecordingProvider);
 
+          // Listen for auto-stop (when recording stops without user action)
+          ref.listen<VineRecordingUIState>(vineRecordingProvider, (previous, next) {
+            if (previous != null && previous.isRecording && !next.isRecording && !_isProcessing) {
+              // Recording stopped automatically (timer reached max duration)
+              Log.info('📹 Recording auto-stopped, processing result', category: LogCategory.video);
+              _handleRecordingAutoStop();
+            }
+          });
+
           if (recordingState.isError) {
             return _buildErrorScreen(recordingState.errorMessage);
           }
@@ -151,29 +173,11 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
             children: [
               // Camera preview (fullscreen)
               Positioned.fill(
-                child: Container(
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.videocam,
-                          size: 64,
-                          color: Colors.white54,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Camera Preview',
-                          style: TextStyle(
-                            color: Colors.white54,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                child: recordingState.isInitialized
+                  ? ref.read(vineRecordingProvider.notifier).previewWidget
+                  : CameraPreviewPlaceholder(
+                      isRecording: recordingState.isRecording,
                     ),
-                  ),
-                ),
               ),
 
               // Recording controls overlay (bottom)
@@ -294,21 +298,27 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Cancel/Back button
+        // Cancel/Back button (when not recording) OR Publish button (when recording)
         IconButton(
-          onPressed: recordingState.isRecording ? null : () {
-            Navigator.of(context).pop();
-          },
+          onPressed: recordingState.isRecording
+            ? () {
+                // Stop and publish immediately
+                Log.info('📹 Publish button pressed', category: LogCategory.video);
+                _toggleRecording(); // This will stop recording and navigate to metadata
+              }
+            : () {
+                Navigator.of(context).pop();
+              },
           icon: Icon(
-            Icons.close,
-            color: recordingState.isRecording ? Colors.grey : Colors.white,
-            size: 32,
+            recordingState.isRecording ? Icons.check_circle : Icons.close,
+            color: recordingState.isRecording ? Colors.green : Colors.white,
+            size: recordingState.isRecording ? 40 : 32,
           ),
         ),
 
         // Record button
         GestureDetector(
-          onTap: _toggleRecording,
+          onTap: recordingState.isRecording ? null : _toggleRecording,  // Disable while recording
           child: Container(
             width: 80,
             height: 80,
@@ -320,11 +330,22 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
                 width: 4,
               ),
             ),
-            child: Icon(
-              recordingState.isRecording ? Icons.stop : Icons.fiber_manual_record,
-              color: recordingState.isRecording ? Colors.white : Colors.red,
-              size: 32,
-            ),
+            child: recordingState.isRecording
+              ? Center(
+                  child: Text(
+                    _formatDuration(recordingState.recordingDuration),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : const Icon(
+                  Icons.fiber_manual_record,
+                  color: Colors.red,
+                  size: 32,
+                ),
           ),
         ),
 
@@ -373,10 +394,14 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
       final state = ref.read(vineRecordingProvider);
 
       if (state.isRecording) {
-        // Stop recording
+        // Stop recording manually
+        Log.info('📹 Manually stopping recording', category: LogCategory.video);
         final result = await notifier.stopRecording();
+        Log.info('📹 Recording stopped, result: ${result?.path}', category: LogCategory.video);
         if (result != null && mounted) {
           _processRecording(result);
+        } else {
+          Log.warning('📹 No file returned from stopRecording', category: LogCategory.video);
         }
       } else {
         // Start recording
@@ -409,6 +434,23 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
   void _toggleFlash() {
     // TODO: Implement flash toggle
     Log.info('📹 UniversalCameraScreenPure: Flash toggle requested', category: LogCategory.video);
+  }
+
+  void _handleRecordingAutoStop() async {
+    try {
+      final notifier = ref.read(vineRecordingProvider.notifier);
+      final result = await notifier.finishRecording();
+
+      Log.info('📹 Auto-stop result: ${result?.path}', category: LogCategory.video);
+
+      if (result != null && mounted) {
+        _processRecording(result);
+      } else {
+        Log.warning('📹 No file returned after auto-stop', category: LogCategory.video);
+      }
+    } catch (e) {
+      Log.error('📹 Failed to handle auto-stop: $e', category: LogCategory.video);
+    }
   }
 
   void _toggleTimer() {

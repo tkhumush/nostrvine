@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
-// import 'package:openvine/providers/video_manager_providers.dart'; // TODO: Restore when VideoManager providers are available
+import 'package:openvine/providers/video_overlay_manager_provider.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
 
@@ -79,7 +79,7 @@ class _VideoOverlayModalCompactState
 
     // Initialize video manager
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // _initializeVideoManager(); // TODO: Restore when VideoManager is available
+      _initializeVideoManager();
     });
   }
 
@@ -87,15 +87,13 @@ class _VideoOverlayModalCompactState
   void dispose() {
     _pageController.dispose();
     _slideController.dispose();
-    // _pauseAllVideos(); // TODO: Restore when VideoManager is available
+    _pauseAllVideos();
     super.dispose();
   }
 
-  // TODO: Restore when VideoManager is available
-  /*
   Future<void> _initializeVideoManager() async {
     try {
-      final videoManager = ref.read(videoManagerProvider.notifier);
+      final videoManager = ref.read(videoOverlayManagerProvider);
 
       // Register all videos with VideoManager
       for (final video in widget.videoList) {
@@ -114,31 +112,25 @@ class _VideoOverlayModalCompactState
           category: LogCategory.ui);
     }
   }
-  */
 
-  // TODO: Restore when VideoManager is available
-  /*
   void _pauseAllVideos() {
     try {
-      final videoManager = ref.read(videoManagerProvider.notifier);
+      final videoManager = ref.read(videoOverlayManagerProvider);
       videoManager.pauseAllVideos();
     } catch (e) {
       Log.error('Error pausing videos in compact overlay: $e',
           name: 'VideoOverlayModalCompact', category: LogCategory.ui);
     }
   }
-  */
 
   Future<void> _onPageChanged(int index) async {
     setState(() {
       _currentIndex = index;
     });
 
-    // TODO: Restore when VideoManager is available
-    /*
     if (index < widget.videoList.length) {
       try {
-        final videoManager = ref.read(videoManagerProvider.notifier);
+        final videoManager = ref.read(videoOverlayManagerProvider);
         final newVideo = widget.videoList[index];
         videoManager.addVideoEvent(newVideo);
         await videoManager.preloadVideo(newVideo.id);
@@ -147,7 +139,6 @@ class _VideoOverlayModalCompactState
             name: 'VideoOverlayModalCompact', category: LogCategory.ui);
       }
     }
-    */
   }
 
   void _dismiss() {
@@ -322,6 +313,7 @@ class _VideoOverlayModalCompactState
             child: VideoFeedItem(
               video: video,
               index: index,
+              hasBottomNavigation: false, // Compact modal overlay has no bottom navigation
             ),
           );
         },

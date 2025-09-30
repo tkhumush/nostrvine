@@ -28,10 +28,10 @@ class TestHelpers {
   /// Create a test provider scope with common overrides
   static ProviderScope createTestProviderScope({
     required Widget child,
-    List<Override>? overrides,
+    List? overrides,
   }) =>
       ProviderScope(
-        overrides: overrides ?? [],
+        overrides: (overrides ?? []).cast(),
         child: child,
       );
 

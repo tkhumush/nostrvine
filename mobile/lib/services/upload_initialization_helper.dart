@@ -3,7 +3,7 @@
 
 import 'dart:async';
 import 'dart:math';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:openvine/models/pending_upload.dart';
 import 'package:openvine/utils/unified_logger.dart';
 

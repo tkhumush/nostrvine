@@ -340,14 +340,16 @@ class MacOSCameraInterface extends CameraPlatformInterface
     // Start native preview
     await NativeMacOSCamera.startPreview();
 
-    // Create the camera widget for visual preview
+    // Complete initialization now that native camera is ready for recording
+    completeInitialization();
+
+    // Create the camera widget for visual preview (asynchronous, doesn't block recording)
     _previewWidget = SizedBox.expand(
       child: macos.CameraMacOSView(
         key: _cameraKey,
         fit: BoxFit.cover,
         cameraMode: macos.CameraMacOSMode.video,
         onCameraInizialized: (controller) {
-          completeInitialization();
           Log.info('📱 macOS camera visual preview initialized',
               name: 'VineRecordingController', category: LogCategory.system);
         },
@@ -424,13 +426,13 @@ class MacOSCameraInterface extends CameraPlatformInterface
       return null;
     }
 
-    // In single recording mode, we just track virtual segments
-    // The actual recording continues until we call stopSingleRecording
+    // In single recording mode, complete the recording and get the actual file
     if (isSingleRecordingMode && isRecording) {
-      Log.verbose('Native macOS single recording mode - virtual segment stop',
+      Log.verbose('Native macOS single recording mode - completing recording',
           name: 'VineRecordingController', category: LogCategory.system);
-      // Return the path for consistency, but actual file won't be ready yet
-      return currentRecordingPath;
+      // Complete the recording and get the actual file path
+      final completedPath = await completeRecording();
+      return completedPath;
     }
 
     return null;
@@ -701,6 +703,15 @@ class VineRecordingController {
   // Getter for camera interface (needed for enhanced controls)
   CameraPlatformInterface? get cameraInterface => _cameraInterface;
 
+  // Getter for camera preview widget
+  Widget get previewWidget =>
+      _cameraInterface?.previewWidget ??
+      const SizedBox(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
   // Callback for notifying UI of state changes during recording
   VoidCallback? _onStateChanged;
 
@@ -816,15 +827,29 @@ class VineRecordingController {
       } else if (Platform.isMacOS) {
         _cameraInterface = MacOSCameraInterface();
       } else if (Platform.isIOS || Platform.isAndroid) {
-        // Use enhanced mobile camera interface for zoom and focus features
-        _cameraInterface = EnhancedMobileCameraInterface();
-        Log.info('Using enhanced mobile camera with zoom and focus features',
-            name: 'VineRecordingController', category: LogCategory.system);
+        // Try enhanced mobile camera interface first, fallback to basic if it fails
+        try {
+          _cameraInterface = EnhancedMobileCameraInterface();
+          await _cameraInterface!.initialize();
+          Log.info('Using enhanced mobile camera with zoom and focus features',
+              name: 'VineRecordingController', category: LogCategory.system);
+        } catch (enhancedError) {
+          Log.warning('Enhanced camera failed, falling back to basic camera: $enhancedError',
+              name: 'VineRecordingController', category: LogCategory.system);
+          _cameraInterface?.dispose();
+          _cameraInterface = MobileCameraInterface();
+          await _cameraInterface!.initialize();
+          Log.info('Using basic mobile camera interface as fallback',
+              name: 'VineRecordingController', category: LogCategory.system);
+        }
       } else {
         throw Exception('Platform not supported: ${Platform.operatingSystem}');
       }
 
-      await _cameraInterface!.initialize();
+      // For non-mobile platforms, initialize here (mobile initialization handled above)
+      if (!Platform.isIOS && !Platform.isAndroid) {
+        await _cameraInterface!.initialize();
+      }
 
       // Set up temp directory for segments
       if (!kIsWeb) {
@@ -911,6 +936,9 @@ class VineRecordingController {
           final macOSInterface = _cameraInterface as MacOSCameraInterface;
 
           // Create a virtual segment (the actual file is still recording)
+          Log.info('📱 Creating virtual segment - filePath: ${macOSInterface.currentRecordingPath}',
+              name: 'VineRecordingController', category: LogCategory.system);
+
           final segment = RecordingSegment(
             startTime: _currentSegmentStartTime!,
             endTime: segmentEndTime,
@@ -921,6 +949,9 @@ class VineRecordingController {
 
           _segments.add(segment);
           _totalRecordedDuration += segmentDuration;
+
+          Log.info('📱 Virtual segment added - segments count now: ${_segments.length}',
+              name: 'VineRecordingController', category: LogCategory.system);
 
           Log.info(
               'Completed virtual segment ${_segments.length}: ${segmentDuration.inMilliseconds}ms',
@@ -1088,6 +1119,16 @@ class VineRecordingController {
               name: 'VineRecordingController',
               category: LogCategory.system);
         }
+      }
+
+      Log.info('📱 finishRecording: hasSegments=$hasSegments, segments count=${_segments.length}',
+          name: 'VineRecordingController', category: LogCategory.system);
+
+      // Debug: Log all segment details
+      for (int i = 0; i < _segments.length; i++) {
+        final segment = _segments[i];
+        Log.info('📱 Segment $i: duration=${segment.duration.inMilliseconds}ms, filePath=${segment.filePath}',
+            name: 'VineRecordingController', category: LogCategory.system);
       }
 
       if (!hasSegments) {

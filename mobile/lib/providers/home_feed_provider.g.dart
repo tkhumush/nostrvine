@@ -6,79 +6,192 @@ part of 'home_feed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$homeFeedLoadingHash() => r'81bbd67b4dd84f30061d4e63cb7e502c6370bb94';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Home feed provider - shows videos only from people you follow
 
-/// Provider to check if home feed is loading
-///
-/// Copied from [homeFeedLoading].
-@ProviderFor(homeFeedLoading)
-final homeFeedLoadingProvider = AutoDisposeProvider<bool>.internal(
-  homeFeedLoading,
-  name: r'homeFeedLoadingProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$homeFeedLoadingHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HomeFeedLoadingRef = AutoDisposeProviderRef<bool>;
-String _$homeFeedCountHash() => r'b739e0a32bf057f20ec30d7ab945528757f833e9';
-
-/// Provider to get current home feed video count
-///
-/// Copied from [homeFeedCount].
-@ProviderFor(homeFeedCount)
-final homeFeedCountProvider = AutoDisposeProvider<int>.internal(
-  homeFeedCount,
-  name: r'homeFeedCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$homeFeedCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HomeFeedCountRef = AutoDisposeProviderRef<int>;
-String _$hasHomeFeedVideosHash() => r'7785c6a7ebf4bc3bcd84129c6b1fda16e7f72edf';
-
-/// Provider to check if we have home feed videos
-///
-/// Copied from [hasHomeFeedVideos].
-@ProviderFor(hasHomeFeedVideos)
-final hasHomeFeedVideosProvider = AutoDisposeProvider<bool>.internal(
-  hasHomeFeedVideos,
-  name: r'hasHomeFeedVideosProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$hasHomeFeedVideosHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HasHomeFeedVideosRef = AutoDisposeProviderRef<bool>;
-String _$homeFeedHash() => r'28452868806e07511d6c4c72f2d67c79c39ecfb8';
+@ProviderFor(HomeFeed)
+const homeFeedProvider = HomeFeedProvider._();
 
 /// Home feed provider - shows videos only from people you follow
-///
-/// Copied from [HomeFeed].
-@ProviderFor(HomeFeed)
-final homeFeedProvider =
-    AutoDisposeAsyncNotifierProvider<HomeFeed, VideoFeedState>.internal(
-  HomeFeed.new,
-  name: r'homeFeedProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$homeFeedHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final class HomeFeedProvider
+    extends $AsyncNotifierProvider<HomeFeed, VideoFeedState> {
+  /// Home feed provider - shows videos only from people you follow
+  const HomeFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-typedef _$HomeFeed = AutoDisposeAsyncNotifier<VideoFeedState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+  @override
+  String debugGetCreateSourceHash() => _$homeFeedHash();
+
+  @$internal
+  @override
+  HomeFeed create() => HomeFeed();
+}
+
+String _$homeFeedHash() => r'ad7166289166c397e7f4e6ec6456b0e4af91ce45';
+
+/// Home feed provider - shows videos only from people you follow
+
+abstract class _$HomeFeed extends $AsyncNotifier<VideoFeedState> {
+  FutureOr<VideoFeedState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<VideoFeedState>, VideoFeedState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<VideoFeedState>, VideoFeedState>,
+              AsyncValue<VideoFeedState>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider to check if home feed is loading
+
+@ProviderFor(homeFeedLoading)
+const homeFeedLoadingProvider = HomeFeedLoadingProvider._();
+
+/// Provider to check if home feed is loading
+
+final class HomeFeedLoadingProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Provider to check if home feed is loading
+  const HomeFeedLoadingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFeedLoadingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeFeedLoadingHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return homeFeedLoading(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$homeFeedLoadingHash() => r'e4c96dfd94b15fc125ecebf90f53a52a20081cd1';
+
+/// Provider to get current home feed video count
+
+@ProviderFor(homeFeedCount)
+const homeFeedCountProvider = HomeFeedCountProvider._();
+
+/// Provider to get current home feed video count
+
+final class HomeFeedCountProvider extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  /// Provider to get current home feed video count
+  const HomeFeedCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeFeedCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeFeedCountHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return homeFeedCount(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$homeFeedCountHash() => r'fa005197b095b160691887155a79988cbc15f8d4';
+
+/// Provider to check if we have home feed videos
+
+@ProviderFor(hasHomeFeedVideos)
+const hasHomeFeedVideosProvider = HasHomeFeedVideosProvider._();
+
+/// Provider to check if we have home feed videos
+
+final class HasHomeFeedVideosProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Provider to check if we have home feed videos
+  const HasHomeFeedVideosProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'hasHomeFeedVideosProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$hasHomeFeedVideosHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return hasHomeFeedVideos(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$hasHomeFeedVideosHash() => r'7785c6a7ebf4bc3bcd84129c6b1fda16e7f72edf';

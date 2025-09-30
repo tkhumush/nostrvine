@@ -8,7 +8,7 @@ part 'user_profile_state.freezed.dart';
 part 'user_profile_state.g.dart';
 
 @freezed
-class UserProfileState with _$UserProfileState {
+sealed class UserProfileState with _$UserProfileState {
   const factory UserProfileState({
     // Profile cache - pubkey -> profile
     @Default({}) Map<String, UserProfile> profileCache,
@@ -39,7 +39,7 @@ class UserProfileState with _$UserProfileState {
   const UserProfileState._();
 
   /// Create initial state
-  static const UserProfileState initial = UserProfileState();
+  static final UserProfileState initial = UserProfileState();
 
   /// Check if a profile is cached
   bool hasProfile(String pubkey) => profileCache.containsKey(pubkey);

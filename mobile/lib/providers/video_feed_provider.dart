@@ -11,7 +11,6 @@ import 'package:openvine/providers/tab_visibility_provider.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/state/video_feed_state.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'video_feed_provider.g.dart';
@@ -80,7 +79,7 @@ class VideoFeed extends _$VideoFeed {
     _profileFetchTimer?.cancel();
 
     // Fetch profiles immediately - no delay needed as provider handles batching internally
-    final profilesProvider = ref.read(userProfileNotifierProvider.notifier);
+    final profilesProvider = ref.read(userProfileProvider.notifier);
 
     final newPubkeys = videos
         .map((v) => v.pubkey)
@@ -192,7 +191,7 @@ bool videoFeedLoading(Ref ref) {
   final asyncState = ref.watch(videoFeedProvider);
   if (asyncState.isLoading) return true;
 
-  final state = asyncState.valueOrNull;
+  final state = asyncState.hasValue ? asyncState.value : null;
   if (state == null) return false;
 
   return state.isLoadingMore;
@@ -200,8 +199,10 @@ bool videoFeedLoading(Ref ref) {
 
 /// Provider to get current video count
 @riverpod
-int videoFeedCount(Ref ref) =>
-    ref.watch(videoFeedProvider).valueOrNull?.videos.length ?? 0;
+int videoFeedCount(Ref ref) {
+  final asyncState = ref.watch(videoFeedProvider);
+  return asyncState.hasValue ? (asyncState.value?.videos.length ?? 0) : 0;
+}
 
 /// Provider to check if we have videos
 @riverpod

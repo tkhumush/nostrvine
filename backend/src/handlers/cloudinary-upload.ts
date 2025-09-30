@@ -29,8 +29,9 @@ export async function handleCloudinarySignedUpload(
   env: Env
 ): Promise<Response> {
   try {
-    // Validate NIP-98 authentication
-    const authResult = await validateNIP98Auth(request);
+    // Validate NIP-98 authentication with extended timeout for video uploads
+    // Users may record a video and upload it later, so allow 5 minutes
+    const authResult = await validateNIP98Auth(request, 300000); // 5 minutes
     if (!authResult.valid) {
       return createAuthErrorResponse(
         authResult.error || 'Authentication failed',

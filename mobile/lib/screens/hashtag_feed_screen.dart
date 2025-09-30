@@ -10,8 +10,9 @@ import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
 
 class HashtagFeedScreen extends ConsumerStatefulWidget {
-  const HashtagFeedScreen({required this.hashtag, super.key});
+  const HashtagFeedScreen({required this.hashtag, this.embedded = false, super.key});
   final String hashtag;
+  final bool embedded;  // If true, don't show Scaffold/AppBar (for embedding in explore)
 
   @override
   ConsumerState<HashtagFeedScreen> createState() => _HashtagFeedScreenState();
@@ -29,32 +30,14 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: VineTheme.backgroundColor,
-        appBar: AppBar(
-          backgroundColor: VineTheme.vineGreen,
-          elevation: 0,
-          title: Text(
-            '#${widget.hashtag}',
-            style: const TextStyle(
-              color: VineTheme.whiteText,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: Builder(
+  Widget build(BuildContext context) {
+    final body = Builder(
           builder: (context) {
             final videoService = ref.watch(videoEventServiceProvider);
             final hashtagService = ref.watch(hashtagServiceProvider);
             final videos = List<VideoEvent>.from(
               hashtagService.getVideosByHashtags([widget.hashtag]),
             )..sort(VideoEvent.compareByLoopsThenTime);
-            final stats = hashtagService.getHashtagStats(widget.hashtag);
 
             if (videoService.isLoading && videos.isEmpty) {
               return Center(
@@ -116,93 +99,62 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
               );
             }
 
-            return Column(
-              children: [
-                // Hashtag info header
-                Container(
-                  color: VineTheme.cardBackground,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_up,
-                            color: VineTheme.vineGreen,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${videos.length} videos',
-                            style: const TextStyle(
-                              color: VineTheme.primaryText,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          if (stats != null) ...[
-                            const Spacer(),
-                            Text(
-                              'by ${stats.authorCount} viners',
-                              style: const TextStyle(
-                                color: VineTheme.secondaryText,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ],
+            return ListView.builder(
+              itemCount: videos.length,
+              itemBuilder: (context, index) {
+                final video = videos[index];
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to inline video player for this hashtag
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ExploreVideoScreenPure(
+                          startingVideo: video,
+                          videoList: videos,
+                          contextTitle: '#${widget.hashtag}',
+                          startingIndex: index,
+                        ),
                       ),
-                      if (stats != null && stats.recentVideoCount > 0) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${stats.recentVideoCount} new in last 24 hours',
-                          style: const TextStyle(
-                            color: VineTheme.secondaryText,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
+                    );
+                  },
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    width: double.infinity,
+                    child: VideoFeedItem(
+                      video: video,
+                      index: index,
+                    ),
                   ),
-                ),
-                const Divider(color: VineTheme.secondaryText, height: 1),
-
-                // Video list
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: videos.length,
-                    itemBuilder: (context, index) {
-                      final video = videos[index];
-                      return GestureDetector(
-                        onTap: () {
-                          // Navigate to inline video player for this hashtag
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ExploreVideoScreenPure(
-                                startingVideo: video,
-                                videoList: videos,
-                                contextTitle: '#${widget.hashtag}',
-                                startingIndex: index,
-                              ),
-                            ),
-                          );
-                        },
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height,
-                          width: double.infinity,
-                          child: VideoFeedItem(
-                            video: video,
-                            index: index,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                );
+              },
             );
           },
+        );
+
+    // If embedded, return body only; otherwise wrap with Scaffold
+    if (widget.embedded) {
+      return body;
+    }
+
+    return Scaffold(
+      backgroundColor: VineTheme.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: VineTheme.vineGreen,
+        elevation: 0,
+        title: Text(
+          '#${widget.hashtag}',
+          style: const TextStyle(
+            color: VineTheme.whiteText,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
-      );
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: body,
+    );
+  }
 }

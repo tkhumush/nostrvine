@@ -121,11 +121,11 @@ void main() {
           videoEventsSubscriptionManagerProvider
               .overrideWithValue(MockSubscriptionManager()),
           curationServiceProvider.overrideWithValue(mockCurationService),
-          // Override dependencies for userProfileNotifierProvider
+          // Override dependencies for userProfileProvider
           nostrServiceProvider.overrideWithValue(mockNostrService2),
           subscriptionManagerProvider
               .overrideWithValue(MockSubscriptionManager()),
-          userProfileNotifierProvider.overrideWith(() =>
+          userProfileProvider.overrideWith(() =>
               customUserProfiles ??
               MockUserProfileNotifier(onFetchProfiles: (_) {})),
           // TODO: Update social provider overrides for new architecture
@@ -185,7 +185,7 @@ void main() {
       container = createContainer(customVideoEvents: [classicVineEvent]);
 
       // Set empty following list BEFORE reading provider
-      container.read(social.socialNotifierProvider.notifier).updateFollowingList([]);
+      container.read(social.socialProvider.notifier).updateFollowingList([]);
 
       final feedState = await container.read(videoFeedProvider.future);
 
@@ -198,7 +198,7 @@ void main() {
     test('should filter videos by following list', () async {
       // Set following list BEFORE reading provider
       container
-          .read(social.socialNotifierProvider.notifier)
+          .read(social.socialProvider.notifier)
           .updateFollowingList(['pubkey1', 'pubkey3']);
 
       final feedState = await container.read(videoFeedProvider.future);
@@ -213,7 +213,7 @@ void main() {
     test('should update feed when following list changes', () async {
       // Initial following list
       container
-          .read(social.socialNotifierProvider.notifier)
+          .read(social.socialProvider.notifier)
           .updateFollowingList(['pubkey1']);
 
       var feedState = await container.read(videoFeedProvider.future);
@@ -221,7 +221,7 @@ void main() {
 
       // Add another follow
       container
-          .read(social.socialNotifierProvider.notifier)
+          .read(social.socialProvider.notifier)
           .updateFollowingList(['pubkey1', 'pubkey2']);
 
       // Feed should auto-update
@@ -239,7 +239,7 @@ void main() {
 
     test('should sort videos by creation time (newest first)', () async {
       // Set following list BEFORE reading provider
-      container.read(social.socialNotifierProvider.notifier).updateFollowingList(
+      container.read(social.socialProvider.notifier).updateFollowingList(
         ['pubkey0', 'pubkey1', 'pubkey2', 'pubkey3', 'pubkey4'],
       );
 
@@ -268,7 +268,7 @@ void main() {
 
       // Set following list BEFORE reading provider
       container
-          .read(social.socialNotifierProvider.notifier)
+          .read(social.socialProvider.notifier)
           .updateFollowingList(['pubkey1', 'pubkey2']);
 
       // Read feed to trigger profile fetching

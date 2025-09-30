@@ -23,12 +23,39 @@ class VideoFeedItem extends ConsumerWidget {
     required this.index,
     this.onTap,
     this.forceShowOverlay = false,
+    this.hasBottomNavigation = true,
   });
 
   final VideoEvent video;
   final int index;
   final VoidCallback? onTap;
   final bool forceShowOverlay;
+  final bool hasBottomNavigation;
+
+  /// Translate error messages to user-friendly text
+  static String _getErrorMessage(String? errorDescription) {
+    if (errorDescription == null) return 'Video playback error';
+
+    final lowerError = errorDescription.toLowerCase();
+
+    if (lowerError.contains('404') || lowerError.contains('not found')) {
+      return 'Video not found';
+    }
+    if (lowerError.contains('network') || lowerError.contains('connection')) {
+      return 'Network error';
+    }
+    if (lowerError.contains('timeout')) {
+      return 'Loading timeout';
+    }
+    if (lowerError.contains('byte range') || lowerError.contains('coremediaerrordomain')) {
+      return 'Video format error\n(Try again or use different browser)';
+    }
+    if (lowerError.contains('format') || lowerError.contains('codec')) {
+      return 'Unsupported video format';
+    }
+
+    return 'Video playback error';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -135,6 +162,61 @@ class VideoFeedItem extends ConsumerWidget {
                         // Let the individual controller handle autoplay based on active state
                         // Don't interfere with playback control here
 
+                        // Check for video error state
+                        if (value.hasError) {
+                          final errorMessage = _getErrorMessage(value.errorDescription);
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // Show thumbnail as background
+                              VideoThumbnailWidget(
+                                video: video,
+                                fit: BoxFit.cover,
+                                showPlayIcon: false,
+                              ),
+                              // Error overlay
+                              Container(
+                                color: Colors.black54,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.white,
+                                        size: 48,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        errorMessage,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          // Retry by invalidating and recreating the controller
+                                          ref.invalidate(
+                                            individualVideoControllerProvider(controllerParams),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.black,
+                                        ),
+                                        child: const Text('Retry'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
                         if (!value.isInitialized) {
                           // Show thumbnail/blurhash while the video initializes
                           return Stack(
@@ -184,6 +266,7 @@ class VideoFeedItem extends ConsumerWidget {
               VideoOverlayActions(
                 video: video,
                 isVisible: forceShowOverlay || isActive,
+                hasBottomNavigation: hasBottomNavigation,
               ),
             ],
           ),
@@ -200,16 +283,18 @@ class VideoOverlayActions extends ConsumerWidget {
     super.key,
     required this.video,
     required this.isVisible,
+    this.hasBottomNavigation = true,
   });
 
   final VideoEvent video;
   final bool isVisible;
+  final bool hasBottomNavigation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!isVisible) return const SizedBox();
 
-    final socialState = ref.watch(socialNotifierProvider);
+    final socialState = ref.watch(socialProvider);
     final isLiked = socialState.isLiked(video.id);
     final isLikeInProgress = socialState.isLikeInProgress(video.id);
     final likeCount = socialState.likeCounts[video.id] ?? 0;
@@ -218,10 +303,10 @@ class VideoOverlayActions extends ConsumerWidget {
       children: [
         // Publisher chip (tap to profile)
         Positioned(
-          top: 16,
+          top: MediaQuery.of(context).viewPadding.top + 16,
           left: 16,
           child: Consumer(builder: (context, ref, _) {
-            final profileAsync = ref.watch(userProfileProvider(video.pubkey));
+            final profileAsync = ref.watch(fetchUserProfileProvider(video.pubkey));
             final display = profileAsync.maybeWhen(
                   data: (p) => p?.bestDisplayName ?? p?.displayName ?? p?.name,
                   orElse: () => null,
@@ -257,7 +342,7 @@ class VideoOverlayActions extends ConsumerWidget {
         ),
         // Video title overlay at bottom left
         Positioned(
-          bottom: 80,
+          bottom: 0,
           left: 16,
           right: 80, // Leave space for action buttons
           child: Container(
@@ -316,7 +401,7 @@ class VideoOverlayActions extends ConsumerWidget {
                 ],
                 Consumer(
                   builder: (context, ref, child) {
-                    final userProfileNotifier = ref.read(userProfileNotifierProvider.notifier);
+                    final userProfileNotifier = ref.read(userProfileProvider.notifier);
                     final profile = userProfileNotifier.getCachedProfile(video.pubkey);
                     final displayName = profile?.displayName ?? profile?.name ?? 'Unknown';
 
@@ -342,7 +427,7 @@ class VideoOverlayActions extends ConsumerWidget {
         ),
         // Action buttons at bottom right
         Positioned(
-          bottom: 80,
+          bottom: 0,
           right: 16,
           child: Column(
             children: [
@@ -356,7 +441,7 @@ class VideoOverlayActions extends ConsumerWidget {
                     name: 'VideoFeedItem',
                     category: LogCategory.ui,
                   );
-                  await ref.read(socialNotifierProvider.notifier)
+                  await ref.read(socialProvider.notifier)
                     .toggleLike(video.id, video.pubkey);
                 },
                 icon: isLikeInProgress

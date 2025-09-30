@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,426 +9,336 @@ part of 'user_profile_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-UserProfileState _$UserProfileStateFromJson(Map<String, dynamic> json) {
-  return _UserProfileState.fromJson(json);
-}
 
 /// @nodoc
 mixin _$UserProfileState {
+
 // Profile cache - pubkey -> profile
-  Map<String, UserProfile> get profileCache =>
-      throw _privateConstructorUsedError; // Pending profile requests
-  Set<String> get pendingRequests =>
-      throw _privateConstructorUsedError; // Missing profiles to avoid spam
-  Set<String> get knownMissingProfiles => throw _privateConstructorUsedError;
-  Map<String, DateTime> get missingProfileRetryAfter =>
-      throw _privateConstructorUsedError; // Batch fetching state
-  Set<String> get pendingBatchPubkeys =>
-      throw _privateConstructorUsedError; // Loading and error state
-  bool get isLoading => throw _privateConstructorUsedError;
-  bool get isInitialized => throw _privateConstructorUsedError;
-  String? get error => throw _privateConstructorUsedError; // Stats
-  int get totalProfilesCached => throw _privateConstructorUsedError;
-  int get totalProfilesRequested => throw _privateConstructorUsedError;
+ Map<String, UserProfile> get profileCache;// Pending profile requests
+ Set<String> get pendingRequests;// Missing profiles to avoid spam
+ Set<String> get knownMissingProfiles; Map<String, DateTime> get missingProfileRetryAfter;// Batch fetching state
+ Set<String> get pendingBatchPubkeys;// Loading and error state
+ bool get isLoading; bool get isInitialized; String? get error;// Stats
+ int get totalProfilesCached; int get totalProfilesRequested;
+/// Create a copy of UserProfileState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UserProfileStateCopyWith<UserProfileState> get copyWith => _$UserProfileStateCopyWithImpl<UserProfileState>(this as UserProfileState, _$identity);
 
   /// Serializes this UserProfileState to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of UserProfileState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $UserProfileStateCopyWith<UserProfileState> get copyWith =>
-      throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfileState&&const DeepCollectionEquality().equals(other.profileCache, profileCache)&&const DeepCollectionEquality().equals(other.pendingRequests, pendingRequests)&&const DeepCollectionEquality().equals(other.knownMissingProfiles, knownMissingProfiles)&&const DeepCollectionEquality().equals(other.missingProfileRetryAfter, missingProfileRetryAfter)&&const DeepCollectionEquality().equals(other.pendingBatchPubkeys, pendingBatchPubkeys)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isInitialized, isInitialized) || other.isInitialized == isInitialized)&&(identical(other.error, error) || other.error == error)&&(identical(other.totalProfilesCached, totalProfilesCached) || other.totalProfilesCached == totalProfilesCached)&&(identical(other.totalProfilesRequested, totalProfilesRequested) || other.totalProfilesRequested == totalProfilesRequested));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(profileCache),const DeepCollectionEquality().hash(pendingRequests),const DeepCollectionEquality().hash(knownMissingProfiles),const DeepCollectionEquality().hash(missingProfileRetryAfter),const DeepCollectionEquality().hash(pendingBatchPubkeys),isLoading,isInitialized,error,totalProfilesCached,totalProfilesRequested);
+
+@override
+String toString() {
+  return 'UserProfileState(profileCache: $profileCache, pendingRequests: $pendingRequests, knownMissingProfiles: $knownMissingProfiles, missingProfileRetryAfter: $missingProfileRetryAfter, pendingBatchPubkeys: $pendingBatchPubkeys, isLoading: $isLoading, isInitialized: $isInitialized, error: $error, totalProfilesCached: $totalProfilesCached, totalProfilesRequested: $totalProfilesRequested)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $UserProfileStateCopyWith<$Res> {
-  factory $UserProfileStateCopyWith(
-          UserProfileState value, $Res Function(UserProfileState) then) =
-      _$UserProfileStateCopyWithImpl<$Res, UserProfileState>;
-  @useResult
-  $Res call(
-      {Map<String, UserProfile> profileCache,
-      Set<String> pendingRequests,
-      Set<String> knownMissingProfiles,
-      Map<String, DateTime> missingProfileRetryAfter,
-      Set<String> pendingBatchPubkeys,
-      bool isLoading,
-      bool isInitialized,
-      String? error,
-      int totalProfilesCached,
-      int totalProfilesRequested});
-}
+abstract mixin class $UserProfileStateCopyWith<$Res>  {
+  factory $UserProfileStateCopyWith(UserProfileState value, $Res Function(UserProfileState) _then) = _$UserProfileStateCopyWithImpl;
+@useResult
+$Res call({
+ Map<String, UserProfile> profileCache, Set<String> pendingRequests, Set<String> knownMissingProfiles, Map<String, DateTime> missingProfileRetryAfter, Set<String> pendingBatchPubkeys, bool isLoading, bool isInitialized, String? error, int totalProfilesCached, int totalProfilesRequested
+});
 
+
+
+
+}
 /// @nodoc
-class _$UserProfileStateCopyWithImpl<$Res, $Val extends UserProfileState>
+class _$UserProfileStateCopyWithImpl<$Res>
     implements $UserProfileStateCopyWith<$Res> {
-  _$UserProfileStateCopyWithImpl(this._value, this._then);
+  _$UserProfileStateCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final UserProfileState _self;
+  final $Res Function(UserProfileState) _then;
 
-  /// Create a copy of UserProfileState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? profileCache = null,
-    Object? pendingRequests = null,
-    Object? knownMissingProfiles = null,
-    Object? missingProfileRetryAfter = null,
-    Object? pendingBatchPubkeys = null,
-    Object? isLoading = null,
-    Object? isInitialized = null,
-    Object? error = freezed,
-    Object? totalProfilesCached = null,
-    Object? totalProfilesRequested = null,
-  }) {
-    return _then(_value.copyWith(
-      profileCache: null == profileCache
-          ? _value.profileCache
-          : profileCache // ignore: cast_nullable_to_non_nullable
-              as Map<String, UserProfile>,
-      pendingRequests: null == pendingRequests
-          ? _value.pendingRequests
-          : pendingRequests // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      knownMissingProfiles: null == knownMissingProfiles
-          ? _value.knownMissingProfiles
-          : knownMissingProfiles // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      missingProfileRetryAfter: null == missingProfileRetryAfter
-          ? _value.missingProfileRetryAfter
-          : missingProfileRetryAfter // ignore: cast_nullable_to_non_nullable
-              as Map<String, DateTime>,
-      pendingBatchPubkeys: null == pendingBatchPubkeys
-          ? _value.pendingBatchPubkeys
-          : pendingBatchPubkeys // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isInitialized: null == isInitialized
-          ? _value.isInitialized
-          : isInitialized // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      totalProfilesCached: null == totalProfilesCached
-          ? _value.totalProfilesCached
-          : totalProfilesCached // ignore: cast_nullable_to_non_nullable
-              as int,
-      totalProfilesRequested: null == totalProfilesRequested
-          ? _value.totalProfilesRequested
-          : totalProfilesRequested // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
+/// Create a copy of UserProfileState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? profileCache = null,Object? pendingRequests = null,Object? knownMissingProfiles = null,Object? missingProfileRetryAfter = null,Object? pendingBatchPubkeys = null,Object? isLoading = null,Object? isInitialized = null,Object? error = freezed,Object? totalProfilesCached = null,Object? totalProfilesRequested = null,}) {
+  return _then(_self.copyWith(
+profileCache: null == profileCache ? _self.profileCache : profileCache // ignore: cast_nullable_to_non_nullable
+as Map<String, UserProfile>,pendingRequests: null == pendingRequests ? _self.pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
+as Set<String>,knownMissingProfiles: null == knownMissingProfiles ? _self.knownMissingProfiles : knownMissingProfiles // ignore: cast_nullable_to_non_nullable
+as Set<String>,missingProfileRetryAfter: null == missingProfileRetryAfter ? _self.missingProfileRetryAfter : missingProfileRetryAfter // ignore: cast_nullable_to_non_nullable
+as Map<String, DateTime>,pendingBatchPubkeys: null == pendingBatchPubkeys ? _self.pendingBatchPubkeys : pendingBatchPubkeys // ignore: cast_nullable_to_non_nullable
+as Set<String>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,isInitialized: null == isInitialized ? _self.isInitialized : isInitialized // ignore: cast_nullable_to_non_nullable
+as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String?,totalProfilesCached: null == totalProfilesCached ? _self.totalProfilesCached : totalProfilesCached // ignore: cast_nullable_to_non_nullable
+as int,totalProfilesRequested: null == totalProfilesRequested ? _self.totalProfilesRequested : totalProfilesRequested // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
 }
 
-/// @nodoc
-abstract class _$$UserProfileStateImplCopyWith<$Res>
-    implements $UserProfileStateCopyWith<$Res> {
-  factory _$$UserProfileStateImplCopyWith(_$UserProfileStateImpl value,
-          $Res Function(_$UserProfileStateImpl) then) =
-      __$$UserProfileStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {Map<String, UserProfile> profileCache,
-      Set<String> pendingRequests,
-      Set<String> knownMissingProfiles,
-      Map<String, DateTime> missingProfileRetryAfter,
-      Set<String> pendingBatchPubkeys,
-      bool isLoading,
-      bool isInitialized,
-      String? error,
-      int totalProfilesCached,
-      int totalProfilesRequested});
 }
 
-/// @nodoc
-class __$$UserProfileStateImplCopyWithImpl<$Res>
-    extends _$UserProfileStateCopyWithImpl<$Res, _$UserProfileStateImpl>
-    implements _$$UserProfileStateImplCopyWith<$Res> {
-  __$$UserProfileStateImplCopyWithImpl(_$UserProfileStateImpl _value,
-      $Res Function(_$UserProfileStateImpl) _then)
-      : super(_value, _then);
 
-  /// Create a copy of UserProfileState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? profileCache = null,
-    Object? pendingRequests = null,
-    Object? knownMissingProfiles = null,
-    Object? missingProfileRetryAfter = null,
-    Object? pendingBatchPubkeys = null,
-    Object? isLoading = null,
-    Object? isInitialized = null,
-    Object? error = freezed,
-    Object? totalProfilesCached = null,
-    Object? totalProfilesRequested = null,
-  }) {
-    return _then(_$UserProfileStateImpl(
-      profileCache: null == profileCache
-          ? _value._profileCache
-          : profileCache // ignore: cast_nullable_to_non_nullable
-              as Map<String, UserProfile>,
-      pendingRequests: null == pendingRequests
-          ? _value._pendingRequests
-          : pendingRequests // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      knownMissingProfiles: null == knownMissingProfiles
-          ? _value._knownMissingProfiles
-          : knownMissingProfiles // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      missingProfileRetryAfter: null == missingProfileRetryAfter
-          ? _value._missingProfileRetryAfter
-          : missingProfileRetryAfter // ignore: cast_nullable_to_non_nullable
-              as Map<String, DateTime>,
-      pendingBatchPubkeys: null == pendingBatchPubkeys
-          ? _value._pendingBatchPubkeys
-          : pendingBatchPubkeys // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isInitialized: null == isInitialized
-          ? _value.isInitialized
-          : isInitialized // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      totalProfilesCached: null == totalProfilesCached
-          ? _value.totalProfilesCached
-          : totalProfilesCached // ignore: cast_nullable_to_non_nullable
-              as int,
-      totalProfilesRequested: null == totalProfilesRequested
-          ? _value.totalProfilesRequested
-          : totalProfilesRequested // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
+/// Adds pattern-matching-related methods to [UserProfileState].
+extension UserProfileStatePatterns on UserProfileState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UserProfileState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _UserProfileState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UserProfileState value)  $default,){
+final _that = this;
+switch (_that) {
+case _UserProfileState():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UserProfileState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _UserProfileState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, UserProfile> profileCache,  Set<String> pendingRequests,  Set<String> knownMissingProfiles,  Map<String, DateTime> missingProfileRetryAfter,  Set<String> pendingBatchPubkeys,  bool isLoading,  bool isInitialized,  String? error,  int totalProfilesCached,  int totalProfilesRequested)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _UserProfileState() when $default != null:
+return $default(_that.profileCache,_that.pendingRequests,_that.knownMissingProfiles,_that.missingProfileRetryAfter,_that.pendingBatchPubkeys,_that.isLoading,_that.isInitialized,_that.error,_that.totalProfilesCached,_that.totalProfilesRequested);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, UserProfile> profileCache,  Set<String> pendingRequests,  Set<String> knownMissingProfiles,  Map<String, DateTime> missingProfileRetryAfter,  Set<String> pendingBatchPubkeys,  bool isLoading,  bool isInitialized,  String? error,  int totalProfilesCached,  int totalProfilesRequested)  $default,) {final _that = this;
+switch (_that) {
+case _UserProfileState():
+return $default(_that.profileCache,_that.pendingRequests,_that.knownMissingProfiles,_that.missingProfileRetryAfter,_that.pendingBatchPubkeys,_that.isLoading,_that.isInitialized,_that.error,_that.totalProfilesCached,_that.totalProfilesRequested);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, UserProfile> profileCache,  Set<String> pendingRequests,  Set<String> knownMissingProfiles,  Map<String, DateTime> missingProfileRetryAfter,  Set<String> pendingBatchPubkeys,  bool isLoading,  bool isInitialized,  String? error,  int totalProfilesCached,  int totalProfilesRequested)?  $default,) {final _that = this;
+switch (_that) {
+case _UserProfileState() when $default != null:
+return $default(_that.profileCache,_that.pendingRequests,_that.knownMissingProfiles,_that.missingProfileRetryAfter,_that.pendingBatchPubkeys,_that.isLoading,_that.isInitialized,_that.error,_that.totalProfilesCached,_that.totalProfilesRequested);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$UserProfileStateImpl extends _UserProfileState {
-  const _$UserProfileStateImpl(
-      {final Map<String, UserProfile> profileCache = const {},
-      final Set<String> pendingRequests = const {},
-      final Set<String> knownMissingProfiles = const {},
-      final Map<String, DateTime> missingProfileRetryAfter = const {},
-      final Set<String> pendingBatchPubkeys = const {},
-      this.isLoading = false,
-      this.isInitialized = false,
-      this.error,
-      this.totalProfilesCached = 0,
-      this.totalProfilesRequested = 0})
-      : _profileCache = profileCache,
-        _pendingRequests = pendingRequests,
-        _knownMissingProfiles = knownMissingProfiles,
-        _missingProfileRetryAfter = missingProfileRetryAfter,
-        _pendingBatchPubkeys = pendingBatchPubkeys,
-        super._();
 
-  factory _$UserProfileStateImpl.fromJson(Map<String, dynamic> json) =>
-      _$$UserProfileStateImplFromJson(json);
+class _UserProfileState extends UserProfileState {
+  const _UserProfileState({final  Map<String, UserProfile> profileCache = const {}, final  Set<String> pendingRequests = const {}, final  Set<String> knownMissingProfiles = const {}, final  Map<String, DateTime> missingProfileRetryAfter = const {}, final  Set<String> pendingBatchPubkeys = const {}, this.isLoading = false, this.isInitialized = false, this.error, this.totalProfilesCached = 0, this.totalProfilesRequested = 0}): _profileCache = profileCache,_pendingRequests = pendingRequests,_knownMissingProfiles = knownMissingProfiles,_missingProfileRetryAfter = missingProfileRetryAfter,_pendingBatchPubkeys = pendingBatchPubkeys,super._();
+  factory _UserProfileState.fromJson(Map<String, dynamic> json) => _$UserProfileStateFromJson(json);
 
 // Profile cache - pubkey -> profile
-  final Map<String, UserProfile> _profileCache;
+ final  Map<String, UserProfile> _profileCache;
 // Profile cache - pubkey -> profile
-  @override
-  @JsonKey()
-  Map<String, UserProfile> get profileCache {
-    if (_profileCache is EqualUnmodifiableMapView) return _profileCache;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_profileCache);
-  }
+@override@JsonKey() Map<String, UserProfile> get profileCache {
+  if (_profileCache is EqualUnmodifiableMapView) return _profileCache;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_profileCache);
+}
 
 // Pending profile requests
-  final Set<String> _pendingRequests;
+ final  Set<String> _pendingRequests;
 // Pending profile requests
-  @override
-  @JsonKey()
-  Set<String> get pendingRequests {
-    if (_pendingRequests is EqualUnmodifiableSetView) return _pendingRequests;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableSetView(_pendingRequests);
-  }
+@override@JsonKey() Set<String> get pendingRequests {
+  if (_pendingRequests is EqualUnmodifiableSetView) return _pendingRequests;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_pendingRequests);
+}
 
 // Missing profiles to avoid spam
-  final Set<String> _knownMissingProfiles;
+ final  Set<String> _knownMissingProfiles;
 // Missing profiles to avoid spam
-  @override
-  @JsonKey()
-  Set<String> get knownMissingProfiles {
-    if (_knownMissingProfiles is EqualUnmodifiableSetView)
-      return _knownMissingProfiles;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableSetView(_knownMissingProfiles);
-  }
+@override@JsonKey() Set<String> get knownMissingProfiles {
+  if (_knownMissingProfiles is EqualUnmodifiableSetView) return _knownMissingProfiles;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_knownMissingProfiles);
+}
 
-  final Map<String, DateTime> _missingProfileRetryAfter;
-  @override
-  @JsonKey()
-  Map<String, DateTime> get missingProfileRetryAfter {
-    if (_missingProfileRetryAfter is EqualUnmodifiableMapView)
-      return _missingProfileRetryAfter;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_missingProfileRetryAfter);
-  }
+ final  Map<String, DateTime> _missingProfileRetryAfter;
+@override@JsonKey() Map<String, DateTime> get missingProfileRetryAfter {
+  if (_missingProfileRetryAfter is EqualUnmodifiableMapView) return _missingProfileRetryAfter;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_missingProfileRetryAfter);
+}
 
 // Batch fetching state
-  final Set<String> _pendingBatchPubkeys;
+ final  Set<String> _pendingBatchPubkeys;
 // Batch fetching state
-  @override
-  @JsonKey()
-  Set<String> get pendingBatchPubkeys {
-    if (_pendingBatchPubkeys is EqualUnmodifiableSetView)
-      return _pendingBatchPubkeys;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableSetView(_pendingBatchPubkeys);
-  }
+@override@JsonKey() Set<String> get pendingBatchPubkeys {
+  if (_pendingBatchPubkeys is EqualUnmodifiableSetView) return _pendingBatchPubkeys;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_pendingBatchPubkeys);
+}
 
 // Loading and error state
-  @override
-  @JsonKey()
-  final bool isLoading;
-  @override
-  @JsonKey()
-  final bool isInitialized;
-  @override
-  final String? error;
+@override@JsonKey() final  bool isLoading;
+@override@JsonKey() final  bool isInitialized;
+@override final  String? error;
 // Stats
-  @override
-  @JsonKey()
-  final int totalProfilesCached;
-  @override
-  @JsonKey()
-  final int totalProfilesRequested;
+@override@JsonKey() final  int totalProfilesCached;
+@override@JsonKey() final  int totalProfilesRequested;
 
-  @override
-  String toString() {
-    return 'UserProfileState(profileCache: $profileCache, pendingRequests: $pendingRequests, knownMissingProfiles: $knownMissingProfiles, missingProfileRetryAfter: $missingProfileRetryAfter, pendingBatchPubkeys: $pendingBatchPubkeys, isLoading: $isLoading, isInitialized: $isInitialized, error: $error, totalProfilesCached: $totalProfilesCached, totalProfilesRequested: $totalProfilesRequested)';
-  }
+/// Create a copy of UserProfileState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$UserProfileStateCopyWith<_UserProfileState> get copyWith => __$UserProfileStateCopyWithImpl<_UserProfileState>(this, _$identity);
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$UserProfileStateImpl &&
-            const DeepCollectionEquality()
-                .equals(other._profileCache, _profileCache) &&
-            const DeepCollectionEquality()
-                .equals(other._pendingRequests, _pendingRequests) &&
-            const DeepCollectionEquality()
-                .equals(other._knownMissingProfiles, _knownMissingProfiles) &&
-            const DeepCollectionEquality().equals(
-                other._missingProfileRetryAfter, _missingProfileRetryAfter) &&
-            const DeepCollectionEquality()
-                .equals(other._pendingBatchPubkeys, _pendingBatchPubkeys) &&
-            (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading) &&
-            (identical(other.isInitialized, isInitialized) ||
-                other.isInitialized == isInitialized) &&
-            (identical(other.error, error) || other.error == error) &&
-            (identical(other.totalProfilesCached, totalProfilesCached) ||
-                other.totalProfilesCached == totalProfilesCached) &&
-            (identical(other.totalProfilesRequested, totalProfilesRequested) ||
-                other.totalProfilesRequested == totalProfilesRequested));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_profileCache),
-      const DeepCollectionEquality().hash(_pendingRequests),
-      const DeepCollectionEquality().hash(_knownMissingProfiles),
-      const DeepCollectionEquality().hash(_missingProfileRetryAfter),
-      const DeepCollectionEquality().hash(_pendingBatchPubkeys),
-      isLoading,
-      isInitialized,
-      error,
-      totalProfilesCached,
-      totalProfilesRequested);
-
-  /// Create a copy of UserProfileState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$UserProfileStateImplCopyWith<_$UserProfileStateImpl> get copyWith =>
-      __$$UserProfileStateImplCopyWithImpl<_$UserProfileStateImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$UserProfileStateImplToJson(
-      this,
-    );
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$UserProfileStateToJson(this, );
 }
 
-abstract class _UserProfileState extends UserProfileState {
-  const factory _UserProfileState(
-      {final Map<String, UserProfile> profileCache,
-      final Set<String> pendingRequests,
-      final Set<String> knownMissingProfiles,
-      final Map<String, DateTime> missingProfileRetryAfter,
-      final Set<String> pendingBatchPubkeys,
-      final bool isLoading,
-      final bool isInitialized,
-      final String? error,
-      final int totalProfilesCached,
-      final int totalProfilesRequested}) = _$UserProfileStateImpl;
-  const _UserProfileState._() : super._();
-
-  factory _UserProfileState.fromJson(Map<String, dynamic> json) =
-      _$UserProfileStateImpl.fromJson;
-
-// Profile cache - pubkey -> profile
-  @override
-  Map<String, UserProfile> get profileCache; // Pending profile requests
-  @override
-  Set<String> get pendingRequests; // Missing profiles to avoid spam
-  @override
-  Set<String> get knownMissingProfiles;
-  @override
-  Map<String, DateTime> get missingProfileRetryAfter; // Batch fetching state
-  @override
-  Set<String> get pendingBatchPubkeys; // Loading and error state
-  @override
-  bool get isLoading;
-  @override
-  bool get isInitialized;
-  @override
-  String? get error; // Stats
-  @override
-  int get totalProfilesCached;
-  @override
-  int get totalProfilesRequested;
-
-  /// Create a copy of UserProfileState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$UserProfileStateImplCopyWith<_$UserProfileStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfileState&&const DeepCollectionEquality().equals(other._profileCache, _profileCache)&&const DeepCollectionEquality().equals(other._pendingRequests, _pendingRequests)&&const DeepCollectionEquality().equals(other._knownMissingProfiles, _knownMissingProfiles)&&const DeepCollectionEquality().equals(other._missingProfileRetryAfter, _missingProfileRetryAfter)&&const DeepCollectionEquality().equals(other._pendingBatchPubkeys, _pendingBatchPubkeys)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isInitialized, isInitialized) || other.isInitialized == isInitialized)&&(identical(other.error, error) || other.error == error)&&(identical(other.totalProfilesCached, totalProfilesCached) || other.totalProfilesCached == totalProfilesCached)&&(identical(other.totalProfilesRequested, totalProfilesRequested) || other.totalProfilesRequested == totalProfilesRequested));
 }
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_profileCache),const DeepCollectionEquality().hash(_pendingRequests),const DeepCollectionEquality().hash(_knownMissingProfiles),const DeepCollectionEquality().hash(_missingProfileRetryAfter),const DeepCollectionEquality().hash(_pendingBatchPubkeys),isLoading,isInitialized,error,totalProfilesCached,totalProfilesRequested);
+
+@override
+String toString() {
+  return 'UserProfileState(profileCache: $profileCache, pendingRequests: $pendingRequests, knownMissingProfiles: $knownMissingProfiles, missingProfileRetryAfter: $missingProfileRetryAfter, pendingBatchPubkeys: $pendingBatchPubkeys, isLoading: $isLoading, isInitialized: $isInitialized, error: $error, totalProfilesCached: $totalProfilesCached, totalProfilesRequested: $totalProfilesRequested)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$UserProfileStateCopyWith<$Res> implements $UserProfileStateCopyWith<$Res> {
+  factory _$UserProfileStateCopyWith(_UserProfileState value, $Res Function(_UserProfileState) _then) = __$UserProfileStateCopyWithImpl;
+@override @useResult
+$Res call({
+ Map<String, UserProfile> profileCache, Set<String> pendingRequests, Set<String> knownMissingProfiles, Map<String, DateTime> missingProfileRetryAfter, Set<String> pendingBatchPubkeys, bool isLoading, bool isInitialized, String? error, int totalProfilesCached, int totalProfilesRequested
+});
+
+
+
+
+}
+/// @nodoc
+class __$UserProfileStateCopyWithImpl<$Res>
+    implements _$UserProfileStateCopyWith<$Res> {
+  __$UserProfileStateCopyWithImpl(this._self, this._then);
+
+  final _UserProfileState _self;
+  final $Res Function(_UserProfileState) _then;
+
+/// Create a copy of UserProfileState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? profileCache = null,Object? pendingRequests = null,Object? knownMissingProfiles = null,Object? missingProfileRetryAfter = null,Object? pendingBatchPubkeys = null,Object? isLoading = null,Object? isInitialized = null,Object? error = freezed,Object? totalProfilesCached = null,Object? totalProfilesRequested = null,}) {
+  return _then(_UserProfileState(
+profileCache: null == profileCache ? _self._profileCache : profileCache // ignore: cast_nullable_to_non_nullable
+as Map<String, UserProfile>,pendingRequests: null == pendingRequests ? _self._pendingRequests : pendingRequests // ignore: cast_nullable_to_non_nullable
+as Set<String>,knownMissingProfiles: null == knownMissingProfiles ? _self._knownMissingProfiles : knownMissingProfiles // ignore: cast_nullable_to_non_nullable
+as Set<String>,missingProfileRetryAfter: null == missingProfileRetryAfter ? _self._missingProfileRetryAfter : missingProfileRetryAfter // ignore: cast_nullable_to_non_nullable
+as Map<String, DateTime>,pendingBatchPubkeys: null == pendingBatchPubkeys ? _self._pendingBatchPubkeys : pendingBatchPubkeys // ignore: cast_nullable_to_non_nullable
+as Set<String>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,isInitialized: null == isInitialized ? _self.isInitialized : isInitialized // ignore: cast_nullable_to_non_nullable
+as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String?,totalProfilesCached: null == totalProfilesCached ? _self.totalProfilesCached : totalProfilesCached // ignore: cast_nullable_to_non_nullable
+as int,totalProfilesRequested: null == totalProfilesRequested ? _self.totalProfilesRequested : totalProfilesRequested // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+// dart format on

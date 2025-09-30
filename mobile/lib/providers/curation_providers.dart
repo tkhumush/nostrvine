@@ -33,8 +33,9 @@ class Curation extends _$Curation {
     // Auto-refresh when video events change
     ref.listen(videoEventsProvider, (previous, next) {
       // Only refresh if we have new video events
-      if (next.hasValue &&
-          previous?.valueOrNull?.length != next.valueOrNull?.length) {
+      final prevLength = previous?.hasValue == true ? (previous!.value?.length ?? 0) : 0;
+      final nextLength = (next?.hasValue ?? false) ? (next?.value?.length ?? 0) : 0;
+      if ((next?.hasValue ?? false) && prevLength != nextLength) {
         _refreshCurationSets();
       }
     });
@@ -42,7 +43,7 @@ class Curation extends _$Curation {
     // Initialize with empty state
     _initializeCuration();
 
-    return const CurationState(
+    return CurationState(
       editorsPicks: [],
       isLoading: true,
     );

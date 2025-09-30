@@ -25,7 +25,7 @@ enum PreloadPriority {
 
 /// Lightweight video metadata without VideoPlayerController
 @freezed
-class VideoMetadata with _$VideoMetadata {
+sealed class VideoMetadata with _$VideoMetadata {
   const factory VideoMetadata({
     required Duration duration,
     required double width,
@@ -39,7 +39,7 @@ class VideoMetadata with _$VideoMetadata {
 /// Lightweight video content representation
 /// This replaces the heavy VideoPlayerController-based approach
 @freezed
-class VideoContent with _$VideoContent {
+sealed class VideoContent with _$VideoContent {
   const factory VideoContent({
     required String videoId,
     required String url,
@@ -101,7 +101,7 @@ enum VideoControllerState {
 
 /// Single video controller state
 @freezed
-class SingleVideoState with _$SingleVideoState {
+sealed class SingleVideoState with _$SingleVideoState {
   const factory SingleVideoState({
     @Default(VideoControllerState.idle) VideoControllerState state,
     String? currentVideoId,
@@ -136,7 +136,7 @@ class SingleVideoState with _$SingleVideoState {
 
 /// Content buffer state for managing preloaded video content
 @freezed
-class VideoContentBufferState with _$VideoContentBufferState {
+sealed class VideoContentBufferState with _$VideoContentBufferState {
   const factory VideoContentBufferState({
     @Default({}) Map<String, VideoContent> content,
     @Default(0) int totalSize,

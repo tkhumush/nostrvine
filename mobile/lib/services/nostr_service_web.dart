@@ -2,17 +2,25 @@
 // ABOUTME: Bypasses embedded relay for simpler Web functionality
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:nostr_sdk/nostr_sdk.dart' as sdk;
+import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
-/// Web implementation of NostrService that connects directly to relays (incomplete)
+/// Web implementation of NostrService that connects directly to external relays
+/// Uses browser's WebSocket API instead of trying to run a local relay
 abstract class NostrServiceWeb implements INostrService {
   final List<String> _configuredRelays = [];
-  final Map<String, sdk.Relay> _relays = {};
+  final Map<String, WebSocketChannel> _relayConnections = {};
   final Map<String, StreamSubscription> _subscriptions = {};
+  final Map<String, String> _activeSubscriptions = {}; // subscriptionId -> relayUrl
+  final StreamController<sdk.Event> _eventController = StreamController<sdk.Event>.broadcast();
   bool _isInitialized = false;
   bool _isDisposed = false;
+  int _subscriptionCounter = 0;
 
   NostrServiceWeb();
 
@@ -20,7 +28,7 @@ abstract class NostrServiceWeb implements INostrService {
   bool get isInitialized => _isInitialized;
 
   @override
-  List<String> get connectedRelays => _relays.keys.toList();
+  List<String> get connectedRelays => _relayConnections.keys.toList();
 
   @override
   Future<void> initialize({
@@ -28,7 +36,7 @@ abstract class NostrServiceWeb implements INostrService {
     bool enableP2P = false,
   }) async {
     if (_isInitialized) {
-      Log.warning('NostrServiceWeb already initialized', 
+      Log.warning('NostrServiceWeb already initialized',
           name: 'NostrServiceWeb', category: LogCategory.relay);
       return;
     }
@@ -40,14 +48,22 @@ abstract class NostrServiceWeb implements INostrService {
       relaysToAdd.add(defaultRelay);
     }
 
-    // Connect to relays directly
+    // Connect to relays directly using WebSocket
     for (final relayUrl in relaysToAdd) {
       try {
-        // TODO: Fix Relay constructor - requires proper implementation
-        // final relay = sdk.Relay(relayUrl);
-        // await relay.connect();
-        // _relays[relayUrl] = relay;
+        final wsUrl = Uri.parse(relayUrl);
+        final channel = WebSocketChannel.connect(wsUrl);
+
+        // Listen for messages from this relay
+        channel.stream.listen(
+          (message) => _handleRelayMessage(relayUrl, message),
+          onError: (error) => _handleRelayError(relayUrl, error),
+          onDone: () => _handleRelayDisconnect(relayUrl),
+        );
+
+        _relayConnections[relayUrl] = channel;
         _configuredRelays.add(relayUrl);
+
         Log.info('Connected to relay: $relayUrl',
             name: 'NostrServiceWeb', category: LogCategory.relay);
       } catch (e) {
@@ -60,6 +76,50 @@ abstract class NostrServiceWeb implements INostrService {
     _isDisposed = false;
   }
 
+  void _handleRelayMessage(String relayUrl, dynamic message) {
+    try {
+      final decoded = jsonDecode(message as String) as List;
+      final messageType = decoded[0] as String;
+
+      if (messageType == 'EVENT' && decoded.length >= 3) {
+        final subscriptionId = decoded[1] as String;
+        final eventJson = decoded[2] as Map<String, dynamic>;
+
+        // Convert to SDK Event
+        final event = sdk.Event.fromJson(eventJson);
+        _eventController.add(event);
+
+        Log.debug('Received event from $relayUrl: ${event.id}',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
+      } else if (messageType == 'EOSE' && decoded.length >= 2) {
+        // End of stored events
+        final subscriptionId = decoded[1] as String;
+        Log.debug('EOSE received from $relayUrl for subscription $subscriptionId',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
+
+        // Trigger any EOSE callbacks
+        // Note: We store callbacks separately if needed
+      } else if (messageType == 'NOTICE') {
+        Log.info('Notice from $relayUrl: ${decoded[1]}',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
+      }
+    } catch (e) {
+      Log.error('Error handling relay message from $relayUrl: $e',
+          name: 'NostrServiceWeb', category: LogCategory.relay);
+    }
+  }
+
+  void _handleRelayError(String relayUrl, dynamic error) {
+    Log.error('Relay error from $relayUrl: $error',
+        name: 'NostrServiceWeb', category: LogCategory.relay);
+  }
+
+  void _handleRelayDisconnect(String relayUrl) {
+    Log.warning('Relay disconnected: $relayUrl',
+        name: 'NostrServiceWeb', category: LogCategory.relay);
+    _relayConnections.remove(relayUrl);
+  }
+
   @override
   Stream<sdk.Event> subscribeToEvents({
     required List<sdk.Filter> filters,
@@ -70,31 +130,38 @@ abstract class NostrServiceWeb implements INostrService {
       throw StateError('Relay not initialized. Call initialize() first.');
     }
 
-    if (_relays.isEmpty) {
+    if (_relayConnections.isEmpty) {
       throw Exception('No connected relays');
     }
 
-    // Create a stream controller for this subscription
-    final controller = StreamController<sdk.Event>.broadcast();
+    // Generate subscription ID
+    final subscriptionId = 'sub_${++_subscriptionCounter}';
 
-    // Subscribe to each relay
-    for (final relay in _relays.values) {
+    // Send REQ message to each relay
+    for (final entry in _relayConnections.entries) {
       try {
-        // TODO: Implement relay subscription when nostr_sdk supports it
-        // final stream = relay.subscribe(filters, id: subscriptionId);
-        // final subscription = stream.listen(
-        //   (event) => controller.add(event),
-        //   onError: (error) => Log.error('Relay subscription error: $error',
-        //       name: 'NostrServiceWeb', category: LogCategory.relay),
-        // );
-        // _subscriptions['$subscriptionId-${relay.url}'] = subscription;
+        final relayUrl = entry.key;
+        final channel = entry.value;
+
+        // Convert filters to JSON
+        final filtersJson = filters.map((f) => f.toJson()).toList();
+
+        // Send REQ message: ["REQ", subscription_id, filter...]
+        final reqMessage = jsonEncode(['REQ', subscriptionId, ...filtersJson]);
+        channel.sink.add(reqMessage);
+
+        _activeSubscriptions[subscriptionId] = relayUrl;
+
+        Log.debug('Sent REQ to $relayUrl: $subscriptionId',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
       } catch (e) {
-        Log.error('Failed to subscribe to relay ${relay.url}: $e',
+        Log.error('Failed to subscribe to relay ${entry.key}: $e',
             name: 'NostrServiceWeb', category: LogCategory.relay);
       }
     }
 
-    return controller.stream;
+    // Return the event stream
+    return _eventController.stream;
   }
 
   Future<List<sdk.Event>> queryEvents(List<sdk.Filter> filters) async {
@@ -102,20 +169,33 @@ abstract class NostrServiceWeb implements INostrService {
       throw StateError('Relay not initialized. Call initialize() first.');
     }
 
-    if (_relays.isEmpty) {
+    if (_relayConnections.isEmpty) {
       throw Exception('No connected relays');
     }
 
     final events = <sdk.Event>{};
-    
-    // Query each relay
-    for (final relay in _relays.values) {
+    final subscriptionId = 'query_${++_subscriptionCounter}';
+
+    // Query each relay with a temporary subscription
+    for (final entry in _relayConnections.entries) {
       try {
-        // TODO: Implement relay query when nostr_sdk supports it
-        // final relayEvents = await relay.query(filters);
-        // events.addAll(relayEvents);
+        final channel = entry.value;
+
+        // Convert filters to JSON
+        final filtersJson = filters.map((f) => f.toJson()).toList();
+
+        // Send REQ message
+        final reqMessage = jsonEncode(['REQ', subscriptionId, ...filtersJson]);
+        channel.sink.add(reqMessage);
+
+        // Wait briefly for events, then close subscription
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Send CLOSE message
+        final closeMessage = jsonEncode(['CLOSE', subscriptionId]);
+        channel.sink.add(closeMessage);
       } catch (e) {
-        Log.error('Failed to query relay ${relay.url}: $e',
+        Log.error('Failed to query relay ${entry.key}: $e',
             name: 'NostrServiceWeb', category: LogCategory.relay);
       }
     }
@@ -130,7 +210,7 @@ abstract class NostrServiceWeb implements INostrService {
       await initialize();
     }
 
-    if (_relays.isEmpty) {
+    if (_relayConnections.isEmpty) {
       return NostrBroadcastResult(
         event: event,
         successCount: 0,
@@ -145,12 +225,20 @@ abstract class NostrServiceWeb implements INostrService {
     int successCount = 0;
 
     // Broadcast to each relay
-    for (final entry in _relays.entries) {
+    for (final entry in _relayConnections.entries) {
       try {
-        // TODO: Implement relay publish when nostr_sdk supports it
-        // await entry.value.publish(event);
-        results[entry.key] = true;
+        final relayUrl = entry.key;
+        final channel = entry.value;
+
+        // Send EVENT message: ["EVENT", event_json]
+        final eventMessage = jsonEncode(['EVENT', event.toJson()]);
+        channel.sink.add(eventMessage);
+
+        results[relayUrl] = true;
         successCount++;
+
+        Log.debug('Published event to $relayUrl: ${event.id}',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
       } catch (e) {
         results[entry.key] = false;
         errors[entry.key] = e.toString();
@@ -162,7 +250,7 @@ abstract class NostrServiceWeb implements INostrService {
     return NostrBroadcastResult(
       event: event,
       successCount: successCount,
-      totalRelays: _relays.length,
+      totalRelays: _relayConnections.length,
       results: results,
       errors: errors,
     );
@@ -179,14 +267,17 @@ abstract class NostrServiceWeb implements INostrService {
     }
     keysToRemove.forEach(_subscriptions.remove);
 
-    // TODO: Also unsubscribe from relays when nostr_sdk supports it
-    // for (final relay in _relays.values) {
-    //   try {
-    //     relay.unsubscribe(id);
-    //   } catch (e) {
-    //     // Ignore unsubscribe errors
-    //   }
-    // }
+    // Send CLOSE message to relays
+    for (final channel in _relayConnections.values) {
+      try {
+        final closeMessage = jsonEncode(['CLOSE', id]);
+        channel.sink.add(closeMessage);
+      } catch (e) {
+        // Ignore unsubscribe errors
+      }
+    }
+
+    _activeSubscriptions.remove(id);
   }
 
   @override
@@ -199,15 +290,18 @@ abstract class NostrServiceWeb implements INostrService {
     }
     _subscriptions.clear();
 
-    // TODO: Disconnect from relays when nostr_sdk supports it
-    // for (final relay in _relays.values) {
-    //   try {
-    //     await relay.disconnect();
-    //   } catch (e) {
-    //     // Ignore disconnect errors
-    //   }
-    // }
-    _relays.clear();
+    // Close all WebSocket connections
+    for (final entry in _relayConnections.entries) {
+      try {
+        await entry.value.sink.close(status.normalClosure);
+        Log.debug('Closed connection to ${entry.key}',
+            name: 'NostrServiceWeb', category: LogCategory.relay);
+      } catch (e) {
+        // Ignore disconnect errors
+      }
+    }
+    _relayConnections.clear();
+    _activeSubscriptions.clear();
 
     _isDisposed = true;
     _isInitialized = false;
@@ -246,16 +340,24 @@ abstract class NostrServiceWeb implements INostrService {
   }
 
   Future<void> connectToRelay(String relayUrl) async {
-    if (_relays.containsKey(relayUrl)) {
+    if (_relayConnections.containsKey(relayUrl)) {
       return; // Already connected
     }
 
     try {
-      // TODO: Implement proper relay connection when nostr_sdk supports it
-      // final relay = sdk.Relay(relayUrl);
-      // await relay.connect();
-      // _relays[relayUrl] = relay;
+      final wsUrl = Uri.parse(relayUrl);
+      final channel = WebSocketChannel.connect(wsUrl);
+
+      // Listen for messages from this relay
+      channel.stream.listen(
+        (message) => _handleRelayMessage(relayUrl, message),
+        onError: (error) => _handleRelayError(relayUrl, error),
+        onDone: () => _handleRelayDisconnect(relayUrl),
+      );
+
+      _relayConnections[relayUrl] = channel;
       _configuredRelays.add(relayUrl);
+
       Log.info('Connected to relay: $relayUrl',
           name: 'NostrServiceWeb', category: LogCategory.relay);
     } catch (e) {
@@ -266,11 +368,14 @@ abstract class NostrServiceWeb implements INostrService {
   }
 
   Future<void> disconnectFromRelay(String relayUrl) async {
-    final relay = _relays[relayUrl];
-    if (relay != null) {
-      // TODO: Implement relay disconnect when nostr_sdk supports it
-      // await relay.disconnect();
-      _relays.remove(relayUrl);
+    final channel = _relayConnections[relayUrl];
+    if (channel != null) {
+      try {
+        await channel.sink.close(status.normalClosure);
+      } catch (e) {
+        // Ignore close errors
+      }
+      _relayConnections.remove(relayUrl);
       _configuredRelays.remove(relayUrl);
     }
   }
@@ -288,5 +393,151 @@ abstract class NostrServiceWeb implements INostrService {
     ];
     final events = await queryEvents(filters);
     return events.isNotEmpty ? events.first : null;
+  }
+
+  // Additional INostrService methods for web implementation
+  @override
+  Future<bool> addRelay(String relayUrl) async {
+    try {
+      await connectToRelay(relayUrl);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Stream<Map<String, bool>> get authStateStream => Stream.value({});
+
+  @override
+  Future<void> closeAllSubscriptions() async {
+    for (final subscription in _subscriptions.values) {
+      await subscription.cancel();
+    }
+    _subscriptions.clear();
+    _activeSubscriptions.clear();
+  }
+
+  @override
+  int get connectedRelayCount => _relayConnections.length;
+
+  @override
+  Future<List<sdk.Event>> getEvents({
+    required List<sdk.Filter> filters,
+    int? limit,
+  }) async {
+    // Add limit to filters if specified
+    if (limit != null) {
+      for (final f in filters) {
+        f.limit = limit;
+      }
+    }
+    return queryEvents(filters);
+  }
+
+  @override
+  Map<String, bool> getRelayStatus() {
+    final status = <String, bool>{};
+    for (final relay in _configuredRelays) {
+      status[relay] = _relayConnections.containsKey(relay);
+    }
+    return status;
+  }
+
+  @override
+  bool get hasKeys => true; // Web always has keys from keyManager
+
+  @override
+  NostrKeyManager get keyManager => throw UnimplementedError('Override in subclass');
+
+  @override
+  bool get isDisposed => _isDisposed;
+
+  @override
+  bool get isVineRelayAuthenticated => true; // Web doesn't need special auth
+
+  @override
+  String? get publicKey => null; // Managed by keyManager
+
+  @override
+  Future<NostrBroadcastResult> publishFileMetadata({
+    required dynamic metadata, // NIP94Metadata
+    required String content,
+    List<String> hashtags = const [],
+  }) async {
+    // For now, create a simple event
+    // TODO: Properly handle NIP94Metadata when available
+    final tags = <List<String>>[];
+
+    // Add hashtags as tags
+    for (final tag in hashtags) {
+      tags.add(['t', tag]);
+    }
+
+    final event = sdk.Event(
+      publicKey ?? '',
+      1063, // File metadata event kind
+      tags,
+      content,
+    );
+
+    return broadcastEvent(event);
+  }
+
+  @override
+  Future<void> reconnectAll() async {
+    await reconnectToRelays();
+  }
+
+  @override
+  Map<String, bool> get relayAuthStates =>
+      Map.fromEntries(_configuredRelays.map((r) => MapEntry(r, true)));
+
+  @override
+  int get relayCount => _configuredRelays.length;
+
+  @override
+  Map<String, dynamic> get relayStatuses => getRelayStatistics();
+
+  @override
+  List<String> get relays => _configuredRelays.toList();
+
+  @override
+  Future<void> removeRelay(String relayUrl) async {
+    await disconnectFromRelay(relayUrl);
+  }
+
+  @override
+  Future<void> retryInitialization() async {
+    if (!_isInitialized) {
+      await initialize();
+    }
+  }
+
+  @override
+  Stream<sdk.Event> searchVideos(
+    String query, {
+    List<String>? authors,
+    DateTime? since,
+    DateTime? until,
+    int? limit,
+  }) {
+    final filters = [
+      sdk.Filter(
+        kinds: [34236], // Video event kind
+        authors: authors,
+        search: query,
+        limit: limit,
+        since: since != null ? since.millisecondsSinceEpoch ~/ 1000 : null,
+        until: until != null ? until.millisecondsSinceEpoch ~/ 1000 : null,
+      )
+    ];
+
+    return subscribeToEvents(filters: filters);
+  }
+
+  @override
+  void setAuthTimeout(Duration timeout) {
+    // Not needed for web
   }
 }

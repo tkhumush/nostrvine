@@ -319,7 +319,7 @@ class VideoEventPublisher {
         return false;
       }
 
-      if (!_authService!.isAuthenticated) {
+      if (!_authService.isAuthenticated) {
         Log.error('User not authenticated - cannot create video event',
             name: 'VideoEventPublisher', category: LogCategory.video);
         return false;
@@ -332,7 +332,7 @@ class VideoEventPublisher {
       Log.verbose('Tags: ${tags.length} tags',
           name: 'VideoEventPublisher', category: LogCategory.video);
 
-      final event = await _authService!.createAndSignEvent(
+      final event = await _authService.createAndSignEvent(
         kind: NIP71VideoKinds.getPreferredAddressableKind(), // NIP-71 addressable short video
         content: content,
         tags: tags,
@@ -372,7 +372,7 @@ class VideoEventPublisher {
         if (_videoEventService != null) {
           try {
             final videoEvent = VideoEvent.fromNostrEvent(event);
-            _videoEventService!.addVideoEvent(videoEvent);
+            _videoEventService.addVideoEvent(videoEvent);
             Log.info('Added published video to discovery cache: ${event.id}',
                 name: 'VideoEventPublisher', category: LogCategory.video);
           } catch (e) {

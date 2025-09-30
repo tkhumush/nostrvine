@@ -139,8 +139,8 @@ class HashtagService {
   /// Get popular hashtags based on total video count
   List<String> getPopularHashtags({int limit = 25}) {
     // Try to get from cache first
-    if (_cacheService != null && _cacheService!.isInitialized) {
-      final cachedHashtags = _cacheService!.getCachedPopularHashtags();
+    if (_cacheService != null && _cacheService.isInitialized) {
+      final cachedHashtags = _cacheService.getCachedPopularHashtags();
       if (cachedHashtags != null && cachedHashtags.isNotEmpty) {
         return cachedHashtags.take(limit).toList();
       }
@@ -153,9 +153,9 @@ class HashtagService {
 
     // Cache the result asynchronously
     if (_cacheService != null &&
-        _cacheService!.isInitialized &&
+        _cacheService.isInitialized &&
         hashtags.isNotEmpty) {
-      _cacheService!.cachePopularHashtags(hashtags);
+      _cacheService.cachePopularHashtags(hashtags);
     }
 
     return hashtags;

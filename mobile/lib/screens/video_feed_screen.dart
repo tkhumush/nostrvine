@@ -191,7 +191,8 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
     // Get current videos from home feed state
     Log.debug('🔍 Attempting ref.read(homeFeedProvider) from VideoFeedScreen._onPageChanged, mounted: $mounted',
         name: 'VideoFeedScreen', category: LogCategory.ui);
-    final feedState = ref.read(homeFeedProvider).valueOrNull;
+    final asyncState = ref.read(homeFeedProvider);
+    final feedState = asyncState.hasValue ? asyncState.value : null;
     if (feedState == null) return;
 
     final videos = feedState.videos;
@@ -279,7 +280,8 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
 
     Log.debug('🔍 Attempting ref.read(homeFeedProvider) from _resumeCurrentVideo, mounted: $mounted',
         name: 'VideoFeedScreen', category: LogCategory.ui);
-    final feedState = ref.read(homeFeedProvider).valueOrNull;
+    final asyncState = ref.read(homeFeedProvider);
+    final feedState = asyncState.hasValue ? asyncState.value : null;
     if (feedState == null) {
       Log.debug('_resumeCurrentVideo: feedState is null, returning',
           name: 'VideoFeedScreen', category: LogCategory.ui);
@@ -303,7 +305,8 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
 
   /// Get the currently displayed video
   VideoEvent? getCurrentVideo() {
-    final feedState = ref.read(homeFeedProvider).valueOrNull;
+    final asyncState = ref.read(homeFeedProvider);
+    final feedState = asyncState.hasValue ? asyncState.value : null;
     if (feedState == null) return null;
 
     final videos = feedState.videos;
@@ -402,7 +405,7 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
 
   Widget _buildEmptyState() {
     // Check if user is following anyone to show appropriate message
-    final socialData = ref.watch(social.socialNotifierProvider);
+    final socialData = ref.watch(social.socialProvider);
     final isFollowingAnyone = socialData.followingPubkeys.isNotEmpty;
 
     Log.info(
@@ -841,7 +844,7 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
     // This prevents creating hundreds of relay subscriptions
     final currentVideo = videos[currentIndex];
     final pubkeysToFetch = <String>{};
-    final userProfilesNotifier = ref.read(userProfileNotifierProvider.notifier);
+    final userProfilesNotifier = ref.read(userProfileProvider.notifier);
 
     // Only add pubkey if we don't have the profile yet
     if (!userProfilesNotifier.hasProfile(currentVideo.pubkey)) {

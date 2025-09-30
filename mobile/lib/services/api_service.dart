@@ -55,7 +55,7 @@ class ApiService {
     try {
       // Check rate limit if configured
       if (_rateLimiter != null) {
-        await _rateLimiter!.checkLimit('/v1/media/request-upload');
+        await _rateLimiter.checkLimit('/v1/media/request-upload');
       }
 
       final uri = Uri.parse('$_baseUrl/v1/media/request-upload');
@@ -221,7 +221,7 @@ class ApiService {
   /// Get rate limit status for an endpoint
   RateLimitStatus? getRateLimitStatus(String endpoint) {
     if (_rateLimiter == null) return null;
-    return _rateLimiter!.getStatus(endpoint);
+    return _rateLimiter.getStatus(endpoint);
   }
 
   /// Close the HTTP client

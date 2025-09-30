@@ -53,7 +53,7 @@ void main() {
     });
 
     test('should start with initial state', () {
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
 
       expect(state, equals(SocialState.initial));
       expect(state.likedEventIds, isEmpty);
@@ -76,9 +76,9 @@ void main() {
           .thenAnswer((_) => const Stream<Event>.empty());
 
       // Initialize
-      await container.read(socialNotifierProvider.notifier).initialize();
+      await container.read(socialProvider.notifier).initialize();
 
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
       expect(state.isInitialized, isTrue);
 
       // Verify it tried to load user data
@@ -117,10 +117,10 @@ void main() {
 
       // Toggle like (should add)
       await container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .toggleLike(eventId, authorPubkey);
 
-      var state = container.read(socialNotifierProvider);
+      var state = container.read(socialProvider);
       expect(state.likedEventIds.contains(eventId), isTrue);
       expect(state.likeCounts[eventId], equals(1));
 
@@ -135,10 +135,10 @@ void main() {
 
       // Toggle like again (should remove)
       await container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .toggleLike(eventId, authorPubkey);
 
-      state = container.read(socialNotifierProvider);
+      state = container.read(socialProvider);
       expect(state.likedEventIds.contains(eventId), isFalse);
       expect(state.likeCounts[eventId], equals(0));
     });
@@ -173,18 +173,18 @@ void main() {
 
       // Follow user
       await container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .followUser(userToFollow);
 
-      var state = container.read(socialNotifierProvider);
+      var state = container.read(socialProvider);
       expect(state.followingPubkeys.contains(userToFollow), isTrue);
 
       // Unfollow user
       await container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .unfollowUser(userToFollow);
 
-      state = container.read(socialNotifierProvider);
+      state = container.read(socialProvider);
       expect(state.followingPubkeys.contains(userToFollow), isFalse);
     });
 
@@ -223,10 +223,10 @@ void main() {
 
       // Repost event
       await container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .repostEvent(eventToRepost);
 
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
       expect(state.repostedEventIds.contains('event-to-repost'), isTrue);
     });
 
@@ -249,13 +249,13 @@ void main() {
       // Try to toggle like
       await expectLater(
         () => container
-            .read(socialNotifierProvider.notifier)
+            .read(socialProvider.notifier)
             .toggleLike(eventId, authorPubkey),
         throwsException,
       );
 
       // State should remain unchanged
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
       expect(state.likedEventIds.contains(eventId), isFalse);
     });
 
@@ -265,20 +265,20 @@ void main() {
 
       // Update stats
       container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .updateFollowerStats(pubkey, stats);
 
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
       expect(state.followerStats[pubkey], equals(stats));
     });
 
     test('should check if user is following another user', () {
       // Add some following pubkeys
       container
-          .read(socialNotifierProvider.notifier)
+          .read(socialProvider.notifier)
           .updateFollowingList(['pubkey1', 'pubkey2', 'pubkey3']);
 
-      final state = container.read(socialNotifierProvider);
+      final state = container.read(socialProvider);
       expect(state.isFollowing('pubkey2'), isTrue);
       expect(state.isFollowing('pubkey4'), isFalse);
     });

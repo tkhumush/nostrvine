@@ -8,7 +8,7 @@ part 'social_state.freezed.dart';
 part 'social_state.g.dart';
 
 @freezed
-class SocialState with _$SocialState {
+sealed class SocialState with _$SocialState {
   const factory SocialState({
     // Like-related state
     @Default({}) Set<String> likedEventIds,
@@ -41,7 +41,7 @@ class SocialState with _$SocialState {
   const SocialState._();
 
   /// Create initial state
-  static const SocialState initial = SocialState();
+  static final SocialState initial = SocialState();
 
   /// Check if user has liked an event
   bool isLiked(String eventId) => likedEventIds.contains(eventId);

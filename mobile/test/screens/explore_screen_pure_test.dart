@@ -146,7 +146,7 @@ void main() {
 
         // Should render successfully
         expect(find.byType(ExploreScreen), findsOneWidget);
-        expect(find.text('Explore'), findsOneWidget);
+        // "Explore" title is now in parent MainNavigationScreen, not in ExploreScreen itself
         expect(find.text('Popular Now'), findsOneWidget);
         expect(find.text('Trending'), findsOneWidget);
         expect(find.text("Editor's Pick"), findsOneWidget);

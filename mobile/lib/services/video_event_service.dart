@@ -1981,13 +1981,13 @@ class VideoEventService extends ChangeNotifier {
 
     // Fetch profile for video author if not already cached
     // This uses existing WebSocket connection with REQ command
-    if (_userProfileService != null && !_userProfileService!.hasProfile(videoEvent.pubkey)) {
+    if (_userProfileService != null && !_userProfileService.hasProfile(videoEvent.pubkey)) {
       Log.debug(
         'Fetching profile for video author ${videoEvent.pubkey.substring(0, 8)}...',
         name: 'VideoEventService',
         category: LogCategory.video,
       );
-      _userProfileService!.fetchProfile(videoEvent.pubkey).catchError((error) {
+      _userProfileService.fetchProfile(videoEvent.pubkey).catchError((error) {
         Log.warning(
           'Failed to fetch profile for ${videoEvent.pubkey.substring(0, 8)}: $error',
           name: 'VideoEventService',

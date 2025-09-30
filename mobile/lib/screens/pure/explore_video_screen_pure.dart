@@ -60,10 +60,21 @@ class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure>
 
   @override
   void dispose() {
-    // Clear active video when leaving explore feed to prevent background playback
+    // CRITICAL: Clear active video when leaving to stop playback
+    // This MUST happen to prevent background audio playing
     try {
+      final activeId = ref.read(activeVideoProvider);
+      Log.info('🛑 ExploreVideoScreenPure disposing - clearing active video: ${activeId?.substring(0, 8) ?? "none"}',
+          name: 'ExploreVideoScreen', category: LogCategory.video);
+
       ref.read(activeVideoProvider.notifier).clearActiveVideo();
-    } catch (_) {}
+
+      Log.info('✅ Active video cleared successfully',
+          name: 'ExploreVideoScreen', category: LogCategory.video);
+    } catch (e) {
+      Log.error('❌ Error clearing active video on dispose: $e',
+          name: 'ExploreVideoScreen', category: LogCategory.video);
+    }
     super.dispose();
   }
 
@@ -86,6 +97,7 @@ class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure>
         itemBuilder: (context, index) => VideoFeedItem(
           video: widget.videoList[index],
           index: index,
+          hasBottomNavigation: false, // Explore feed mode has no bottom navigation
         ),
       );
   }

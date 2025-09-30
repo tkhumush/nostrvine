@@ -2,7 +2,7 @@
 // ABOUTME: Represents user information like display name, avatar, bio, and social links
 
 import 'dart:convert';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:nostr_sdk/event.dart';
 
 part 'user_profile.g.dart';

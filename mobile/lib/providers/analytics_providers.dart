@@ -50,7 +50,7 @@ class Analytics extends _$Analytics {
       _cleanupTimer?.cancel();
     });
 
-    return AnalyticsState.initial;
+    return const AnalyticsState();
   }
 
   /// Initialize the analytics service

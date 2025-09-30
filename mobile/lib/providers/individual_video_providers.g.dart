@@ -6,465 +6,284 @@ part of 'individual_video_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$individualVideoControllerHash() =>
-    r'3e62352d72952f81cdee3832dd025f96ecb5ce0c';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// Provider for individual video controllers with autoDispose
 /// Each video gets its own controller instance
-///
-/// Copied from [individualVideoController].
+
 @ProviderFor(individualVideoController)
-const individualVideoControllerProvider = IndividualVideoControllerFamily();
+const individualVideoControllerProvider = IndividualVideoControllerFamily._();
 
 /// Provider for individual video controllers with autoDispose
 /// Each video gets its own controller instance
-///
-/// Copied from [individualVideoController].
-class IndividualVideoControllerFamily extends Family<VideoPlayerController> {
-  /// Provider for individual video controllers with autoDispose
-  /// Each video gets its own controller instance
-  ///
-  /// Copied from [individualVideoController].
-  const IndividualVideoControllerFamily();
 
+final class IndividualVideoControllerProvider
+    extends
+        $FunctionalProvider<
+          VideoPlayerController,
+          VideoPlayerController,
+          VideoPlayerController
+        >
+    with $Provider<VideoPlayerController> {
   /// Provider for individual video controllers with autoDispose
   /// Each video gets its own controller instance
-  ///
-  /// Copied from [individualVideoController].
-  IndividualVideoControllerProvider call(
-    VideoControllerParams params,
-  ) {
-    return IndividualVideoControllerProvider(
-      params,
-    );
+  const IndividualVideoControllerProvider._({
+    required IndividualVideoControllerFamily super.from,
+    required VideoControllerParams super.argument,
+  }) : super(
+         retry: null,
+         name: r'individualVideoControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$individualVideoControllerHash();
+
+  @override
+  String toString() {
+    return r'individualVideoControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  IndividualVideoControllerProvider getProviderOverride(
-    covariant IndividualVideoControllerProvider provider,
-  ) {
-    return call(
-      provider.params,
-    );
+  $ProviderElement<VideoPlayerController> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  VideoPlayerController create(Ref ref) {
+    final argument = this.argument as VideoControllerParams;
+    return individualVideoController(ref, argument);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'individualVideoControllerProvider';
-}
-
-/// Provider for individual video controllers with autoDispose
-/// Each video gets its own controller instance
-///
-/// Copied from [individualVideoController].
-class IndividualVideoControllerProvider
-    extends AutoDisposeProvider<VideoPlayerController> {
-  /// Provider for individual video controllers with autoDispose
-  /// Each video gets its own controller instance
-  ///
-  /// Copied from [individualVideoController].
-  IndividualVideoControllerProvider(
-    VideoControllerParams params,
-  ) : this._internal(
-          (ref) => individualVideoController(
-            ref as IndividualVideoControllerRef,
-            params,
-          ),
-          from: individualVideoControllerProvider,
-          name: r'individualVideoControllerProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$individualVideoControllerHash,
-          dependencies: IndividualVideoControllerFamily._dependencies,
-          allTransitiveDependencies:
-              IndividualVideoControllerFamily._allTransitiveDependencies,
-          params: params,
-        );
-
-  IndividualVideoControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.params,
-  }) : super.internal();
-
-  final VideoControllerParams params;
-
-  @override
-  Override overrideWith(
-    VideoPlayerController Function(IndividualVideoControllerRef provider)
-        create,
-  ) {
-    return ProviderOverride(
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VideoPlayerController value) {
+    return $ProviderOverride(
       origin: this,
-      override: IndividualVideoControllerProvider._internal(
-        (ref) => create(ref as IndividualVideoControllerRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        params: params,
-      ),
+      providerOverride: $SyncValueProvider<VideoPlayerController>(value),
     );
-  }
-
-  @override
-  AutoDisposeProviderElement<VideoPlayerController> createElement() {
-    return _IndividualVideoControllerProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is IndividualVideoControllerProvider && other.params == params;
+    return other is IndividualVideoControllerProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, params.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin IndividualVideoControllerRef
-    on AutoDisposeProviderRef<VideoPlayerController> {
-  /// The parameter `params` of this provider.
-  VideoControllerParams get params;
-}
+String _$individualVideoControllerHash() =>
+    r'8e94a815f4705b8059abf56effd940c165aa8f83';
 
-class _IndividualVideoControllerProviderElement
-    extends AutoDisposeProviderElement<VideoPlayerController>
-    with IndividualVideoControllerRef {
-  _IndividualVideoControllerProviderElement(super.provider);
+/// Provider for individual video controllers with autoDispose
+/// Each video gets its own controller instance
+
+final class IndividualVideoControllerFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          VideoPlayerController,
+          VideoControllerParams
+        > {
+  const IndividualVideoControllerFamily._()
+    : super(
+        retry: null,
+        name: r'individualVideoControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider for individual video controllers with autoDispose
+  /// Each video gets its own controller instance
+
+  IndividualVideoControllerProvider call(VideoControllerParams params) =>
+      IndividualVideoControllerProvider._(argument: params, from: this);
 
   @override
-  VideoControllerParams get params =>
-      (origin as IndividualVideoControllerProvider).params;
+  String toString() => r'individualVideoControllerProvider';
+}
+
+/// Provider for video loading state
+
+@ProviderFor(videoLoadingState)
+const videoLoadingStateProvider = VideoLoadingStateFamily._();
+
+/// Provider for video loading state
+
+final class VideoLoadingStateProvider
+    extends
+        $FunctionalProvider<
+          VideoLoadingState,
+          VideoLoadingState,
+          VideoLoadingState
+        >
+    with $Provider<VideoLoadingState> {
+  /// Provider for video loading state
+  const VideoLoadingStateProvider._({
+    required VideoLoadingStateFamily super.from,
+    required VideoControllerParams super.argument,
+  }) : super(
+         retry: null,
+         name: r'videoLoadingStateProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$videoLoadingStateHash();
+
+  @override
+  String toString() {
+    return r'videoLoadingStateProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<VideoLoadingState> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  VideoLoadingState create(Ref ref) {
+    final argument = this.argument as VideoControllerParams;
+    return videoLoadingState(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VideoLoadingState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VideoLoadingState>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VideoLoadingStateProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$videoLoadingStateHash() => r'22f741beecbea8885fcd115ef3047a2fa2eb5e0d';
 
 /// Provider for video loading state
-///
-/// Copied from [videoLoadingState].
-@ProviderFor(videoLoadingState)
-const videoLoadingStateProvider = VideoLoadingStateFamily();
 
-/// Provider for video loading state
-///
-/// Copied from [videoLoadingState].
-class VideoLoadingStateFamily extends Family<VideoLoadingState> {
-  /// Provider for video loading state
-  ///
-  /// Copied from [videoLoadingState].
-  const VideoLoadingStateFamily();
-
-  /// Provider for video loading state
-  ///
-  /// Copied from [videoLoadingState].
-  VideoLoadingStateProvider call(
-    VideoControllerParams params,
-  ) {
-    return VideoLoadingStateProvider(
-      params,
-    );
-  }
-
-  @override
-  VideoLoadingStateProvider getProviderOverride(
-    covariant VideoLoadingStateProvider provider,
-  ) {
-    return call(
-      provider.params,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'videoLoadingStateProvider';
-}
-
-/// Provider for video loading state
-///
-/// Copied from [videoLoadingState].
-class VideoLoadingStateProvider extends AutoDisposeProvider<VideoLoadingState> {
-  /// Provider for video loading state
-  ///
-  /// Copied from [videoLoadingState].
-  VideoLoadingStateProvider(
-    VideoControllerParams params,
-  ) : this._internal(
-          (ref) => videoLoadingState(
-            ref as VideoLoadingStateRef,
-            params,
-          ),
-          from: videoLoadingStateProvider,
-          name: r'videoLoadingStateProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$videoLoadingStateHash,
-          dependencies: VideoLoadingStateFamily._dependencies,
-          allTransitiveDependencies:
-              VideoLoadingStateFamily._allTransitiveDependencies,
-          params: params,
-        );
-
-  VideoLoadingStateProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.params,
-  }) : super.internal();
-
-  final VideoControllerParams params;
-
-  @override
-  Override overrideWith(
-    VideoLoadingState Function(VideoLoadingStateRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: VideoLoadingStateProvider._internal(
-        (ref) => create(ref as VideoLoadingStateRef),
-        from: from,
-        name: null,
+final class VideoLoadingStateFamily extends $Family
+    with $FunctionalFamilyOverride<VideoLoadingState, VideoControllerParams> {
+  const VideoLoadingStateFamily._()
+    : super(
+        retry: null,
+        name: r'videoLoadingStateProvider',
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        params: params,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider for video loading state
+
+  VideoLoadingStateProvider call(VideoControllerParams params) =>
+      VideoLoadingStateProvider._(argument: params, from: this);
 
   @override
-  AutoDisposeProviderElement<VideoLoadingState> createElement() {
-    return _VideoLoadingStateProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is VideoLoadingStateProvider && other.params == params;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, params.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'videoLoadingStateProvider';
 }
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin VideoLoadingStateRef on AutoDisposeProviderRef<VideoLoadingState> {
-  /// The parameter `params` of this provider.
-  VideoControllerParams get params;
-}
-
-class _VideoLoadingStateProviderElement
-    extends AutoDisposeProviderElement<VideoLoadingState>
-    with VideoLoadingStateRef {
-  _VideoLoadingStateProviderElement(super.provider);
-
-  @override
-  VideoControllerParams get params =>
-      (origin as VideoLoadingStateProvider).params;
-}
-
-String _$isVideoActiveHash() => r'763c3d07e5cede5d38a174bfedecafa35aedafac';
 
 /// Provider for checking if a specific video is currently active
-///
-/// Copied from [isVideoActive].
+
 @ProviderFor(isVideoActive)
-const isVideoActiveProvider = IsVideoActiveFamily();
+const isVideoActiveProvider = IsVideoActiveFamily._();
 
 /// Provider for checking if a specific video is currently active
-///
-/// Copied from [isVideoActive].
-class IsVideoActiveFamily extends Family<bool> {
-  /// Provider for checking if a specific video is currently active
-  ///
-  /// Copied from [isVideoActive].
-  const IsVideoActiveFamily();
 
+final class IsVideoActiveProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
   /// Provider for checking if a specific video is currently active
-  ///
-  /// Copied from [isVideoActive].
-  IsVideoActiveProvider call(
-    String videoId,
-  ) {
-    return IsVideoActiveProvider(
-      videoId,
-    );
+  const IsVideoActiveProvider._({
+    required IsVideoActiveFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'isVideoActiveProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isVideoActiveHash();
+
+  @override
+  String toString() {
+    return r'isVideoActiveProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  IsVideoActiveProvider getProviderOverride(
-    covariant IsVideoActiveProvider provider,
-  ) {
-    return call(
-      provider.videoId,
-    );
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as String;
+    return isVideoActive(ref, argument);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'isVideoActiveProvider';
-}
-
-/// Provider for checking if a specific video is currently active
-///
-/// Copied from [isVideoActive].
-class IsVideoActiveProvider extends AutoDisposeProvider<bool> {
-  /// Provider for checking if a specific video is currently active
-  ///
-  /// Copied from [isVideoActive].
-  IsVideoActiveProvider(
-    String videoId,
-  ) : this._internal(
-          (ref) => isVideoActive(
-            ref as IsVideoActiveRef,
-            videoId,
-          ),
-          from: isVideoActiveProvider,
-          name: r'isVideoActiveProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$isVideoActiveHash,
-          dependencies: IsVideoActiveFamily._dependencies,
-          allTransitiveDependencies:
-              IsVideoActiveFamily._allTransitiveDependencies,
-          videoId: videoId,
-        );
-
-  IsVideoActiveProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.videoId,
-  }) : super.internal();
-
-  final String videoId;
-
-  @override
-  Override overrideWith(
-    bool Function(IsVideoActiveRef provider) create,
-  ) {
-    return ProviderOverride(
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
       origin: this,
-      override: IsVideoActiveProvider._internal(
-        (ref) => create(ref as IsVideoActiveRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        videoId: videoId,
-      ),
+      providerOverride: $SyncValueProvider<bool>(value),
     );
-  }
-
-  @override
-  AutoDisposeProviderElement<bool> createElement() {
-    return _IsVideoActiveProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is IsVideoActiveProvider && other.videoId == videoId;
+    return other is IsVideoActiveProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, videoId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin IsVideoActiveRef on AutoDisposeProviderRef<bool> {
-  /// The parameter `videoId` of this provider.
-  String get videoId;
-}
+String _$isVideoActiveHash() => r'd5fa4709a64fd373a99ad5da32e09c44d0d96cc0';
 
-class _IsVideoActiveProviderElement extends AutoDisposeProviderElement<bool>
-    with IsVideoActiveRef {
-  _IsVideoActiveProviderElement(super.provider);
+/// Provider for checking if a specific video is currently active
+
+final class IsVideoActiveFamily extends $Family
+    with $FunctionalFamilyOverride<bool, String> {
+  const IsVideoActiveFamily._()
+    : super(
+        retry: null,
+        name: r'isVideoActiveProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider for checking if a specific video is currently active
+
+  IsVideoActiveProvider call(String videoId) =>
+      IsVideoActiveProvider._(argument: videoId, from: this);
 
   @override
-  String get videoId => (origin as IsVideoActiveProvider).videoId;
+  String toString() => r'isVideoActiveProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

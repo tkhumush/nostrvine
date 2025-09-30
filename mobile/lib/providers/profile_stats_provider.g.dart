@@ -6,188 +6,148 @@ part of 'profile_stats_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileStatsHash() => r'd5c6d5d944c249d4161d3201fe9faddab232f7d0';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Async provider for loading profile statistics
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
+@ProviderFor(fetchProfileStats)
+const fetchProfileStatsProvider = FetchProfileStatsFamily._();
 
 /// Async provider for loading profile statistics
-///
-/// Copied from [profileStats].
-@ProviderFor(profileStats)
-const profileStatsProvider = ProfileStatsFamily();
 
-/// Async provider for loading profile statistics
-///
-/// Copied from [profileStats].
-class ProfileStatsFamily extends Family<AsyncValue<ProfileStats>> {
+final class FetchProfileStatsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ProfileStats>,
+          ProfileStats,
+          FutureOr<ProfileStats>
+        >
+    with $FutureModifier<ProfileStats>, $FutureProvider<ProfileStats> {
   /// Async provider for loading profile statistics
-  ///
-  /// Copied from [profileStats].
-  const ProfileStatsFamily();
+  const FetchProfileStatsProvider._({
+    required FetchProfileStatsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fetchProfileStatsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// Async provider for loading profile statistics
-  ///
-  /// Copied from [profileStats].
-  ProfileStatsProvider call(
-    String pubkey,
-  ) {
-    return ProfileStatsProvider(
-      pubkey,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$fetchProfileStatsHash();
+
+  @override
+  String toString() {
+    return r'fetchProfileStatsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  ProfileStatsProvider getProviderOverride(
-    covariant ProfileStatsProvider provider,
-  ) {
-    return call(
-      provider.pubkey,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<ProfileStats> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'profileStatsProvider';
-}
-
-/// Async provider for loading profile statistics
-///
-/// Copied from [profileStats].
-class ProfileStatsProvider extends AutoDisposeFutureProvider<ProfileStats> {
-  /// Async provider for loading profile statistics
-  ///
-  /// Copied from [profileStats].
-  ProfileStatsProvider(
-    String pubkey,
-  ) : this._internal(
-          (ref) => profileStats(
-            ref as ProfileStatsRef,
-            pubkey,
-          ),
-          from: profileStatsProvider,
-          name: r'profileStatsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$profileStatsHash,
-          dependencies: ProfileStatsFamily._dependencies,
-          allTransitiveDependencies:
-              ProfileStatsFamily._allTransitiveDependencies,
-          pubkey: pubkey,
-        );
-
-  ProfileStatsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.pubkey,
-  }) : super.internal();
-
-  final String pubkey;
-
-  @override
-  Override overrideWith(
-    FutureOr<ProfileStats> Function(ProfileStatsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ProfileStatsProvider._internal(
-        (ref) => create(ref as ProfileStatsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        pubkey: pubkey,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<ProfileStats> createElement() {
-    return _ProfileStatsProviderElement(this);
+  FutureOr<ProfileStats> create(Ref ref) {
+    final argument = this.argument as String;
+    return fetchProfileStats(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ProfileStatsProvider && other.pubkey == pubkey;
+    return other is FetchProfileStatsProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, pubkey.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ProfileStatsRef on AutoDisposeFutureProviderRef<ProfileStats> {
-  /// The parameter `pubkey` of this provider.
-  String get pubkey;
-}
+String _$fetchProfileStatsHash() => r'118fadc474858892061d625f54f159bd35aeaf5e';
 
-class _ProfileStatsProviderElement
-    extends AutoDisposeFutureProviderElement<ProfileStats>
-    with ProfileStatsRef {
-  _ProfileStatsProviderElement(super.provider);
+/// Async provider for loading profile statistics
+
+final class FetchProfileStatsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ProfileStats>, String> {
+  const FetchProfileStatsFamily._()
+    : super(
+        retry: null,
+        name: r'fetchProfileStatsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Async provider for loading profile statistics
+
+  FetchProfileStatsProvider call(String pubkey) =>
+      FetchProfileStatsProvider._(argument: pubkey, from: this);
 
   @override
-  String get pubkey => (origin as ProfileStatsProvider).pubkey;
+  String toString() => r'fetchProfileStatsProvider';
+}
+
+/// Notifier for managing profile stats state
+
+@ProviderFor(ProfileStatsNotifier)
+const profileStatsProvider = ProfileStatsNotifierProvider._();
+
+/// Notifier for managing profile stats state
+final class ProfileStatsNotifierProvider
+    extends $NotifierProvider<ProfileStatsNotifier, ProfileStatsState> {
+  /// Notifier for managing profile stats state
+  const ProfileStatsNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profileStatsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileStatsNotifierHash();
+
+  @$internal
+  @override
+  ProfileStatsNotifier create() => ProfileStatsNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProfileStatsState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProfileStatsState>(value),
+    );
+  }
 }
 
 String _$profileStatsNotifierHash() =>
-    r'176e0de9672c078ddc391901a2633cc3fc135b6e';
+    r'6e837bc9a390304fc3d758749498ca2624ba2615';
 
 /// Notifier for managing profile stats state
-///
-/// Copied from [ProfileStatsNotifier].
-@ProviderFor(ProfileStatsNotifier)
-final profileStatsNotifierProvider = AutoDisposeNotifierProvider<
-    ProfileStatsNotifier, ProfileStatsState>.internal(
-  ProfileStatsNotifier.new,
-  name: r'profileStatsNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$profileStatsNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef _$ProfileStatsNotifier = AutoDisposeNotifier<ProfileStatsState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$ProfileStatsNotifier extends $Notifier<ProfileStatsState> {
+  ProfileStatsState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ProfileStatsState, ProfileStatsState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ProfileStatsState, ProfileStatsState>,
+              ProfileStatsState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

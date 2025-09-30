@@ -2,7 +2,7 @@
 // ABOUTME: Provides fast local storage and retrieval of Nostr user profiles with automatic cleanup
 
 import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:openvine/models/user_profile.dart';
 import 'package:openvine/utils/unified_logger.dart';
 

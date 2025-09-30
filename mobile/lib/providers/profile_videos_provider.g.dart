@@ -6,189 +6,149 @@ part of 'profile_videos_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileVideosHash() => r'81b7832c42cdc276b82e466f18b1dca22f414558';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Async provider for loading profile videos
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
+@ProviderFor(fetchProfileVideos)
+const fetchProfileVideosProvider = FetchProfileVideosFamily._();
 
 /// Async provider for loading profile videos
-///
-/// Copied from [profileVideos].
-@ProviderFor(profileVideos)
-const profileVideosProvider = ProfileVideosFamily();
 
-/// Async provider for loading profile videos
-///
-/// Copied from [profileVideos].
-class ProfileVideosFamily extends Family<AsyncValue<List<VideoEvent>>> {
+final class FetchProfileVideosProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VideoEvent>>,
+          List<VideoEvent>,
+          FutureOr<List<VideoEvent>>
+        >
+    with $FutureModifier<List<VideoEvent>>, $FutureProvider<List<VideoEvent>> {
   /// Async provider for loading profile videos
-  ///
-  /// Copied from [profileVideos].
-  const ProfileVideosFamily();
+  const FetchProfileVideosProvider._({
+    required FetchProfileVideosFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'fetchProfileVideosProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// Async provider for loading profile videos
-  ///
-  /// Copied from [profileVideos].
-  ProfileVideosProvider call(
-    String pubkey,
-  ) {
-    return ProfileVideosProvider(
-      pubkey,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$fetchProfileVideosHash();
+
+  @override
+  String toString() {
+    return r'fetchProfileVideosProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  ProfileVideosProvider getProviderOverride(
-    covariant ProfileVideosProvider provider,
-  ) {
-    return call(
-      provider.pubkey,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<List<VideoEvent>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'profileVideosProvider';
-}
-
-/// Async provider for loading profile videos
-///
-/// Copied from [profileVideos].
-class ProfileVideosProvider
-    extends AutoDisposeFutureProvider<List<VideoEvent>> {
-  /// Async provider for loading profile videos
-  ///
-  /// Copied from [profileVideos].
-  ProfileVideosProvider(
-    String pubkey,
-  ) : this._internal(
-          (ref) => profileVideos(
-            ref as ProfileVideosRef,
-            pubkey,
-          ),
-          from: profileVideosProvider,
-          name: r'profileVideosProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$profileVideosHash,
-          dependencies: ProfileVideosFamily._dependencies,
-          allTransitiveDependencies:
-              ProfileVideosFamily._allTransitiveDependencies,
-          pubkey: pubkey,
-        );
-
-  ProfileVideosProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.pubkey,
-  }) : super.internal();
-
-  final String pubkey;
-
-  @override
-  Override overrideWith(
-    FutureOr<List<VideoEvent>> Function(ProfileVideosRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ProfileVideosProvider._internal(
-        (ref) => create(ref as ProfileVideosRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        pubkey: pubkey,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<VideoEvent>> createElement() {
-    return _ProfileVideosProviderElement(this);
+  FutureOr<List<VideoEvent>> create(Ref ref) {
+    final argument = this.argument as String;
+    return fetchProfileVideos(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ProfileVideosProvider && other.pubkey == pubkey;
+    return other is FetchProfileVideosProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, pubkey.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ProfileVideosRef on AutoDisposeFutureProviderRef<List<VideoEvent>> {
-  /// The parameter `pubkey` of this provider.
-  String get pubkey;
-}
+String _$fetchProfileVideosHash() =>
+    r'6e79d18a77785f9e1615f0059270df51c405ee2d';
 
-class _ProfileVideosProviderElement
-    extends AutoDisposeFutureProviderElement<List<VideoEvent>>
-    with ProfileVideosRef {
-  _ProfileVideosProviderElement(super.provider);
+/// Async provider for loading profile videos
+
+final class FetchProfileVideosFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VideoEvent>>, String> {
+  const FetchProfileVideosFamily._()
+    : super(
+        retry: null,
+        name: r'fetchProfileVideosProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Async provider for loading profile videos
+
+  FetchProfileVideosProvider call(String pubkey) =>
+      FetchProfileVideosProvider._(argument: pubkey, from: this);
 
   @override
-  String get pubkey => (origin as ProfileVideosProvider).pubkey;
+  String toString() => r'fetchProfileVideosProvider';
+}
+
+/// Notifier for managing profile videos state
+
+@ProviderFor(ProfileVideosNotifier)
+const profileVideosProvider = ProfileVideosNotifierProvider._();
+
+/// Notifier for managing profile videos state
+final class ProfileVideosNotifierProvider
+    extends $NotifierProvider<ProfileVideosNotifier, ProfileVideosState> {
+  /// Notifier for managing profile videos state
+  const ProfileVideosNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'profileVideosProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileVideosNotifierHash();
+
+  @$internal
+  @override
+  ProfileVideosNotifier create() => ProfileVideosNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProfileVideosState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProfileVideosState>(value),
+    );
+  }
 }
 
 String _$profileVideosNotifierHash() =>
-    r'2da3a5b577f7bc6a328a75feb2f6333aaba7c47d';
+    r'9b2d8e428b1a69004266bf9a97c799b8a0945b91';
 
 /// Notifier for managing profile videos state
-///
-/// Copied from [ProfileVideosNotifier].
-@ProviderFor(ProfileVideosNotifier)
-final profileVideosNotifierProvider =
-    NotifierProvider<ProfileVideosNotifier, ProfileVideosState>.internal(
-  ProfileVideosNotifier.new,
-  name: r'profileVideosNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$profileVideosNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef _$ProfileVideosNotifier = Notifier<ProfileVideosState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$ProfileVideosNotifier extends $Notifier<ProfileVideosState> {
+  ProfileVideosState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ProfileVideosState, ProfileVideosState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ProfileVideosState, ProfileVideosState>,
+              ProfileVideosState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

@@ -1,7 +1,7 @@
 // ABOUTME: Persistent cache service for hashtag statistics using Hive storage
 // ABOUTME: Provides fast local storage and retrieval of trending hashtags with automatic updates
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:openvine/utils/unified_logger.dart';
 
 /// Service for persistent caching of hashtag statistics

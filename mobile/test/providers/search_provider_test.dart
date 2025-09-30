@@ -71,14 +71,14 @@ void main() {
 
     group('Search Notifier', () {
       test('should provide SearchNotifier with initial state', () {
-        final searchNotifier = container.read(searchNotifierProvider);
+        final searchNotifier = container.read(searchStateProvider);
         expect(searchNotifier.isInitial, isTrue);
         expect(searchNotifier.query, isNull);
         expect(searchNotifier.results, isEmpty);
       });
 
       test('should provide searchNotifierProvider', () {
-        final searchNotifierState = container.read(searchNotifierProvider);
+        final searchNotifierState = container.read(searchStateProvider);
         expect(searchNotifierState, isA<SearchState>());
         expect(searchNotifierState.isInitial, isTrue);
       });

@@ -85,7 +85,7 @@ void main() {
     test('should filter events based on following mode', () async {
       // Setup following list
       container
-          .read(social.socialNotifierProvider.notifier)
+          .read(social.socialProvider.notifier)
           .updateFollowingList(['pubkey1', 'pubkey2']);
 
       // Setup mock Nostr service
@@ -114,7 +114,7 @@ void main() {
 
     test('should use classic vines fallback when no following', () async {
       // No following list
-      container.read(social.socialNotifierProvider.notifier).updateFollowingList([]);
+      container.read(social.socialProvider.notifier).updateFollowingList([]);
 
       // Setup mock Nostr service
       when(() => mockNostrService.isInitialized).thenReturn(true);

@@ -6,54 +6,140 @@ part of 'analytics_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(httpClient)
+const httpClientProvider = HttpClientProvider._();
+
+final class HttpClientProvider
+    extends $FunctionalProvider<http.Client, http.Client, http.Client>
+    with $Provider<http.Client> {
+  const HttpClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'httpClientProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$httpClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<http.Client> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  http.Client create(Ref ref) {
+    return httpClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(http.Client value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<http.Client>(value),
+    );
+  }
+}
+
 String _$httpClientHash() => r'3e1d65fa831165b685a1881b712e31312635f7c7';
 
-/// See also [httpClient].
-@ProviderFor(httpClient)
-final httpClientProvider = AutoDisposeProvider<http.Client>.internal(
-  httpClient,
-  name: r'httpClientProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$httpClientHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+@ProviderFor(sharedPreferences)
+const sharedPreferencesProvider = SharedPreferencesProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HttpClientRef = AutoDisposeProviderRef<http.Client>;
+final class SharedPreferencesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SharedPreferences>,
+          SharedPreferences,
+          FutureOr<SharedPreferences>
+        >
+    with
+        $FutureModifier<SharedPreferences>,
+        $FutureProvider<SharedPreferences> {
+  const SharedPreferencesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sharedPreferencesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sharedPreferencesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SharedPreferences> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SharedPreferences> create(Ref ref) {
+    return sharedPreferences(ref);
+  }
+}
+
 String _$sharedPreferencesHash() => r'106b441400813a2b4bba3261097e11e5688efb98';
 
-/// See also [sharedPreferences].
-@ProviderFor(sharedPreferences)
-final sharedPreferencesProvider =
-    AutoDisposeFutureProvider<SharedPreferences>.internal(
-  sharedPreferences,
-  name: r'sharedPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sharedPreferencesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SharedPreferencesRef = AutoDisposeFutureProviderRef<SharedPreferences>;
-String _$analyticsHash() => r'129722f5e37ef77d946f81f0fa07c3094debfdb6';
-
-/// See also [Analytics].
 @ProviderFor(Analytics)
-final analyticsProvider =
-    AutoDisposeNotifierProvider<Analytics, AnalyticsState>.internal(
-  Analytics.new,
-  name: r'analyticsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$analyticsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const analyticsProvider = AnalyticsProvider._();
 
-typedef _$Analytics = AutoDisposeNotifier<AnalyticsState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class AnalyticsProvider
+    extends $NotifierProvider<Analytics, AnalyticsState> {
+  const AnalyticsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'analyticsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$analyticsHash();
+
+  @$internal
+  @override
+  Analytics create() => Analytics();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AnalyticsState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AnalyticsState>(value),
+    );
+  }
+}
+
+String _$analyticsHash() => r'78a1e18f67ada8f45b03d6ca4b3e725701bf432f';
+
+abstract class _$Analytics extends $Notifier<AnalyticsState> {
+  AnalyticsState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AnalyticsState, AnalyticsState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AnalyticsState, AnalyticsState>,
+              AnalyticsState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

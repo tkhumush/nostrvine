@@ -4,7 +4,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/user_profile.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/state/user_profile_state.dart';
@@ -91,7 +90,7 @@ bool _shouldSkipFetch(String pubkey) {
 
 /// Async provider for loading a single user profile
 @riverpod
-Future<UserProfile?> userProfile(Ref ref, String pubkey) async {
+Future<UserProfile?> fetchUserProfile(Ref ref, String pubkey) async {
   // Check cache first
   final cached = _getCachedUserProfile(pubkey);
   if (cached != null) {
@@ -226,9 +225,9 @@ class UserProfileNotifier extends _$UserProfileNotifier {
       );
 
       _clearUserProfileCache(pubkey);
-      ref.invalidate(userProfileProvider(pubkey));
+      ref.invalidate(fetchUserProfileProvider(pubkey));
 
-      final newCache = {...state.profileCache}..remove(pubkey);
+      final newCache = Map<String, UserProfile>.from(state.profileCache)..remove(pubkey);
       state = state.copyWith(profileCache: newCache);
 
       // Cancel any existing subscriptions
@@ -254,11 +253,12 @@ class UserProfileNotifier extends _$UserProfileNotifier {
       );
 
       // Use the async provider to fetch profile
-      final profile = await ref.read(userProfileProvider(pubkey).future);
+      final profile = await ref.read(fetchUserProfileProvider(pubkey).future);
 
       if (profile != null) {
         // Update state cache
-        final newCache = {...state.profileCache, pubkey: profile};
+        final newCache = Map<String, UserProfile>.from(state.profileCache);
+        newCache[pubkey] = profile;
         state = state.copyWith(
           profileCache: newCache,
           totalProfilesCached: newCache.length,
@@ -331,7 +331,8 @@ class UserProfileNotifier extends _$UserProfileNotifier {
           // Update both memory cache and state cache
           _cacheUserProfile(pubkey, profile);
 
-          final newCache = {...state.profileCache, pubkey: profile};
+          final newCache = Map<String, UserProfile>.from(state.profileCache);
+          newCache[pubkey] = profile;
           state = state.copyWith(
             profileCache: newCache,
             totalProfilesCached: newCache.length,
@@ -457,7 +458,8 @@ class UserProfileNotifier extends _$UserProfileNotifier {
           // Update both memory cache and state cache
           _cacheUserProfile(pubkey, profile);
 
-          final newCache = {...state.profileCache, pubkey: profile};
+          final newCache = Map<String, UserProfile>.from(state.profileCache);
+          newCache[pubkey] = profile;
           state = state.copyWith(
             profileCache: newCache,
             totalProfilesCached: newCache.length,

@@ -30,7 +30,7 @@ void main() {
 
     group('Initial State', () {
       test('should have correct initial state', () {
-        final state = container.read(profileStatsNotifierProvider);
+        final state = container.read(profileStatsProvider);
         expect(state.isLoading, false);
         expect(state.stats, isNull);
         expect(state.error, isNull);
@@ -52,11 +52,11 @@ void main() {
         );
 
         // Load stats using the notifier
-        final notifier = container.read(profileStatsNotifierProvider.notifier);
+        final notifier = container.read(profileStatsProvider.notifier);
         await notifier.loadStats(testPubkey);
 
         // Verify final state
-        final state = container.read(profileStatsNotifierProvider);
+        final state = container.read(profileStatsProvider);
         expect(state.isLoading, false);
         expect(state.hasData, true);
         expect(state.error, isNull);
@@ -81,11 +81,11 @@ void main() {
         );
 
         // Load stats using the notifier
-        final notifier = container.read(profileStatsNotifierProvider.notifier);
+        final notifier = container.read(profileStatsProvider.notifier);
         await notifier.loadStats(testPubkey);
 
         // Verify error state
-        final state = container.read(profileStatsNotifierProvider);
+        final state = container.read(profileStatsProvider);
         expect(state.isLoading, false);
         expect(state.hasError, true);
         expect(state.error, contains('Network error'));
@@ -101,7 +101,7 @@ void main() {
           (_) async => 25,
         );
 
-        final notifier = container.read(profileStatsNotifierProvider.notifier);
+        final notifier = container.read(profileStatsProvider.notifier);
         await notifier.loadStats(testPubkey);
         clearInteractions(mockSocialService);
 
@@ -117,7 +117,7 @@ void main() {
         await notifier.refreshStats(testPubkey);
 
         // Should have new stats
-        final state = container.read(profileStatsNotifierProvider);
+        final state = container.read(profileStatsProvider);
         expect(state.stats!.videoCount, 30);
         expect(state.stats!.followers, 150);
         expect(state.stats!.following, 75);
@@ -133,18 +133,18 @@ void main() {
           Exception('Network error'),
         );
 
-        final notifier = container.read(profileStatsNotifierProvider.notifier);
+        final notifier = container.read(profileStatsProvider.notifier);
         await notifier.loadStats(testPubkey);
 
         // Verify error state
-        var state = container.read(profileStatsNotifierProvider);
+        var state = container.read(profileStatsProvider);
         expect(state.hasError, true);
 
         // Clear error
         notifier.clearError();
 
         // Verify error cleared
-        state = container.read(profileStatsNotifierProvider);
+        state = container.read(profileStatsProvider);
         expect(state.error, isNull);
         expect(state.hasError, false);
       });

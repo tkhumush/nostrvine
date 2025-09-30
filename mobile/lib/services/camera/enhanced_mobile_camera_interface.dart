@@ -25,48 +25,90 @@ class EnhancedMobileCameraInterface extends CameraPlatformInterface {
 
   @override
   Future<void> initialize() async {
-    _availableCameras = await availableCameras();
-    if (_availableCameras.isEmpty) {
-      throw Exception('No cameras available');
-    }
+    try {
+      Log.info('Initializing enhanced mobile camera interface...',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
 
-    // Default to back camera if available
-    _currentCameraIndex = _availableCameras.indexWhere(
-      (cam) => cam.lensDirection == CameraLensDirection.back,
-    );
-    if (_currentCameraIndex == -1) {
-      _currentCameraIndex = 0;
-    }
+      _availableCameras = await availableCameras();
+      Log.info('Found ${_availableCameras.length} available cameras',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
 
-    await _initializeCurrentCamera();
+      if (_availableCameras.isEmpty) {
+        throw Exception('No cameras available - check camera permissions');
+      }
+
+      // Default to back camera if available
+      _currentCameraIndex = _availableCameras.indexWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.back,
+      );
+      if (_currentCameraIndex == -1) {
+        _currentCameraIndex = 0;
+      }
+
+      Log.info('Selected camera $_currentCameraIndex: ${_availableCameras[_currentCameraIndex].name}',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
+
+      await _initializeCurrentCamera();
+
+      Log.info('Enhanced mobile camera initialized successfully',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
+    } catch (e) {
+      Log.error('Enhanced mobile camera initialization failed: $e',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
+      rethrow;
+    }
   }
 
   Future<void> _initializeCurrentCamera() async {
     _controller?.dispose();
 
-    final camera = _availableCameras[_currentCameraIndex];
-    _controller = CameraController(
-      camera,
-      ResolutionPreset.high,
-      enableAudio: true,
-      imageFormatGroup: ImageFormatGroup.yuv420,
-    );
+    try {
+      final camera = _availableCameras[_currentCameraIndex];
+      Log.info('Initializing camera controller for: ${camera.name}',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
 
-    await _controller!.initialize();
-    await _controller!.prepareForVideoRecording();
+      _controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: true,
+        imageFormatGroup: ImageFormatGroup.yuv420,
+      );
 
-    // Initialize zoom levels
-    _minZoomLevel = await _controller!.getMinZoomLevel();
-    _maxZoomLevel = await _controller!.getMaxZoomLevel();
-    _currentZoomLevel = _minZoomLevel;
+      await _controller!.initialize();
+      Log.info('Camera controller initialized successfully',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
 
-    // Set initial flash mode
-    await _controller!.setFlashMode(_currentFlashMode);
+      await _controller!.prepareForVideoRecording();
+      Log.info('Video recording preparation complete',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
 
-    Log.info(
-        'Enhanced camera initialized - Zoom range: $_minZoomLevel to $_maxZoomLevel',
-        name: 'EnhancedMobileCamera',
-        category: LogCategory.system);
+      // Initialize zoom levels
+      _minZoomLevel = await _controller!.getMinZoomLevel();
+      _maxZoomLevel = await _controller!.getMaxZoomLevel();
+      _currentZoomLevel = _minZoomLevel;
+
+      // Set initial flash mode
+      await _controller!.setFlashMode(_currentFlashMode);
+
+      Log.info(
+          'Enhanced camera initialized - Zoom range: $_minZoomLevel to $_maxZoomLevel',
+          name: 'EnhancedMobileCamera',
+          category: LogCategory.system);
+    } catch (e) {
+      Log.error('Camera controller initialization failed: $e',
+          name: 'EnhancedMobileCamera', category: LogCategory.system);
+
+      // Provide more specific error messages
+      if (e.toString().contains('CameraAccessDenied') || e.toString().contains('permission')) {
+        throw Exception('Camera permission denied. Please enable camera access in iOS Settings > Privacy & Security > Camera.');
+      } else if (e.toString().contains('CameraInUse')) {
+        throw Exception('Camera is currently in use by another app. Please close other camera apps and try again.');
+      } else if (e.toString().contains('CameraNotFound')) {
+        throw Exception('Camera not found. This may happen on iOS Simulator - please test on a real device.');
+      }
+
+      rethrow;
+    }
   }
 
   @override

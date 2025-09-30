@@ -1,15 +1,17 @@
 // ABOUTME: JavaScript interop for NIP-07 browser extension support (Alby, nos2x, etc.)
 // ABOUTME: Provides type-safe Dart interface to window.nostr object for web authentication
 
-@JS()
-library;
-
 import 'package:flutter/foundation.dart';
-import 'package:js/js.dart' if (dart.library.io) 'stubs/js_stub.dart';
+
+// Extension type definitions for NIP-07 JavaScript interop
 
 /// Check if NIP-07 extension is available
-@JS()
-external NostrExtension? get _nostr;
+NostrExtension? get _nostr {
+  if (kIsWeb) {
+    return null; // Will be overridden by web-specific implementation
+  }
+  return null;
+}
 
 /// Public getter that safely checks for extension availability
 NostrExtension? get nostr => kIsWeb ? _nostr : null;
@@ -18,97 +20,127 @@ NostrExtension? get nostr => kIsWeb ? _nostr : null;
 bool get isNip07Available => kIsWeb && _nostr != null;
 
 /// The main NIP-07 interface that browser extensions implement
-@JS()
-@anonymous
-abstract class NostrExtension {
+class NostrExtension {
+  const NostrExtension();
+
   /// Get the user's public key (hex format)
-  external Future<String> getPublicKey();
+  Future<String> getPublicKey() async {
+    throw UnsupportedError('NIP-07 only available on web');
+  }
 
   /// Sign a Nostr event
-  external Future<NostrEvent> signEvent(NostrEvent event);
+  Future<Map<String, dynamic>> signEvent(Map<String, dynamic> event) async {
+    throw UnsupportedError('NIP-07 only available on web');
+  }
 
   /// Get the user's relays (optional NIP-07 extension)
-  external Future<Map<String, dynamic>>? getRelays();
+  Future<Map<String, dynamic>>? getRelays() {
+    throw UnsupportedError('NIP-07 only available on web');
+  }
 
   /// NIP-04 encryption (optional)
-  external NIP04? get nip04;
+  NIP04? get nip04 => null;
 }
 
 /// NIP-04 encryption interface (optional extension feature)
-@JS()
-@anonymous
-abstract class NIP04 {
-  external Future<String> encrypt(String pubkey, String plaintext);
-  external Future<String> decrypt(String pubkey, String ciphertext);
+class NIP04 {
+  const NIP04();
+
+  Future<String> encrypt(String pubkey, String plaintext) async {
+    throw UnsupportedError('NIP-04 only available on web');
+  }
+
+  Future<String> decrypt(String pubkey, String ciphertext) async {
+    throw UnsupportedError('NIP-04 only available on web');
+  }
 }
 
-/// Nostr event structure for JavaScript interop
-@JS()
-@anonymous
+/// Nostr event structure for cross-platform use
 class NostrEvent {
-  external factory NostrEvent({
+  NostrEvent({
+    this.id,
+    required this.pubkey,
+    required this.created_at, // ignore: non_constant_identifier_names
+    required this.kind,
+    required this.tags,
+    required this.content,
+    this.sig,
+  });
+
+  /// Factory to create a new NostrEvent
+  factory NostrEvent.create({
+    String? id,
     required String pubkey, // ignore: non_constant_identifier_names
     required int created_at, // ignore: non_constant_identifier_names
     required int kind,
     required List<List<String>> tags,
     required String content,
-    String? id,
     String? sig,
-  });
+  }) {
+    return NostrEvent(
+      id: id,
+      pubkey: pubkey,
+      created_at: created_at,
+      kind: kind,
+      tags: tags,
+      content: content,
+      sig: sig,
+    );
+  }
 
-  external String? get id;
-  external set id(String? id);
+  String? id;
+  String pubkey;
+  int created_at; // ignore: non_constant_identifier_names
+  int kind;
+  List<List<String>> tags;
+  String content;
+  String? sig;
 
-  external String get pubkey;
-  external set pubkey(String pubkey);
-
-  // ignore: non_constant_identifier_names
-  external int get created_at;
-  // ignore: non_constant_identifier_names
-  external set created_at(int created_at);
-
-  external int get kind;
-  external set kind(int kind);
-
-  external List<List<String>> get tags;
-  external set tags(List<List<String>> tags);
-
-  external String get content;
-  external set content(String content);
-
-  external String? get sig;
-  external set sig(String? sig);
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      'pubkey': pubkey,
+      'created_at': created_at,
+      'kind': kind,
+      'tags': tags,
+      'content': content,
+      if (sig != null) 'sig': sig,
+    };
+  }
 }
 
-/// Convert Dart Map to JavaScript NostrEvent
-NostrEvent dartEventToJs(Map<String, dynamic> dartEvent) => NostrEvent(
-      id: dartEvent['id'],
-      pubkey: dartEvent['pubkey'] ?? '',
-      created_at: dartEvent['created_at'] ??
-          DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      kind: dartEvent['kind'] ?? 1,
-      tags: (dartEvent['tags'] as List<dynamic>?)
-              ?.map(
-                (tag) => (tag as List<dynamic>)
-                    .map((item) => item.toString())
-                    .toList(),
-              )
-              .toList() ??
-          [],
-      content: dartEvent['content'] ?? '',
-      sig: dartEvent['sig'],
-    );
+/// Convert Dart Map to NostrEvent
+NostrEvent dartEventToJs(Map<String, dynamic> dartEvent) {
+  final tags = (dartEvent['tags'] as List<dynamic>?)
+      ?.map((tag) => (tag as List<dynamic>)
+          .map((item) => item.toString())
+          .toList())
+      .toList() ?? <List<String>>[];
 
-/// Convert JavaScript NostrEvent to Dart Map
-Map<String, dynamic> jsEventToDart(NostrEvent jsEvent) => {
-      'id': jsEvent.id,
-      'pubkey': jsEvent.pubkey,
-      'created_at': jsEvent.created_at,
-      'kind': jsEvent.kind,
-      'tags': jsEvent.tags,
-      'content': jsEvent.content,
-      'sig': jsEvent.sig,
-    };
+  return NostrEvent.create(
+    id: dartEvent['id'] as String?,
+    pubkey: (dartEvent['pubkey'] ?? '').toString(),
+    created_at: dartEvent['created_at'] ??
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    kind: dartEvent['kind'] ?? 1,
+    tags: tags,
+    content: (dartEvent['content'] ?? '').toString(),
+    sig: dartEvent['sig'] as String?,
+  );
+}
+
+/// Convert NostrEvent to Dart Map
+Map<String, dynamic> jsEventToDart(NostrEvent event) {
+  return {
+    'id': event.id,
+    'pubkey': event.pubkey,
+    'created_at': event.created_at,
+    'kind': event.kind,
+    'tags': event.tags,
+    'content': event.content,
+    'sig': event.sig,
+  };
+}
 
 /// Enhanced error handling for NIP-07 operations
 class Nip07Exception implements Exception {
@@ -152,3 +184,4 @@ Future<T> safeNip07Call<T>(
     }
   }
 }
+

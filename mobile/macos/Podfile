@@ -41,17 +41,41 @@ post_install do |installer|
 
     # Fix CocoaPods macro redefinition warnings
     target.build_configurations.each do |config|
+      # Fix macOS deployment target warnings
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '13.0'
+
       # Remove duplicate $(inherited) from GCC_PREPROCESSOR_DEFINITIONS
       if config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
         defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
         if defs.is_a?(Array)
+          # Remove all instances of $(inherited) and duplicates
           defs.delete_if { |definition| definition == '$(inherited)' }
+          # Remove duplicate POD_CONFIGURATION_DEBUG definitions
+          pod_config_defs = defs.select { |d| d.include?('POD_CONFIGURATION_DEBUG') }
+          if pod_config_defs.length > 1
+            defs.delete_if { |d| d.include?('POD_CONFIGURATION_DEBUG') }
+            defs << pod_config_defs.first
+          end
           defs.unshift('$(inherited)')
         elsif defs.is_a?(String)
+          # Clean up string definitions
           defs = defs.gsub(/\$\(inherited\)\s*/, '').strip
+          # Remove duplicate POD_CONFIGURATION_DEBUG
+          defs = defs.gsub(/POD_CONFIGURATION_DEBUG=1\s+DEBUG=1\s*/, 'POD_CONFIGURATION_DEBUG=1 ')
           config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = "$(inherited) #{defs}"
         end
       end
+
+      # Fix Firebase Crashlytics dSYM warnings
+      if config.name == 'Debug'
+        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      end
+
+      # Suppress specific warnings
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'NO'
+      config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
+      config.build_settings['GCC_WARN_64_TO_32_BIT_CONVERSION'] = 'NO'
     end
   end
 end

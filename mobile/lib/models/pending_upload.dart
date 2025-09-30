@@ -2,7 +2,7 @@
 // ABOUTME: Supports local persistence and state management for async upload flow
 
 import 'dart:math' as math;
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 part 'pending_upload.g.dart';
 

@@ -25,7 +25,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _replyControllers = <String, TextEditingController>{};
   String? _replyingToCommentId;
   bool _isPosting = false;
-  // Using Riverpod commentsNotifierProvider instead
+  // Using Riverpod commentsProvider instead
   @override
   void initState() {
     super.initState();
@@ -142,7 +142,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     Expanded(
                       child: Builder(
                         builder: (context) {
-                          final state = ref.watch(commentsNotifierProvider(
+                          final state = ref.watch(commentsProvider(
                               widget.videoEvent.id, widget.videoEvent.pubkey));
 
                           if (state.isLoading) {

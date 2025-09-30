@@ -5,8 +5,8 @@ OpenVine is a decentralized vine-like video sharing application powered by Nostr
 - **Flutter Mobile App**: Cross-platform client for capturing and sharing short videos
 - **Cloudflare Workers Backend**: Serverless backend for GIF creation and media processing
 
-## Current Focus  
-**Video Feed Architecture Complete** - Fixed video display issues and optimized Riverpod-based video management
+## Current Focus
+**Upload System** - Using Blossom server upload with fallback to api.openvine.co backend
 
 ## Technology Stack
 - **Frontend**: Flutter (Dart) with Camera plugin
@@ -35,7 +35,7 @@ See `mobile/docs/NOSTR_RELAY_ARCHITECTURE.md` for detailed architecture document
 OpenVine requires specific Nostr event types for proper functionality:
 - **Kind 0**: User profiles (NIP-01) - Required for user display names and avatars
 - **Kind 6**: Reposts (NIP-18) - Required for video repost/reshare functionality  
-- **Kind 32222**: Addressable short looping videos (NIP-32222) - Primary video content with editable metadata
+- **Kind 34236**: Addressable short looping videos (NIP-71) - Primary video content with editable metadata
 - **Kind 7**: Reactions (NIP-25) - Like/heart interactions
 - **Kind 3**: Contact lists (NIP-02) - Follow/following relationships
 
@@ -54,31 +54,63 @@ The Flutter app is typically already running locally on Chrome when working on d
 - **Debug Tools**: Chrome DevTools for Flutter debugging
 
 ## Build/Test Commands
+
+
 ```bash
-# Flutter commands (run from /mobile directory)
-flutter run -d chrome --release    # Run in Chrome browser
-flutter build apk --debug          # Build Android debug APK
+./run_dev.sh                       # Run on Chrome in debug mode
+./run_dev.sh chrome release        # Run on Chrome in release mode
+./run_dev.sh ios debug             # Run on iOS simulator in debug mode
+
+
+# Standard Flutter commands (run from /mobile directory)
 flutter test                       # Run unit tests
 flutter analyze                    # Static analysis
+```
 
-# Backend commands (run from /backend directory)  
+```bash
+./build_native.sh ios release      # Build iOS release
+./build_native.sh macos debug      # Build macOS debug
+./build_testflight.sh               # Build for TestFlight
+./build_web_optimized.sh            # Build optimized web version
+./build_ios.sh release             # iOS-specific build
+./build_macos.sh release           # macOS-specific build
+
+# Backend commands (run from /backend directory)
 npm run dev                        # Local Cloudflare Workers development
 npm run deploy                     # Deploy to Cloudflare
 npm test                           # Run backend tests
+```
 
-# Analytics database management
+### Analytics Database Management
+```bash
 ./flush-analytics-simple.sh true   # Dry run - preview analytics keys to delete
 ./flush-analytics-simple.sh false  # Actually flush analytics database
 ```
+
+
+
+
+### Upload Architecture
+
+**Current**:
+```
+Flutter App → Blossom Server  → Nostr Event
+```
+
+**Architecture Benefits**:
+- User-configurable Blossom media servers
+- Fallback to legacy backend for reliability
+- Direct media hosting without intermediaries
 
 ## API Documentation
 
 **Backend API Reference**: See `docs/BACKEND_API_REFERENCE.md` for complete documentation of all backend endpoints.
 
 **Domain Architecture**:
-- `api.openvine.co` - Main backend (uploads, media, video management, NIP-05, moderation, analytics)
+- `api.openvine.co` - Legacy backend (fallback option)
+- User-configured Blossom servers - **PRIMARY** - Decentralized media hosting
 
-**Key Endpoints**:
+**Key Endpoints** (Legacy - being deprecated):
 - File uploads: `POST api.openvine.co/api/upload`
 - Video analytics: `POST api.openvine.co/analytics/view`
 - Trending content: `GET api.openvine.co/analytics/trending/vines`
@@ -106,6 +138,14 @@ npm test                           # Run backend tests
 **Common CocoaPods Issues**: The scripts automatically handle "sandbox is not in sync with Podfile.lock" errors by ensuring `pod install` runs at the proper time. See `BUILD_SCRIPTS_README.md` for detailed usage and Xcode integration instructions.
 
 ## Development Workflow Requirements
+
+### Library Versions and Freshness Policy
+- Always choose the latest stable/released versions of libraries, SDKs, and tools.
+- Avoid outdated code snippets and deprecated APIs; prefer modern, maintained approaches.
+- When searching docs/packages/snippets or installing dependencies, treat the current date as the system time and prefer sources updated recently.
+- For Dart/Flutter, add dependencies at their latest stable release (`flutter pub add <package>` without pinning unless required by constraints).
+- For Node/TypeScript, prefer the latest stable versions from npm; only pin versions when necessary for compatibility.
+- If a newer major version exists, review changelogs/migrations and adopt it unless blocked.
 
 ### Code Quality Checks
 **MANDATORY**: Always run `flutter analyze` after completing any task that modifies Dart code. This catches:
@@ -219,14 +259,9 @@ Fixed broken bridge between VideoEventService and VideoManager:
 - Result: Videos appeared in feed providers but caused preload failures
 - **Solution**: Added home feed listener to VideoManager alongside discovery listener
 
-## Analytics Database Management
+## AI Rules for Flutter
 
-**Flush Script**: `/backend/flush-analytics-simple.sh` - Clears all analytics data from KV storage
-
-```bash
-./flush-analytics-simple.sh true   # Preview deletions
-./flush-analytics-simple.sh false  # Actually delete
-```
+See `docs/AI_RULES_FLUTTER.md` for complete Flutter/Dart AI guidelines. Always read and follow these rules when generating or editing code in `mobile/`.
 
 ## Key Files
 - `mobile/lib/services/camera_service.dart` - Hybrid frame capture implementation

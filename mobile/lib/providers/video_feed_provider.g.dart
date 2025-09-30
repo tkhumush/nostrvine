@@ -6,78 +6,191 @@ part of 'video_feed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$videoFeedLoadingHash() => r'd202ed92cf906a603f676488ea4115de75d6242a';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Simple discovery video feed provider
 
-/// Provider to check if video feed is loading
-///
-/// Copied from [videoFeedLoading].
-@ProviderFor(videoFeedLoading)
-final videoFeedLoadingProvider = AutoDisposeProvider<bool>.internal(
-  videoFeedLoading,
-  name: r'videoFeedLoadingProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$videoFeedLoadingHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef VideoFeedLoadingRef = AutoDisposeProviderRef<bool>;
-String _$videoFeedCountHash() => r'c9fc7b68a402d8e63cff499a4a44842466718db8';
-
-/// Provider to get current video count
-///
-/// Copied from [videoFeedCount].
-@ProviderFor(videoFeedCount)
-final videoFeedCountProvider = AutoDisposeProvider<int>.internal(
-  videoFeedCount,
-  name: r'videoFeedCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$videoFeedCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef VideoFeedCountRef = AutoDisposeProviderRef<int>;
-String _$hasVideosHash() => r'2780fade78b3238a1979632f42151a3400b482b7';
-
-/// Provider to check if we have videos
-///
-/// Copied from [hasVideos].
-@ProviderFor(hasVideos)
-final hasVideosProvider = AutoDisposeProvider<bool>.internal(
-  hasVideos,
-  name: r'hasVideosProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$hasVideosHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HasVideosRef = AutoDisposeProviderRef<bool>;
-String _$videoFeedHash() => r'6f558a2dbaa3ccd4a70ade2c689b05a3cd47792b';
+@ProviderFor(VideoFeed)
+const videoFeedProvider = VideoFeedProvider._();
 
 /// Simple discovery video feed provider
-///
-/// Copied from [VideoFeed].
-@ProviderFor(VideoFeed)
-final videoFeedProvider =
-    AutoDisposeAsyncNotifierProvider<VideoFeed, VideoFeedState>.internal(
-  VideoFeed.new,
-  name: r'videoFeedProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$videoFeedHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final class VideoFeedProvider
+    extends $AsyncNotifierProvider<VideoFeed, VideoFeedState> {
+  /// Simple discovery video feed provider
+  const VideoFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'videoFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-typedef _$VideoFeed = AutoDisposeAsyncNotifier<VideoFeedState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+  @override
+  String debugGetCreateSourceHash() => _$videoFeedHash();
+
+  @$internal
+  @override
+  VideoFeed create() => VideoFeed();
+}
+
+String _$videoFeedHash() => r'f7a25661530d5a78223ac9f6bb897ab9d2b81f90';
+
+/// Simple discovery video feed provider
+
+abstract class _$VideoFeed extends $AsyncNotifier<VideoFeedState> {
+  FutureOr<VideoFeedState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<VideoFeedState>, VideoFeedState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<VideoFeedState>, VideoFeedState>,
+              AsyncValue<VideoFeedState>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider to check if video feed is loading
+
+@ProviderFor(videoFeedLoading)
+const videoFeedLoadingProvider = VideoFeedLoadingProvider._();
+
+/// Provider to check if video feed is loading
+
+final class VideoFeedLoadingProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Provider to check if video feed is loading
+  const VideoFeedLoadingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'videoFeedLoadingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$videoFeedLoadingHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return videoFeedLoading(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$videoFeedLoadingHash() => r'055850405fbf52cb95fa8a6d62b431fc5b5aed2a';
+
+/// Provider to get current video count
+
+@ProviderFor(videoFeedCount)
+const videoFeedCountProvider = VideoFeedCountProvider._();
+
+/// Provider to get current video count
+
+final class VideoFeedCountProvider extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  /// Provider to get current video count
+  const VideoFeedCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'videoFeedCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$videoFeedCountHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return videoFeedCount(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$videoFeedCountHash() => r'de3d7d4c6f880e868a4a0c490b3c4df125040195';
+
+/// Provider to check if we have videos
+
+@ProviderFor(hasVideos)
+const hasVideosProvider = HasVideosProvider._();
+
+/// Provider to check if we have videos
+
+final class HasVideosProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Provider to check if we have videos
+  const HasVideosProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'hasVideosProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$hasVideosHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return hasVideos(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$hasVideosHash() => r'2780fade78b3238a1979632f42151a3400b482b7';

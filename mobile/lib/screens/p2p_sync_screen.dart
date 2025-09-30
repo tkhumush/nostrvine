@@ -6,6 +6,8 @@ import 'package:openvine/theme/vine_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/p2p_sync_provider.dart';
 import 'package:openvine/services/p2p_discovery_service.dart';
+import 'package:openvine/widgets/camera_fab.dart';
+import 'package:openvine/widgets/vine_bottom_nav.dart';
 
 class P2PSyncScreen extends ConsumerStatefulWidget {
   const P2PSyncScreen({super.key});
@@ -24,8 +26,10 @@ class _P2PSyncScreenState extends ConsumerState<P2PSyncScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('P2P Video Sync'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        backgroundColor: VineTheme.vineGreen,
+        foregroundColor: VineTheme.whiteText,
       ),
+      backgroundColor: Colors.black,
       body: syncStatus.when(
         data: (status) => _buildSyncContent(context, status, peers, actions),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -53,6 +57,9 @@ class _P2PSyncScreenState extends ConsumerState<P2PSyncScreen> {
           ),
         ),
       ),
+      floatingActionButton: const CameraFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: const VineBottomNav(),
     );
   }
 

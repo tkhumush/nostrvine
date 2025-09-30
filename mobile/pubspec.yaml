@@ -16,10 +16,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.0.1+15
+version: 0.0.1+20
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -36,28 +36,29 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # State management
-  flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
-  freezed_annotation: ^2.4.4
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
+  freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
   
   # Networking
-  http: ^1.2.1
+  http: ^1.5.0
   http_parser: ^4.0.2
   web_socket_channel: ^3.0.3
-  connectivity_plus: ^6.0.5
-  device_info_plus: ^10.1.0
-  url_launcher: ^6.2.5
-  dio: ^5.3.2
-  
+  connectivity_plus: ^7.0.0
+  device_info_plus: ^12.1.0
+  url_launcher: ^6.3.2
+  dio: ^5.8.0
+  dio_web_adapter: ^2.1.1
+
   # P2P Connectivity for Video Sharing
-  flutter_blue_plus: ^1.32.8  # BLE for metadata sync
+  flutter_blue_plus: ^2.0.0  # BLE for metadata sync
   wifi_iot: ^0.3.18  # WiFi Direct for Android high-bandwidth sharing
-  permission_handler: ^11.3.1  # Handle runtime permissions
+  permission_handler: ^12.0.1  # Handle runtime permissions
   
   # Camera and media
-  camera: ^0.11.0+2
-  camera_macos: ^0.0.1  # macOS camera support
+  camera: ^0.11.2
+  camera_macos: ^0.0.9  # macOS camera support
   video_player: ^2.9.1
   video_player_media_kit: ^1.0.6
   media_kit_libs_ios_video: any
@@ -66,14 +67,14 @@ dependencies:
   visibility_detector: ^0.4.0+2  # Detect widget visibility for proper video control
   image: ^4.1.7  # Image processing for GIF generation
   video_thumbnail: ^0.5.3  # Extract thumbnails from videos
-  image_picker: ^1.0.7  # For selecting images from gallery or camera
-  file_selector: ^1.0.3  # For desktop file selection (macOS, Windows, Linux)
+  image_picker: ^1.2.0  # For selecting images from gallery or camera
+  file_selector: ^1.0.4  # For desktop file selection (macOS, Windows, Linux)
   
   # Cloud services (removed cloudinary_public - using Blossom instead)
   
   # Local persistence
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  hive_ce: ^2.6.0
+  hive_ce_flutter: ^2.1.0
   
   # Storage
   shared_preferences: ^2.2.3
@@ -86,8 +87,6 @@ dependencies:
   encrypt: ^5.0.3
   bech32: ^0.2.2
   
-  # JavaScript interop for web
-  js: ^0.6.7
   
   # Concurrency control
   pool: ^1.5.1
@@ -96,8 +95,8 @@ dependencies:
   animations: ^2.0.11
   cached_network_image: ^3.3.1
   flutter_cache_manager: ^3.3.1
-  share_plus: ^10.1.2  # Cross-platform sharing
-  google_fonts: ^6.2.1  # For using Google Fonts including Pacifico
+  share_plus: ^12.0.0  # Cross-platform sharing
+  google_fonts: ^6.3.2  # For using Google Fonts including Pacifico
   blurhash_dart: ^1.2.1  # Generate blurhash for progressive image loading
   # Nostr SDK - Local package for comprehensive Nostr support
   nostr_sdk:
@@ -114,10 +113,10 @@ dependencies:
   equatable: ^2.0.5
   
   # Desktop window management for proper window sizing
-  window_manager: ^0.3.7
-  firebase_core: ^3.15.1
-  firebase_crashlytics: ^4.1.2
-  firebase_analytics: ^11.3.5
+  window_manager: ^0.5.1
+  firebase_core: ^4.1.1
+  firebase_crashlytics: ^5.0.2
+  firebase_analytics: ^12.0.2
 
 dependency_overrides:
   cryptography_flutter:
@@ -128,29 +127,29 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
-  
+  flutter_lints: ^6.0.0
+
   # Testing
   mocktail: ^1.0.3
   mockito: ^5.4.4
-  
+
   # Code generation
   build_runner: ^2.4.9
-  hive_generator: ^2.0.1
-  
+  hive_ce_generator: ^1.6.0
+
   # CLI tools
   args: ^2.4.2
-  riverpod_generator: ^2.4.0
-  custom_lint: ^0.6.4
-  riverpod_lint: ^2.3.10
-  freezed: ^2.5.7
+  riverpod_generator: ^3.0.0
+  # custom_lint: ^0.6.4  # Temporarily disabled due to rxdart version conflict
+  # riverpod_lint: ^2.3.10  # Depends on custom_lint
+  freezed: ^3.0.0
   json_serializable: ^6.8.0
   path: any
   yaml: any
@@ -171,6 +170,7 @@ flutter:
   assets:
     - assets/videos/
     - assets/top_1000_hashtags.json
+    - assets/fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -183,7 +183,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+  fonts:
+    - family: Pacifico
+      fonts:
+        - asset: assets/fonts/Pacifico-Regular.ttf
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf

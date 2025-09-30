@@ -9,7 +9,7 @@ part 'curation_state.freezed.dart';
 
 /// State model for curation provider (only Editor's Picks)
 @freezed
-class CurationState with _$CurationState {
+sealed class CurationState with _$CurationState {
   const factory CurationState({
     /// Editor's picks videos (classic vines)
     required List<VideoEvent> editorsPicks,

@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void testWithContainer(
   String description,
   Future<void> Function(ProviderContainer container) callback, {
-  List<Override>? overrides,
+  List? overrides,
 }) {
   test(description, () async {
-    final container = ProviderContainer(overrides: overrides ?? []);
+    final container = ProviderContainer(overrides: (overrides ?? []).cast());
     try {
       await callback(container);
     } finally {

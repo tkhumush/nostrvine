@@ -1,7 +1,6 @@
 // ABOUTME: Riverpod provider for managing profile statistics with async loading and caching
 // ABOUTME: Aggregates user video count, likes, and other metrics from Nostr events
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -139,7 +138,7 @@ void clearAllProfileStatsCache() {
 
 /// Async provider for loading profile statistics
 @riverpod
-Future<ProfileStats> profileStats(Ref ref, String pubkey) async {
+Future<ProfileStats> fetchProfileStats(Ref ref, String pubkey) async {
   // Check cache first
   final cached = _getCachedProfileStats(pubkey);
   if (cached != null) {
@@ -154,7 +153,7 @@ Future<ProfileStats> profileStats(Ref ref, String pubkey) async {
 
   try {
     // Load all stats in parallel for better performance
-    final results = await Future.wait([
+    final results = await Future.wait<dynamic>([
       socialService.getFollowerStats(pubkey),
       socialService.getUserVideoCount(pubkey),
     ]);
@@ -201,7 +200,7 @@ class ProfileStatsNotifier extends _$ProfileStatsNotifier {
     });
 
     try {
-      final stats = await ref.read(profileStatsProvider(pubkey).future);
+      final stats = await ref.read(fetchProfileStatsProvider(pubkey).future);
       state = state.copyWith(
         stats: stats,
         isLoading: false,
@@ -218,7 +217,7 @@ class ProfileStatsNotifier extends _$ProfileStatsNotifier {
   /// Refresh stats by clearing cache and reloading
   Future<void> refreshStats(String pubkey) async {
     _clearProfileStatsCache(pubkey);
-    ref.invalidate(profileStatsProvider(pubkey));
+    ref.invalidate(fetchProfileStatsProvider(pubkey));
     await loadStats(pubkey);
   }
 

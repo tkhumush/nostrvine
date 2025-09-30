@@ -45,7 +45,7 @@ void main() {
 
     group('Initial State', () {
       test('should have correct initial state', () {
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.videos, isEmpty);
         expect(state.isLoading, false);
         expect(state.isLoadingMore, false);
@@ -92,14 +92,14 @@ void main() {
             .thenAnswer((_) => controller.stream);
 
         // Act
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
 
         // Close the stream to complete loading
         await controller.close();
 
         // Assert
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.videos.length, equals(2));
         expect(state.videos.first.id, equals('video1')); // Newest first
         expect(state.videos.last.id, equals('video2'));
@@ -118,11 +118,11 @@ void main() {
             .thenAnswer((_) => Stream.error(Exception('Network error')));
 
         // Act
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
 
         // Assert
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.isLoading, false);
         expect(state.videos, isEmpty);
         // Note: Error handling in streaming implementation might not set error state
@@ -139,7 +139,7 @@ void main() {
             .thenAnswer((_) => controller.stream);
 
         // Act - start two concurrent loads
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         final future1 = notifier.loadVideosForUser(testPubkey);
         final future2 = notifier.loadVideosForUser(testPubkey);
 
@@ -179,12 +179,12 @@ void main() {
             .thenAnswer((_) => controller1.stream);
 
         // Load initial videos
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
         await controller1.close();
 
         // Verify initial state
-        var state = container.read(profileVideosNotifierProvider);
+        var state = container.read(profileVideosProvider);
         expect(state.videos.length, equals(1));
         expect(state.videos.first.id, equals('initial_video1'));
 
@@ -213,7 +213,7 @@ void main() {
         await controller2.close();
 
         // Assert - should have updated videos
-        state = container.read(profileVideosNotifierProvider);
+        state = container.read(profileVideosProvider);
         expect(state.videos.length, equals(1));
         expect(state.videos.first.id, equals('updated_video1'));
       });
@@ -225,13 +225,13 @@ void main() {
         when(mockNostrService.subscribeToEvents(filters: anyNamed('filters')))
             .thenAnswer((_) => Stream.error(Exception('Test error')));
 
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
 
         // Verify we can clear error (implementation might vary)
         notifier.clearError();
 
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.error, isNull);
       });
 
@@ -267,7 +267,7 @@ void main() {
             .thenAnswer((_) => controller1.stream);
 
         // Load initial videos
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
         await controller1.close();
 
@@ -284,20 +284,20 @@ void main() {
         await controller2.close();
 
         // Assert - should complete without error
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.isLoadingMore, false);
       });
 
       test('should not load more when hasMore is false', () async {
         // This test ensures loadMoreVideos returns early when there are no more videos
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
 
         // Initial state has hasMore = true, but no videos loaded
         // This should cause loadMoreVideos to return early
         await notifier.loadMoreVideos();
 
         // Should complete without attempting to create subscription
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.isLoadingMore, false);
       });
     });
@@ -314,7 +314,7 @@ void main() {
         when(mockNostrService.subscribeToEvents(filters: anyNamed('filters')))
             .thenAnswer((_) => controller.stream);
 
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
         await controller.close();
 
@@ -333,7 +333,7 @@ void main() {
         notifier.addVideo(newVideo);
 
         // Assert - video should be added to list
-        final state = container.read(profileVideosNotifierProvider);
+        final state = container.read(profileVideosProvider);
         expect(state.videos.length, equals(1));
         expect(state.videos.first.id, equals('new_video_123'));
       });
@@ -357,19 +357,19 @@ void main() {
         when(mockNostrService.subscribeToEvents(filters: anyNamed('filters')))
             .thenAnswer((_) => controller.stream);
 
-        final notifier = container.read(profileVideosNotifierProvider.notifier);
+        final notifier = container.read(profileVideosProvider.notifier);
         await notifier.loadVideosForUser(testPubkey);
         await controller.close();
 
         // Verify initial state
-        var state = container.read(profileVideosNotifierProvider);
+        var state = container.read(profileVideosProvider);
         expect(state.videos.length, equals(1));
 
         // Act - remove video
         notifier.removeVideo('video_to_remove');
 
         // Assert - video should be removed
-        state = container.read(profileVideosNotifierProvider);
+        state = container.read(profileVideosProvider);
         expect(state.videos, isEmpty);
       });
     });

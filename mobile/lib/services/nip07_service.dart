@@ -114,7 +114,9 @@ class Nip07Service {
 
       // Request public key from extension
       final pubkey = await nip07.safeNip07Call(
-        () => nip07.nostr!.getPublicKey(),
+        () async {
+          return await nip07.nostr!.getPublicKey();
+        },
         'get public key',
       );
 
@@ -130,10 +132,14 @@ class Nip07Service {
       _isConnected = true;
 
       // Try to get user's relays (optional feature)
+      // TODO: Fix tear-off issue with getRelays extension method
+      // Currently disabled due to dart:js_interop limitation with external extension type tear-offs
       try {
-        final relaysMethod = nip07.nostr!.getRelays;
-        _userRelays = await relaysMethod();
-        Log.debug('Retrieved ${_userRelays?.length ?? 0} relays from extension',
+        // if (nip07.nostr!.getRelays != null) {
+        //   final jsRelays = await nip07.nostr!.getRelays!().toDart;
+        //   _userRelays = jsRelays.dartify() as Map<String, dynamic>?;
+        // }
+        Log.debug('Retrieved ${_userRelays?.length ?? 0} relays from extension (disabled)',
             name: 'Nip07Service', category: LogCategory.system);
       } catch (e) {
         Log.warning('Extension does not support getRelays: $e',
@@ -179,12 +185,12 @@ class Nip07Service {
 
       // Sign the event
       final signedJsEvent = await nip07.safeNip07Call(
-        () => nip07.nostr!.signEvent(jsEvent),
+        () => nip07.nostr!.signEvent(jsEvent.toMap()),
         'sign event',
       );
 
       // Convert back to Dart format
-      final signedEvent = nip07.jsEventToDart(signedJsEvent);
+      final signedEvent = signedJsEvent;
 
       // Validate the signed event
       if (signedEvent['sig'] == null || signedEvent['id'] == null) {
@@ -220,7 +226,8 @@ class Nip07Service {
     }
 
     try {
-      return await nip07.nostr!.nip04!.encrypt(recipientPubkey, message);
+      final encrypted = await nip07.nostr!.nip04!.encrypt(recipientPubkey, message);
+      return encrypted;
     } catch (e) {
       Log.error('NIP-04 encryption failed: $e',
           name: 'Nip07Service', category: LogCategory.system);
@@ -236,7 +243,8 @@ class Nip07Service {
     }
 
     try {
-      return await nip07.nostr!.nip04!.decrypt(senderPubkey, encryptedMessage);
+      final decrypted = await nip07.nostr!.nip04!.decrypt(senderPubkey, encryptedMessage);
+      return decrypted;
     } catch (e) {
       Log.error('NIP-04 decryption failed: $e',
           name: 'Nip07Service', category: LogCategory.system);

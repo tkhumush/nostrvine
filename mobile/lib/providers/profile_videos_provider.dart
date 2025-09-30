@@ -3,7 +3,6 @@
 
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nostr_sdk/filter.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/app_providers.dart';
@@ -123,7 +122,7 @@ void clearAllProfileVideosCache() {
 
 /// Async provider for loading profile videos
 @riverpod
-Future<List<VideoEvent>> profileVideos(Ref ref, String pubkey) async {
+Future<List<VideoEvent>> fetchProfileVideos(Ref ref, String pubkey) async {
   // Check cache first
   final cached = _getCachedProfileVideos(pubkey);
   if (cached != null) {
@@ -649,7 +648,7 @@ class ProfileVideosNotifier extends _$ProfileVideosNotifier {
   Future<void> refreshVideos() async {
     if (_currentPubkey != null) {
       _clearProfileVideosCache(_currentPubkey!);
-      ref.invalidate(profileVideosProvider(_currentPubkey!));
+      ref.invalidate(fetchProfileVideosProvider(_currentPubkey!));
       await loadVideosForUser(_currentPubkey!);
     }
   }

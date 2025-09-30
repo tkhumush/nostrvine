@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -239,6 +240,8 @@ VideoPlayerController individualVideoController(
   rescheduleDrop();
 
   // Listen for active state changes to control playback reliably
+  // Listen to both the specific video active state AND the global activeVideoProvider
+  // This ensures we catch state changes even when widgets are disposed
   ref.listen<bool>(isVideoActiveProvider(params.videoId), (prev, next) {
     final videoIdDisplay = params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId;
 
@@ -271,6 +274,37 @@ VideoPlayerController individualVideoController(
       }
     } catch (error) {
       Log.error('❌ Error in active state listener for $videoIdDisplay...: $error',
+          name: 'IndividualVideoController', category: LogCategory.system);
+    }
+  });
+
+  // CRITICAL FIX: Listen to activeVideoProvider changes to pause when this video becomes inactive
+  // This handles both: (1) switching to another video, (2) clearing active video entirely
+  ref.listen<String?>(activeVideoProvider, (prev, next) {
+    final videoIdDisplay = params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId;
+
+    // DEBUG: Log every state change to diagnose if listener fires
+    Log.debug('📡 ActiveVideo listener fired for $videoIdDisplay: prev=${prev?.substring(0, 8) ?? "null"}, next=${next?.substring(0, 8) ?? "null"}',
+        name: 'IndividualVideoController', category: LogCategory.system);
+
+    try {
+      // This video was active (either in prev or we're currently active) and now it's not
+      final wasActive = prev == params.videoId;
+      final isActiveNow = next == params.videoId;
+
+      if (wasActive && !isActiveNow && controller.value.isPlaying) {
+        Log.info('⏸️ Pausing video $videoIdDisplay... (no longer active: ${next == null ? "cleared" : "switched"})',
+            name: 'IndividualVideoController', category: LogCategory.system);
+        controller.pause().catchError((error) {
+          Log.error('❌ Failed to pause video $videoIdDisplay...: $error',
+              name: 'IndividualVideoController', category: LogCategory.system);
+        });
+      } else {
+        Log.debug('⏭️ Skipping pause for $videoIdDisplay: wasActive=$wasActive, isActiveNow=$isActiveNow, isPlaying=${controller.value.isPlaying}',
+            name: 'IndividualVideoController', category: LogCategory.system);
+      }
+    } catch (error) {
+      Log.error('❌ Error in activeVideoProvider listener for $videoIdDisplay...: $error',
           name: 'IndividualVideoController', category: LogCategory.system);
     }
   });

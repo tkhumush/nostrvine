@@ -7,6 +7,8 @@ import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/widgets/camera_fab.dart';
+import 'package:openvine/widgets/vine_bottom_nav.dart';
 
 /// Screen for managing Nostr relay settings
 class RelaySettingsScreen extends ConsumerStatefulWidget {
@@ -38,8 +40,8 @@ class _RelaySettingsScreenState extends ConsumerState<RelaySettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Relay Settings'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: VineTheme.vineGreen,
+        foregroundColor: VineTheme.whiteText,
       ),
       backgroundColor: Colors.black,
       body: Column(
@@ -153,11 +155,9 @@ class _RelaySettingsScreenState extends ConsumerState<RelaySettingsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddRelayDialog,
-        backgroundColor: VineTheme.vineGreen,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: const CameraFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: VineBottomNav(),
     );
   }
 

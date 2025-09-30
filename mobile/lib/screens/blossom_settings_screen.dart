@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/widgets/camera_fab.dart';
+import 'package:openvine/widgets/vine_bottom_nav.dart';
 
 class BlossomSettingsScreen extends ConsumerStatefulWidget {
   const BlossomSettingsScreen({super.key});
@@ -124,7 +126,8 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Blossom Upload Settings'),
-          backgroundColor: Colors.black,
+          backgroundColor: VineTheme.vineGreen,
+          foregroundColor: VineTheme.whiteText,
         ),
         backgroundColor: Colors.black,
         body: const Center(
@@ -132,13 +135,17 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
             color: VineTheme.vineGreen,
           ),
         ),
+        floatingActionButton: const CameraFAB(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: VineBottomNav(),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Blossom Upload Settings'),
-        backgroundColor: Colors.black,
+        backgroundColor: VineTheme.vineGreen,
+        foregroundColor: VineTheme.whiteText,
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _saveSettings,
@@ -226,7 +233,7 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
                 }
               });
             },
-            activeColor: VineTheme.vineGreen,
+            activeThumbColor: VineTheme.vineGreen,
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.withValues(alpha:0.3),
           ),
@@ -322,6 +329,9 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
           ],
         ],
       ),
+      floatingActionButton: const CameraFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: VineBottomNav(),
     );
   }
 
