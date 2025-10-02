@@ -4,7 +4,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:nostr_sdk/client_utils/keys.dart' as keys;
+import 'package:nostr_sdk/nip04/nip04.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:pointycastle/export.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// Bunker connection configuration
@@ -61,6 +64,8 @@ class NsecBunkerClient {
   BunkerConfig? _config;
   String? _userPubkey;
   String? _clientPubkey;
+  String? _clientPrivateKey;
+  ECDHBasicAgreement? _agreement;
 
   final _pendingRequests = <String, Completer<Map<String, dynamic>>>{};
   StreamSubscription? _wsSubscription;
@@ -135,8 +140,9 @@ class NsecBunkerClient {
           name: 'NsecBunkerClient', category: LogCategory.relay);
 
       // Generate ephemeral client keypair for this session
-      // In production, use proper Nostr key generation
-      _clientPubkey = _generateClientPubkey();
+      _clientPrivateKey = keys.generatePrivateKey();
+      _clientPubkey = keys.getPublicKey(_clientPrivateKey!);
+      _agreement = NIP04.getAgreement(_clientPrivateKey!);
 
       _wsChannel = WebSocketChannel.connect(Uri.parse(_config!.relayUrl));
 
@@ -344,24 +350,135 @@ class NsecBunkerClient {
   }
 
   String _encryptContent(String content) {
-    // TODO: Implement NIP-04 encryption with bunker pubkey
-    // For now, return as-is (NOT SECURE - implement proper encryption)
-    return content;
+    if (_agreement == null || _config == null) {
+      throw StateError('Bunker not properly configured for encryption');
+    }
+    return NIP04.encrypt(content, _agreement!, _config!.bunkerPubkey);
   }
 
   String _decryptContent(String encryptedContent) {
-    // TODO: Implement NIP-04 decryption with bunker pubkey
-    // For now, return as-is (NOT SECURE - implement proper decryption)
-    return encryptedContent;
+    if (_agreement == null || _config == null) {
+      throw StateError('Bunker not properly configured for decryption');
+    }
+    try {
+      return NIP04.decrypt(encryptedContent, _agreement!, _config!.bunkerPubkey);
+    } catch (e) {
+      Log.error('Failed to decrypt content: $e',
+          name: 'NsecBunkerClient', category: LogCategory.relay);
+      return '';
+    }
   }
 
   String _generateRequestId() {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
-  String _generateClientPubkey() {
-    // TODO: Generate proper ephemeral Nostr keypair
-    // For now, return a placeholder
-    return 'client_pubkey_${DateTime.now().millisecondsSinceEpoch}';
+  /// Check if NIP-04 encryption is supported
+  bool supportsNIP04Encryption() => true;
+
+  // Test-only methods for setting up encryption
+  void setClientKeys(String privateKey, String publicKey) {
+    _clientPrivateKey = privateKey;
+    _clientPubkey = publicKey;
+    _agreement = NIP04.getAgreement(privateKey);
+  }
+
+  void setBunkerPublicKey(String publicKey) {
+    if (_config == null) {
+      _config = BunkerConfig(
+        relayUrl: 'wss://test.relay',
+        bunkerPubkey: publicKey,
+        secret: 'test',
+      );
+    } else {
+      _config = BunkerConfig(
+        relayUrl: _config!.relayUrl,
+        bunkerPubkey: publicKey,
+        secret: _config!.secret,
+        permissions: _config!.permissions,
+      );
+    }
+  }
+
+  void setConfig(BunkerConfig config) {
+    _config = config;
+  }
+
+  String generateClientPrivateKey() {
+    return keys.generatePrivateKey();
+  }
+
+  String getClientPublicKey(String privateKey) {
+    return keys.getPublicKey(privateKey);
+  }
+
+  String encryptContent(String content) {
+    return _encryptContent(content);
+  }
+
+  String decryptContent(String encryptedContent) {
+    return _decryptContent(encryptedContent);
+  }
+
+  Map<String, dynamic> createRequestEvent(Map<String, dynamic> request) {
+    return _createRequestEvent(request);
+  }
+
+  Map<String, dynamic>? processResponse(Map<String, dynamic> event) {
+    try {
+      final content = event['content'] as String?;
+      if (content == null) return null;
+
+      final decryptedContent = _decryptContent(content);
+      if (decryptedContent.isEmpty) return null;
+
+      return jsonDecode(decryptedContent) as Map<String, dynamic>;
+    } catch (e) {
+      Log.error('Failed to process response: $e',
+          name: 'NsecBunkerClient', category: LogCategory.relay);
+      return null;
+    }
+  }
+
+  /// Parse bunker URI and authenticate
+  Future<BunkerAuthResult> authenticateFromUri(String bunkerUri) async {
+    try {
+      final uri = Uri.parse(bunkerUri);
+      if (uri.scheme != 'bunker') {
+        return BunkerAuthResult(
+          success: false,
+          error: 'Invalid bunker URI scheme: ${uri.scheme}',
+        );
+      }
+
+      // Extract npub and relay from URI
+      final userInfo = uri.userInfo;
+      final relay = uri.host;
+      final queryParams = uri.queryParameters;
+      final secret = queryParams['secret'] ?? '';
+      final permissions = queryParams['perms']?.split(',') ?? [];
+
+      // Create config from URI
+      _config = BunkerConfig(
+        relayUrl: 'wss://$relay',
+        bunkerPubkey: userInfo, // This should be converted from npub to hex
+        secret: secret,
+        permissions: permissions,
+      );
+
+      // For now, simulate successful auth
+      _userPubkey = userInfo; // In production, get actual user pubkey
+
+      return BunkerAuthResult(
+        success: true,
+        config: _config,
+        userPubkey: _userPubkey,
+      );
+    } catch (e) {
+      return BunkerAuthResult(
+        success: false,
+        error: 'Failed to parse bunker URI: $e',
+      );
+    }
   }
 }

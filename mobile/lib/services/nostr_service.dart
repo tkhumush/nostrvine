@@ -18,6 +18,7 @@ import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/p2p_discovery_service.dart';
 import 'package:openvine/services/p2p_video_sync_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/utils/log_batcher.dart';
 
 /// Production implementation of NostrService using EmbeddedNostrRelay directly
 /// Manages external relay connections and provides unified API to the app
@@ -343,17 +344,18 @@ class NostrService implements INostrService {
       subscriptionId: id,
       filters: embeddedFilters,
       onEvent: (embeddedEvent) {
-        Log.debug('Embedded relay returned event for $id',
-            name: 'NostrService', category: LogCategory.relay);
+        // Use batched logging for repetitive relay event logs
+        RelayEventLogBatcher.batchRelayEvent(subscriptionId: id);
         // Convert embedded relay event to nostr_sdk event
         final event = _convertFromEmbeddedEvent(embeddedEvent);
 
         // Drop duplicates for this subscription
         if (seenEventIds.contains(event.id)) {
-          Log.debug(
-              'Dropping duplicate event ${event.id.substring(0, 8)} for $id',
-              name: 'NostrService',
-              category: LogCategory.relay);
+          // Use batched logging for duplicate events
+          RelayEventLogBatcher.batchDuplicateEvent(
+            eventId: event.id,
+            subscriptionId: id,
+          );
           return;
         }
         seenEventIds.add(event.id);
@@ -962,6 +964,9 @@ class NostrService implements INostrService {
   @override
   Future<void> dispose() async {
     if (_isDisposed) return;
+
+    // Flush any remaining batched logs
+    LogBatcher.flush();
 
     UnifiedLogger.info('Starting disposal...', name: 'NostrService');
 

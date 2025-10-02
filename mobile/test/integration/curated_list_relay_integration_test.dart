@@ -2,7 +2,6 @@
 // ABOUTME: Tests full lifecycle: create lists, publish to relay, retrieve on startup, sync updates
 
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,9 +10,7 @@ import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/services/curated_list_service.dart';
 import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
-import 'package:openvine/services/secure_key_storage_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:nostr_sdk/event.dart';
 import 'package:nostr_sdk/filter.dart';
 
 void main() {

@@ -58,21 +58,21 @@
 	<key>FirebaseCrashlyticsCollectionEnabled</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app uses Bluetooth to discover and sync videos with nearby divine users for offline sharing.</string>
+	<string>diVine uses Bluetooth to discover and sync videos with nearby users for offline sharing.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>This app uses Bluetooth to share videos directly with other divine users nearby.</string>
+	<string>diVine uses Bluetooth to share videos directly with other users nearby.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_openvine._tcp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to camera to record vine videos.</string>
+	<string>diVine needs access to your camera to record short videos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Location access allows discovery of nearby devices for optional offline sync while using the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is used to enable Wi‑Fi-related features and nearby device discovery for optional offline sync.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs access to microphone to record audio for vine videos.</string>
+	<string>diVine needs access to your microphone to record audio with videos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Photo library access is needed to save exported videos to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

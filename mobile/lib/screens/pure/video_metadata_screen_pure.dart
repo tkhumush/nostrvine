@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:video_player/video_player.dart';
-import 'package:openvine/main.dart';
 
 /// Pure video metadata screen using revolutionary single-controller Riverpod architecture
 class VideoMetadataScreenPure extends ConsumerStatefulWidget {
@@ -47,8 +46,25 @@ class _VideoMetadataScreenPureState extends ConsumerState<VideoMetadataScreenPur
 
   Future<void> _initializeVideoPreview() async {
     try {
+      // Verify file exists before attempting to play
+      if (!await widget.videoFile.exists()) {
+        throw Exception('Video file does not exist: ${widget.videoFile.path}');
+      }
+
+      final fileSize = await widget.videoFile.length();
+      Log.info('📝 Initializing video preview for file: ${widget.videoFile.path} (${fileSize} bytes)',
+          category: LogCategory.video);
+
       _videoController = VideoPlayerController.file(widget.videoFile);
-      await _videoController!.initialize();
+
+      // Add timeout to prevent hanging - video player should initialize quickly
+      await _videoController!.initialize().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          throw Exception('Video player initialization timed out after 2 seconds');
+        },
+      );
+
       await _videoController!.setLooping(true);
       await _videoController!.play();
 
@@ -63,6 +79,13 @@ class _VideoMetadataScreenPureState extends ConsumerState<VideoMetadataScreenPur
     } catch (e) {
       Log.error('📝 Failed to initialize video preview: $e',
           category: LogCategory.video);
+
+      // Still allow the screen to be usable even if preview fails
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
     }
   }
 
@@ -404,11 +427,12 @@ class _VideoMetadataScreenPureState extends ConsumerState<VideoMetadataScreenPur
       // For now, simulate upload
       await Future.delayed(const Duration(seconds: 2));
 
+      Log.info('📝 Video publishing complete, returning to camera screen',
+          category: LogCategory.video);
+
       if (mounted) {
-        // Navigate to user's own profile after successful upload
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        // Navigate to profile tab (null means own profile)
-        mainNavigationKey.currentState?.navigateToProfile(null);
+        // Just pop back to camera screen - let camera handle navigation to profile
+        Navigator.of(context).pop();
       }
     } catch (e) {
       Log.error('📝 VideoMetadataScreenPure: Failed to publish video: $e',

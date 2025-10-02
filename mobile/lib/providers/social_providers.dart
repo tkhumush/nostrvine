@@ -2,13 +2,16 @@
 // ABOUTME: Pure @riverpod functions for social interactions like likes, follows, and reposts
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:nostr_sdk/event.dart';
 import 'package:nostr_sdk/filter.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/providers/home_feed_provider.dart';
 import 'package:openvine/state/social_state.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'social_providers.g.dart';
 
@@ -27,6 +30,68 @@ class SocialNotifier extends _$SocialNotifier {
     ref.onDispose(_cleanupSubscriptions);
 
     return SocialState.initial;
+  }
+
+  /// Load following list from local cache
+  Future<void> _loadFollowingListFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authService = ref.read(authServiceProvider);
+      final currentUserPubkey = authService.currentPublicKeyHex;
+
+      if (currentUserPubkey != null) {
+        final key = 'following_list_$currentUserPubkey';
+        final cached = prefs.getString(key);
+        if (cached != null) {
+          final List<dynamic> decoded = jsonDecode(cached);
+          final followingPubkeys = decoded.cast<String>();
+
+          // Update state with cached data immediately
+          state = state.copyWith(followingPubkeys: followingPubkeys);
+
+          Log.info(
+              '📋 Loaded cached following list: ${followingPubkeys.length} users (in background)',
+              name: 'SocialNotifier',
+              category: LogCategory.system);
+        }
+      }
+    } catch (e) {
+      Log.error('Failed to load following list from cache: $e',
+          name: 'SocialNotifier', category: LogCategory.system);
+    }
+  }
+
+  /// Save following list to local cache
+  Future<void> _saveFollowingListToCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authService = ref.read(authServiceProvider);
+      final currentUserPubkey = authService.currentPublicKeyHex;
+
+      if (currentUserPubkey != null) {
+        final key = 'following_list_$currentUserPubkey';
+        await prefs.setString(key, jsonEncode(state.followingPubkeys));
+        Log.debug(
+            '💾 Saved following list to cache: ${state.followingPubkeys.length} users',
+            name: 'SocialNotifier',
+            category: LogCategory.system);
+      }
+    } catch (e) {
+      Log.error('Failed to save following list to cache: $e',
+          name: 'SocialNotifier', category: LogCategory.system);
+    }
+  }
+
+  /// Refresh home feed when following list changes
+  void _refreshHomeFeed() {
+    try {
+      ref.invalidate(homeFeedProvider);
+      Log.info('🔄 Triggered home feed refresh after following list change',
+          name: 'SocialNotifier', category: LogCategory.system);
+    } catch (e) {
+      Log.error('Failed to refresh home feed: $e',
+          name: 'SocialNotifier', category: LogCategory.system);
+    }
   }
 
   /// Initialize the service
@@ -55,8 +120,11 @@ class SocialNotifier extends _$SocialNotifier {
       // Initialize current user's social data if authenticated
       if (authService.isAuthenticated &&
           authService.currentPublicKeyHex != null) {
+        // Load cached following list FIRST for instant UI display
+        await _loadFollowingListFromCache();
+
         Log.info(
-            '🤝 SocialNotifier: Fetching contact list for authenticated user',
+            '🤝 SocialNotifier: Fetching contact list for authenticated user (cached: ${state.followingPubkeys.length} users)',
             name: 'SocialNotifier',
             category: LogCategory.system);
         // Load follow list and user's own reactions in parallel
@@ -129,7 +197,7 @@ class SocialNotifier extends _$SocialNotifier {
         // Add like
         final reactionEventId = await _publishLike(eventId, authorPubkey);
 
-        // Update state
+        // Update state - likeCounts tracks only NEW likes from Nostr
         state = state.copyWith(
           likedEventIds: {...state.likedEventIds, eventId},
           likeEventIdToReactionId: {
@@ -239,8 +307,14 @@ class SocialNotifier extends _$SocialNotifier {
       // Update state
       state = state.copyWith(followingPubkeys: newFollowingList);
 
+      // Save to cache
+      _saveFollowingListToCache();
+
       Log.info('Now following: $pubkeyToFollow',
           name: 'SocialNotifier', category: LogCategory.system);
+
+      // Trigger home feed refresh to show videos from newly followed user
+      _refreshHomeFeed();
     } catch (e) {
       Log.error('Error following user: $e',
           name: 'SocialNotifier', category: LogCategory.system);
@@ -291,8 +365,14 @@ class SocialNotifier extends _$SocialNotifier {
       // Update state
       state = state.copyWith(followingPubkeys: newFollowingList);
 
+      // Save to cache
+      _saveFollowingListToCache();
+
       Log.info('Unfollowed: $pubkeyToUnfollow',
           name: 'SocialNotifier', category: LogCategory.system);
+
+      // Trigger home feed refresh to update feed
+      _refreshHomeFeed();
     } catch (e) {
       Log.error('Error unfollowing user: $e',
           name: 'SocialNotifier', category: LogCategory.system);
@@ -843,6 +923,9 @@ class SocialNotifier extends _$SocialNotifier {
       followingPubkeys: followingPubkeys,
       currentUserContactListEvent: event,
     );
+
+    // Save to cache for next startup
+    _saveFollowingListToCache();
 
     Log.info(
       '✅ Processed contact list with ${followingPubkeys.length} pubkeys',

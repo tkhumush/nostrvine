@@ -4,7 +4,6 @@ import 'package:openvine/utils/unified_logger.dart';
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:io';
 
 void main() async {

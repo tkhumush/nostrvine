@@ -1,7 +1,6 @@
 // ABOUTME: Performance test for embedded relay - validates sub-100ms video feed loading
 // ABOUTME: Tests core embedded relay functionality without complex event creation
 
-import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';

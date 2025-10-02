@@ -25,13 +25,11 @@ void main() {
   group('Profile Screen Unfollow Tests (TDD)', () {
     late MockINostrService mockNostrService;
     late MockAuthService mockAuthService;
-    late MockSubscriptionManager mockSubscriptionManager;
     late MockSocialService mockSocialService;
 
     setUp(() {
       mockNostrService = MockINostrService();
       mockAuthService = MockAuthService();
-      mockSubscriptionManager = MockSubscriptionManager();
       mockSocialService = MockSocialService();
 
       // Setup default mock behaviors

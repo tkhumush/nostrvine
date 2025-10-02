@@ -237,8 +237,6 @@ void main() {
       });
 
       testWidgets('handles tap on different hashtags correctly', (tester) async {
-        final tappedHashtags = <String>[];
-
         // Mock the navigation to capture hashtag values
         await tester.pumpWidget(
           MaterialApp(

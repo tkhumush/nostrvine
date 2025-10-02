@@ -1461,7 +1461,7 @@ final class CuratedListServiceProvider
 }
 
 String _$curatedListServiceHash() =>
-    r'678b47d1162b8e89a469ccc91518fdcbc1e53577';
+    r'4cb1e31f4432938d5c0f9944a55dc52266d37c96';
 
 /// Bookmark service for NIP-51 bookmarks
 

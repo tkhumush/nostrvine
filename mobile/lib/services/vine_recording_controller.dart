@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:camera_macos/camera_macos.dart' as macos;
 import 'package:path_provider/path_provider.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 
 import 'package:openvine/services/camera/native_macos_camera.dart';
 import 'package:openvine/services/camera/enhanced_mobile_camera_interface.dart';
@@ -16,6 +18,7 @@ import 'package:openvine/services/web_camera_service_stub.dart'
     if (dart.library.html) 'web_camera_service.dart' as camera_service;
 import 'package:openvine/utils/async_utils.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/widgets/macos_camera_preview.dart';
 
 /// Represents a single recording segment in the Vine-style recording
 /// REFACTORED: Removed ChangeNotifier - now uses pure state management via Riverpod
@@ -333,7 +336,7 @@ class MobileCameraInterface extends CameraPlatformInterface {
 class MacOSCameraInterface extends CameraPlatformInterface
     with AsyncInitialization {
   final GlobalKey _cameraKey = GlobalKey(debugLabel: 'vineCamera');
-  late Widget _previewWidget;
+  Widget? _previewWidget;
   String? currentRecordingPath;
   bool isRecording = false;
 
@@ -398,7 +401,7 @@ class MacOSCameraInterface extends CameraPlatformInterface
     // For macOS, use single recording mode
     if (!isSingleRecordingMode && !isRecording) {
       // First time - start the single recording
-      currentRecordingPath = filePath;
+      // Don't set currentRecordingPath yet - native will provide the actual path
       isRecording = true;
       isSingleRecordingMode = true;
       _recordingStartTime = DateTime.now();
@@ -536,12 +539,16 @@ class MacOSCameraInterface extends CameraPlatformInterface
 
   @override
   Widget get previewWidget {
-    // Return the visual preview from camera_macos
-    if (!isInitialized) {
-      Log.info('📱 macOS camera preview requested but not initialized yet',
-          name: 'VineRecordingController', category: LogCategory.system);
+    // Return the visual preview from camera_macos, or placeholder if not ready
+    if (_previewWidget == null) {
+      if (isInitialized) {
+        Log.info('📱 macOS camera initialized but preview widget not created yet',
+            name: 'VineRecordingController', category: LogCategory.system);
+      }
+      // Return placeholder until preview widget is ready
+      return const CameraPreviewPlaceholder();
     }
-    return _previewWidget;
+    return _previewWidget!;
   }
 
   @override
@@ -905,9 +912,10 @@ class VineRecordingController {
       return;
     }
 
-    // On web, prevent multiple segments until compilation is implemented
+    // On web, prevent multiple segments - MediaRecorder doesn't support pause/resume like mobile
+    // Web needs continuous recording or a different concatenation approach
     if (kIsWeb && _segments.isNotEmpty) {
-      Log.warning('Multiple segments not supported on web yet',
+      Log.warning('Multiple segments not supported on web - use single continuous recording',
           name: 'VineRecordingController', category: LogCategory.system);
       return;
     }
@@ -956,34 +964,43 @@ class VineRecordingController {
 
       // Only save segments longer than minimum duration
       if (segmentDuration >= minSegmentDuration) {
-        // For macOS in single recording mode, create virtual segments
+        // For macOS in single recording mode, stop the native recording to get the actual path
         if (!kIsWeb &&
             Platform.isMacOS &&
             _cameraInterface is MacOSCameraInterface) {
           final macOSInterface = _cameraInterface as MacOSCameraInterface;
 
-          // Create a virtual segment (the actual file is still recording)
-          Log.info('📱 Creating virtual segment - filePath: ${macOSInterface.currentRecordingPath}',
-              name: 'VineRecordingController', category: LogCategory.system);
+          // Cancel auto-stop timer since user is manually stopping
+          macOSInterface._maxDurationTimer?.cancel();
 
-          final segment = RecordingSegment(
-            startTime: _currentSegmentStartTime!,
-            endTime: segmentEndTime,
-            duration: segmentDuration,
-            filePath: macOSInterface
-                .currentRecordingPath, // Use the single recording path
-          );
+          // Stop the native recording and get the actual file path
+          final recordedPath = await macOSInterface.completeRecording();
 
-          _segments.add(segment);
-          _totalRecordedDuration += segmentDuration;
+          if (recordedPath != null) {
+            Log.info('📱 Native recording stopped, path: $recordedPath',
+                name: 'VineRecordingController', category: LogCategory.system);
 
-          Log.info('📱 Virtual segment added - segments count now: ${_segments.length}',
-              name: 'VineRecordingController', category: LogCategory.system);
+            final segment = RecordingSegment(
+              startTime: _currentSegmentStartTime!,
+              endTime: segmentEndTime,
+              duration: segmentDuration,
+              filePath: recordedPath,
+            );
 
-          Log.info(
-              'Completed virtual segment ${_segments.length}: ${segmentDuration.inMilliseconds}ms',
-              name: 'VineRecordingController',
-              category: LogCategory.system);
+            _segments.add(segment);
+            _totalRecordedDuration += segmentDuration;
+
+            Log.info('📱 Segment added - segments count now: ${_segments.length}',
+                name: 'VineRecordingController', category: LogCategory.system);
+
+            Log.info(
+                'Completed segment ${_segments.length}: ${segmentDuration.inMilliseconds}ms',
+                name: 'VineRecordingController',
+                category: LogCategory.system);
+          } else {
+            Log.warning('Failed to stop native recording - no path returned',
+                name: 'VineRecordingController', category: LogCategory.system);
+          }
         } else {
           // Normal segment recording for other platforms
           final filePath = await _cameraInterface!.stopRecordingSegment();
@@ -1039,6 +1056,91 @@ class VineRecordingController {
       Log.error('Failed to stop recording: $e',
           name: 'VineRecordingController', category: LogCategory.system);
       // Don't rethrow - handle gracefully in UI
+    }
+  }
+
+  /// Concatenate multiple video segments using FFmpeg (mobile/desktop only)
+  Future<File?> _concatenateSegments(List<RecordingSegment> segments) async {
+    if (kIsWeb) {
+      throw Exception('FFmpeg concatenation not supported on web platform');
+    }
+
+    if (segments.isEmpty) {
+      throw Exception('No segments to concatenate');
+    }
+
+    if (segments.length == 1 && segments.first.filePath != null) {
+      // Single segment - just return it
+      return File(segments.first.filePath!);
+    }
+
+    try {
+      Log.info('📹 Concatenating ${segments.length} video segments with FFmpeg',
+          name: 'VineRecordingController', category: LogCategory.system);
+
+      // Create output file path
+      final tempDir = await getTemporaryDirectory();
+      final outputPath =
+          '${tempDir.path}/vine_final_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+      // Create concat file list
+      final concatFilePath = '${tempDir.path}/concat_list.txt';
+      final concatFile = File(concatFilePath);
+
+      // Write file paths to concat list
+      final buffer = StringBuffer();
+      for (final segment in segments) {
+        if (segment.filePath != null) {
+          // FFmpeg concat requires the 'file' prefix and proper escaping
+          buffer.writeln("file '${segment.filePath}'");
+        }
+      }
+
+      await concatFile.writeAsString(buffer.toString());
+
+      Log.info('📹 FFmpeg concat list:\n${buffer.toString()}',
+          name: 'VineRecordingController', category: LogCategory.system);
+
+      // Execute FFmpeg concatenation
+      // Using concat demuxer with -c copy for fast, lossless concatenation
+      final command = '-f concat -safe 0 -i "$concatFilePath" -c copy "$outputPath"';
+
+      Log.info('📹 Executing FFmpeg command: $command',
+          name: 'VineRecordingController', category: LogCategory.system);
+
+      final session = await FFmpegKit.execute(command);
+      final returnCode = await session.getReturnCode();
+
+      if (ReturnCode.isSuccess(returnCode)) {
+        Log.info('📹 FFmpeg concatenation successful: $outputPath',
+            name: 'VineRecordingController', category: LogCategory.system);
+
+        // Clean up concat list file
+        try {
+          await concatFile.delete();
+        } catch (e) {
+          Log.warning('Failed to delete concat list file: $e',
+              name: 'VineRecordingController', category: LogCategory.system);
+        }
+
+        final outputFile = File(outputPath);
+        if (await outputFile.exists()) {
+          return outputFile;
+        } else {
+          throw Exception('Output file does not exist after concatenation');
+        }
+      } else {
+        final output = await session.getOutput();
+        Log.error('📹 FFmpeg concatenation failed with code $returnCode',
+            name: 'VineRecordingController', category: LogCategory.system);
+        Log.error('📹 FFmpeg output: $output',
+            name: 'VineRecordingController', category: LogCategory.system);
+        throw Exception('FFmpeg concatenation failed with code $returnCode');
+      }
+    } catch (e) {
+      Log.error('📹 Video concatenation error: $e',
+          name: 'VineRecordingController', category: LogCategory.system);
+      rethrow;
     }
   }
 
@@ -1199,17 +1301,15 @@ class VineRecordingController {
         }
       }
 
-      // For now, handle multi-segment by using the first segment
-      // TODO: Implement proper video concatenation using FFmpeg
-      if (_segments.isNotEmpty && _segments.first.filePath != null) {
-        final file = File(_segments.first.filePath!);
-        if (await file.exists()) {
-          Log.warning(
-              'Using first segment only - multi-segment compilation not fully implemented',
-              name: 'VineRecordingController',
-              category: LogCategory.system);
+      // Concatenate multiple segments using FFmpeg
+      if (_segments.isNotEmpty) {
+        Log.info('📹 Concatenating ${_segments.length} segments using FFmpeg',
+            name: 'VineRecordingController', category: LogCategory.system);
+
+        final concatenatedFile = await _concatenateSegments(_segments);
+        if (concatenatedFile != null) {
           _setState(VineRecordingState.completed);
-          return file;
+          return concatenatedFile;
         }
       }
 
@@ -1428,8 +1528,11 @@ class VineRecordingController {
   void _handleMacOSAutoCompletion() async {
     final macOSInterface = _cameraInterface as MacOSCameraInterface;
 
-    // Create a virtual segment for the entire recording duration
-    if (_currentSegmentStartTime != null) {
+    // Stop the native recording first to get the file path
+    final recordedPath = await macOSInterface.completeRecording();
+
+    // Create a segment with the actual file path
+    if (_currentSegmentStartTime != null && recordedPath != null) {
       final segmentEndTime = DateTime.now();
       final segmentDuration =
           segmentEndTime.difference(_currentSegmentStartTime!);
@@ -1438,16 +1541,22 @@ class VineRecordingController {
         startTime: _currentSegmentStartTime!,
         endTime: segmentEndTime,
         duration: segmentDuration,
-        filePath: macOSInterface.currentRecordingPath,
+        filePath: recordedPath,
       );
 
       _segments.add(segment);
       _totalRecordedDuration += segmentDuration;
 
       Log.info(
-          'Completed virtual segment ${_segments.length}: ${segmentDuration.inMilliseconds}ms',
+          'Completed segment ${_segments.length} after auto-stop: ${segmentDuration.inMilliseconds}ms, path: $recordedPath',
           name: 'VineRecordingController',
           category: LogCategory.system);
+    } else if (_currentSegmentStartTime == null) {
+      Log.warning('Cannot create segment - no start time recorded',
+          name: 'VineRecordingController', category: LogCategory.system);
+    } else if (recordedPath == null) {
+      Log.error('Cannot create segment - completeRecording returned null path',
+          name: 'VineRecordingController', category: LogCategory.system);
     }
 
     _currentSegmentStartTime = null;

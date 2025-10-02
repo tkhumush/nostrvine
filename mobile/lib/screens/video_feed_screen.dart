@@ -13,7 +13,7 @@ import 'package:openvine/providers/social_providers.dart' as social;
 import 'package:openvine/main.dart';
 import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:openvine/widgets/video_feed_item.dart';
+import 'package:openvine/widgets/video_page_view.dart';
 import 'package:openvine/state/video_feed_state.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
 import 'package:openvine/services/video_preload_service.dart';
@@ -95,16 +95,43 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
   int _currentIndex = 0;
   bool _isRefreshing = false; // Track if feed is currently refreshing
 
+  static int _instanceCounter = 0;
+  static DateTime? _lastInitTime;
+  late final int _instanceId;
+  late final DateTime _initTime;
+
   @override
   bool get wantKeepAlive => true; // Keep state alive when using IndexedStack
 
   @override
   void initState() {
     super.initState();
-    Log.debug('🏗️ Widget VideoFeedScreen created with key ${widget.key}',
-        name: 'VideoFeedScreen', category: LogCategory.ui);
-    Log.info('🎬 VideoFeedScreen: initState called',
-        name: 'VideoFeedScreen', category: LogCategory.ui);
+
+    _instanceCounter++;
+    _instanceId = _instanceCounter;
+    _initTime = DateTime.now();
+
+    final timeSinceLastInit = _lastInitTime != null
+        ? _initTime.difference(_lastInitTime!).inMilliseconds
+        : null;
+
+    Log.info(
+      '🏗️  VideoFeedScreen: initState #$_instanceId at ${_initTime.millisecondsSinceEpoch}ms'
+      '${timeSinceLastInit != null ? ' (${timeSinceLastInit}ms since last init)' : ''}',
+      name: 'VideoFeedScreen',
+      category: LogCategory.ui,
+    );
+
+    if (timeSinceLastInit != null && timeSinceLastInit < 2000) {
+      Log.warning(
+        '⚠️  VideoFeedScreen: RAPID RE-INIT DETECTED! Only ${timeSinceLastInit}ms since last init. '
+        'This indicates the widget is being recreated!',
+        name: 'VideoFeedScreen',
+        category: LogCategory.ui,
+      );
+    }
+
+    _lastInitTime = _initTime;
 
     _pageController = PageController();
     WidgetsBinding.instance.addObserver(this);
@@ -114,8 +141,12 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
 
   @override
   void dispose() {
-    Log.debug('🗑️ Widget VideoFeedScreen disposing with key ${widget.key}',
-        name: 'VideoFeedScreen', category: LogCategory.ui);
+    final lifetime = DateTime.now().difference(_initTime).inMilliseconds;
+    Log.info(
+      '🗑️  VideoFeedScreen: dispose #$_instanceId after ${lifetime}ms lifetime',
+      name: 'VideoFeedScreen',
+      category: LogCategory.ui,
+    );
 
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
@@ -203,16 +234,7 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
       return;
     }
 
-    // Check if we're near the end and should load more videos
-    _checkForPagination(index, videos.length);
-
-    // Preloading is handled by the single video controller through VideoFeedItem visibility
-
-    // Prewarm neighbor controllers (±1) with a small cap
-    _prewarmNeighbors(videos, index);
-
-    // Preload upcoming videos in background for smooth playback
-    _preloadUpcomingVideos(index, videos);
+    // Preloading and prewarming now handled by VideoPageView
 
     // Batch fetch profiles for videos around current position
     _batchFetchProfilesAroundIndex(index, videos);
@@ -334,27 +356,39 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
     }
   }
 
+  static int _buildCounter = 0;
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    Log.info('🎬 VideoFeedScreen: build() called',
-        name: 'VideoFeedScreen', category: LogCategory.ui);
+
+    _buildCounter++;
+    Log.info(
+      '🎨 VideoFeedScreen: build() #$_buildCounter (instance #$_instanceId)',
+      name: 'VideoFeedScreen',
+      category: LogCategory.ui,
+    );
 
     // VideoFeedScreen is now a body widget - parent handles Scaffold
     return _buildBody();
   }
 
   Widget _buildBody() {
-    Log.info('🎬 VideoFeedScreen: _buildBody called',
-        name: 'VideoFeedScreen', category: LogCategory.ui);
+    Log.info(
+      '🎬 VideoFeedScreen: _buildBody #$_buildCounter (instance #$_instanceId) - watching homeFeedProvider...',
+      name: 'VideoFeedScreen',
+      category: LogCategory.ui,
+    );
 
     // Watch the home feed state
     final videoFeedAsync = ref.watch(homeFeedProvider);
 
     Log.info(
-        '🎬 VideoFeedScreen: videoFeedAsync state = ${videoFeedAsync.runtimeType}',
-        name: 'VideoFeedScreen',
-        category: LogCategory.ui);
+      '🎬 VideoFeedScreen: _buildBody #$_buildCounter received AsyncValue state: ${videoFeedAsync.runtimeType}, '
+      'isLoading: ${videoFeedAsync.isLoading}, hasValue: ${videoFeedAsync.hasValue}, hasError: ${videoFeedAsync.hasError}',
+      name: 'VideoFeedScreen',
+      category: LogCategory.ui,
+    );
 
     // The single video controller is instantiated via VideoFeedItem widgets
 
@@ -554,67 +588,33 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
         name: 'VideoFeedScreen',
         category: LogCategory.ui);
 
-    // Per-item controllers manage their own lifecycle; no global feed setup needed
-    // Prewarm neighbors for initial view
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _prewarmNeighbors(videos, _currentIndex);
-    });
+    // Temporarily simplified to match explore feed - testing if Stack wrapper blocks gestures
+    return VideoPageView(
+        videos: videos,
+        controller: _pageController,
+        initialIndex: _currentIndex,
+        hasBottomNavigation: true,
+        enablePrewarming: true,
+        enablePreloading: true,
+        enableLifecycleManagement: false,  // Match explore feed to avoid IndexedStack conflicts
+        onPageChanged: (index, video) {
+          setState(() => _currentIndex = index);
+          _onPageChanged(index);
+        },
+        onLoadMore: () {
+          _checkForPagination(_currentIndex, videos.length);
+        },
+        onRefresh: () async {
+          await _handleRefresh();
+        }
+      );
 
+    /* REMOVED FOR TESTING - Stack wrapper may block gestures
     return Semantics(
       label: 'Video feed',
       child: Stack(
         children: [
-          NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              // Track user scrolling to prevent rebuilds during interaction
-              if (notification is ScrollStartNotification) {
-                Log.info('📱 User started scrolling',
-                    name: 'FeedScreenV2', category: LogCategory.ui);
-
-                // With single video controller, no need to pause on scroll
-                // The controller automatically handles video switching during scroll
-              } else if (notification is ScrollEndNotification) {
-                Log.info('📱 User stopped scrolling',
-                    name: 'FeedScreenV2', category: LogCategory.ui);
-
-                // Check for pull-to-refresh at the top
-                if (_currentIndex == 0 && notification.metrics.pixels < -50) {
-                  _handleRefresh();
-                }
-
-                // Resume the current video after scrolling ends
-                if (videos.isNotEmpty && _currentIndex < videos.length) {
-                  final currentVideo = videos[_currentIndex];
-                  _playVideo(currentVideo.id);
-                }
-              }
-              return false;
-            },
-            child: PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              onPageChanged: _onPageChanged,
-              itemCount: videos.length,
-              pageSnapping: true,
-              itemBuilder: (context, index) {
-                // No transition indicators needed - simple discovery feed
-
-                // Simple index - no adjustments needed
-                final videoIndex = index;
-
-                // Bounds checking
-                if (videoIndex < 0 || videoIndex >= videos.length) {
-                  return _buildErrorItem('Index out of bounds');
-                }
-
-                final video = videos[videoIndex];
-                final isActive = index == _currentIndex;
-
-                // Error boundary for individual videos
-                return _buildVideoItemWithErrorBoundary(video, isActive, index);
-              },
-            ),
-          ),
+          VideoPageView(...),
 
           // Pull-to-refresh indicator overlay
           if (_isRefreshing && _currentIndex == 0)
@@ -656,40 +656,10 @@ class _VideoFeedScreenState extends ConsumerState<VideoFeedScreen>
         ],
       ),
     );
+    */
   }
 
-  Widget _buildVideoItemWithErrorBoundary(VideoEvent video, bool isActive, int index) {
-    try {
-      return VideoFeedItem(
-        video: video,
-        index: index,
-        onTap: () => _handleVideoError(video.id, 'Video tapped'),
-      );
-    } catch (e) {
-      // Error boundary - prevent one bad video from crashing entire feed
-      Log.error('FeedScreenV2: Error creating video item ${video.id}: $e',
-          name: 'FeedScreenV2', category: LogCategory.ui);
-      return _buildErrorItem('Error loading video: ${video.title ?? video.id}');
-    }
-  }
 
-  /// Prewarm neighbors around the current index and cap concurrency
-  void _prewarmNeighbors(List<VideoEvent> videos, int currentIndex) {
-    if (videos.isEmpty) return;
-
-    final ids = <String>{};
-    // current + neighbors ±1
-    for (final i in [currentIndex - 1, currentIndex, currentIndex + 1]) {
-      if (i >= 0 && i < videos.length) {
-        final v = videos[i];
-        if (v.videoUrl != null && v.videoUrl!.isNotEmpty) {
-          ids.add(v.id);
-        }
-      }
-    }
-
-    ref.read(prewarmManagerProvider.notifier).setPrewarmed(ids, cap: 3);
-  }
 
   /// Preload upcoming videos for smooth playback using background service
   void _preloadUpcomingVideos(int currentIndex, List<VideoEvent> videos) {

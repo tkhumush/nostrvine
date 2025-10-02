@@ -1,9 +1,14 @@
 // ABOUTME: Content moderation service with NIP-51 mute list support
 // ABOUTME: Manages client-side content filtering while respecting decentralized principles
 
+import 'dart:async';
 import 'dart:convert';
 
-import 'package:nostr_sdk/event.dart';
+import 'package:nostr_sdk/event.dart' as nostr_sdk;
+import 'package:nostr_sdk/filter.dart';
+import 'package:openvine/services/auth_service.dart';
+import 'package:openvine/services/nostr_service_interface.dart';
+import 'package:openvine/services/nostr_list_service_mixin.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -106,15 +111,28 @@ class ModerationResult {
 
 /// Content moderation service managing mute lists and filtering
 /// REFACTORED: Removed ChangeNotifier - now uses pure state management via Riverpod
-class ContentModerationService {
+class ContentModerationService with NostrListServiceMixin {
   ContentModerationService({
+    required INostrService nostrService,
+    required AuthService authService,
     required SharedPreferences prefs,
-  }) : _prefs = prefs {
+  })  : _nostrService = nostrService,
+        _authService = authService,
+        _prefs = prefs {
     _loadSettings();
     _loadLocalMuteList();
     _loadSubscribedLists();
   }
+
+  final INostrService _nostrService;
+  final AuthService _authService;
   final SharedPreferences _prefs;
+
+  // Mixin interface implementations
+  @override
+  INostrService get nostrService => _nostrService;
+  @override
+  AuthService get authService => _authService;
 
   // Default divine moderation list
   static const String defaultMuteListId = 'openvine-default-mutes-v1';
@@ -168,7 +186,7 @@ class ContentModerationService {
   }
 
   /// Check if content should be filtered
-  ModerationResult checkContent(Event event) {
+  ModerationResult checkContent(nostr_sdk.Event event) {
     if (!_enableDefaultModeration && !_enableCustomMuteLists) {
       return ModerationResult.clean;
     }
@@ -365,16 +383,35 @@ class ContentModerationService {
     }
   }
 
-  /// Subscribe to external mute list via Nostr
+  /// Subscribe to external mute list via Nostr (NIP-51)
+  ///
+  /// Supports two subscription methods:
+  /// 1. By pubkey (listId format: "pubkey:<hex_pubkey>"): Subscribe to user's mute list
+  /// 2. By event ID (future): Subscribe to specific list event
   Future<void> _subscribeToMuteList(String listId) async {
     try {
-      // TODO: Implement NIP-51 list subscription
-      // This would fetch the mute list from Nostr and parse entries
-      Log.debug('Subscribing to mute list: $listId',
+      Log.debug('Subscribing to NIP-51 mute list: $listId',
           name: 'ContentModerationService', category: LogCategory.system);
 
-      // Placeholder implementation
-      _muteLists[listId] = [];
+      List<MuteListEntry> entries;
+
+      if (listId.startsWith('pubkey:')) {
+        // Subscribe to user's mute list by pubkey
+        final pubkey = listId.substring('pubkey:'.length);
+        entries = await _loadMuteListByPubkey(pubkey);
+      } else {
+        // Treat as event ID or other identifier (future enhancement)
+        Log.warning('Unknown list ID format: $listId',
+            name: 'ContentModerationService', category: LogCategory.system);
+        entries = [];
+      }
+
+      _muteLists[listId] = entries;
+
+      Log.info(
+          'Subscribed to mute list "$listId" with ${entries.length} entries',
+          name: 'ContentModerationService',
+          category: LogCategory.system);
     } catch (e) {
       Log.error('Failed to subscribe to mute list $listId: $e',
           name: 'ContentModerationService', category: LogCategory.system);
@@ -382,8 +419,112 @@ class ContentModerationService {
     }
   }
 
+  /// Load mute list from a specific pubkey
+  ///
+  /// Queries for NIP-51 kind 10000 (mute list) events published by the given pubkey.
+  /// Returns the entries from the most recent mute list event.
+  Future<List<MuteListEntry>> _loadMuteListByPubkey(String pubkey) async {
+    try {
+      Log.debug('Loading mute list for pubkey: ${pubkey.substring(0, 8)}...',
+          name: 'ContentModerationService', category: LogCategory.system);
+
+      // Query for kind 10000 (mute list) events from this pubkey
+      final filter = Filter(
+        authors: [pubkey],
+        kinds: [10000], // NIP-51 mute list
+      );
+
+      final events = await _nostrService.getEvents(filters: [filter]);
+
+      if (events.isEmpty) {
+        Log.debug('No mute list found for pubkey: ${pubkey.substring(0, 8)}...',
+            name: 'ContentModerationService', category: LogCategory.system);
+        return [];
+      }
+
+      // Sort by created_at to get the most recent (kind 10000 is replaceable)
+      events.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final latestEvent = events.first;
+
+      Log.debug(
+          'Found mute list event: ${latestEvent.id.substring(0, 8)}... (created: ${DateTime.fromMillisecondsSinceEpoch(latestEvent.createdAt * 1000)})',
+          name: 'ContentModerationService',
+          category: LogCategory.system);
+
+      // Parse mute list entries from event
+      return _parseMuteListFromEvent(latestEvent);
+    } catch (e) {
+      Log.error('Failed to load mute list for pubkey $pubkey: $e',
+          name: 'ContentModerationService', category: LogCategory.system);
+      return [];
+    }
+  }
+
+  /// Parse mute list entries from NIP-51 kind 10000 event
+  ///
+  /// NIP-51 mute lists contain tags like:
+  /// - ['p', '<pubkey>', '<reason>'] - Mute user
+  /// - ['e', '<event_id>', '<reason>'] - Mute event
+  /// - ['word', '<keyword>', '<reason>'] - Mute keyword
+  /// - ['t', '<hashtag>', '<reason>'] - Mute hashtag
+  List<MuteListEntry> _parseMuteListFromEvent(nostr_sdk.Event event) {
+    final entries = <MuteListEntry>[];
+
+    for (final tag in event.tags) {
+      if (tag.length < 2) continue;
+
+      final tagType = tag[0];
+      final value = tag[1];
+      final reason = tag.length > 2 ? tag[2] : null;
+
+      // Map NIP-51 tag types to our internal types
+      String? internalType;
+      ContentFilterReason filterReason = ContentFilterReason.other;
+
+      switch (tagType) {
+        case 'p': // Mute pubkey
+          internalType = 'pubkey';
+          filterReason = ContentFilterReason.harassment;
+          break;
+        case 'e': // Mute event
+          internalType = 'event';
+          filterReason = ContentFilterReason.spam;
+          break;
+        case 'word': // Mute keyword
+          internalType = 'keyword';
+          filterReason = ContentFilterReason.spam;
+          break;
+        case 't': // Mute hashtag
+          internalType = 'keyword'; // Treat hashtags as keywords
+          filterReason = ContentFilterReason.spam;
+          break;
+        default:
+          // Skip unknown tag types
+          continue;
+      }
+
+      final entry = MuteListEntry(
+        type: internalType,
+        value: value,
+        reason: filterReason,
+        severity: ContentSeverity.hide, // Default severity for external lists
+        createdAt: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
+        note: reason,
+      );
+
+      entries.add(entry);
+    }
+
+    Log.debug(
+        'Parsed ${entries.length} mute entries from event ${event.id.substring(0, 8)}...',
+        name: 'ContentModerationService',
+        category: LogCategory.system);
+
+    return entries;
+  }
+
   /// Check if mute list entry matches event
-  bool _doesEntryMatch(MuteListEntry entry, Event event) {
+  bool _doesEntryMatch(MuteListEntry entry, nostr_sdk.Event event) {
     switch (entry.type) {
       case 'pubkey':
         return event.pubkey == entry.value;

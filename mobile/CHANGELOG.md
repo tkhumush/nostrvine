@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Home Feed Video Loading (2025-01-30)
+
+#### Bug Fixes
+- **Fixed home feed only loading 1 video** - Resolved race condition in video batch loading
+  - Home feed provider now waits for complete video batch from relay instead of completing on first video
+  - Implemented stability-based waiting: monitors video count and completes when stable for 300ms
+  - Added 3-second maximum timeout as safety for slow connections
+  - Uses proper event-driven pattern with Completer and ChangeNotifier listeners
+- **Fixed home feed auto-refresh behavior**
+  - Automatically refreshes when contact list changes (follow/unfollow)
+  - Added 10-minute auto-refresh timer for background updates
+  - Maintains proper keepAlive behavior to prevent unnecessary rebuilds
+- **Fixed video swiping gesture conflicts**
+  - Changed `enableLifecycleManagement` to `false` in home feed to match explore feed
+  - Added missing `controller` parameter to VideoPageView for proper state management
+- **Code quality improvements**
+  - Removed unused imports and fields in home_feed_provider.dart
+  - Fixed syntax error (trailing comma) in video_feed_screen.dart
+
+#### Technical Details
+- Modified `lib/providers/home_feed_provider.dart`:
+  - Lines 126-163: Stability-based video loading with proper cleanup
+  - Lines 80-93: Reactive listening for contact list changes
+  - Lines 69-78: 10-minute auto-refresh timer
+- Modified `lib/screens/video_feed_screen.dart`:
+  - Added `controller: _pageController` to VideoPageView
+  - Changed `enableLifecycleManagement: false`
+- Enhanced debug logging in `lib/widgets/video_page_view.dart`
+
 ### Changed - Riverpod 3 Migration (2025-01-30)
 
 #### Breaking Changes

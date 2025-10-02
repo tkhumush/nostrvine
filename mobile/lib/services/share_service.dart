@@ -82,9 +82,11 @@ class ShareService {
   Future<void> shareViaSheet(VideoEvent video, BuildContext context) async {
     try {
       final shareText = generateShareText(video);
-      await Share.share(
-        shareText,
-        subject: 'Check out this video on divine',
+      await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: 'Check out this video on divine',
+        ),
       );
     } catch (e) {
       Log.error('Error sharing via sheet: $e',

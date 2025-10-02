@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/providers/seen_videos_notifier.dart';
 import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/subscription_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
@@ -48,26 +49,10 @@ class VideoEvents extends _$VideoEvents {
       category: LogCategory.video,
     );
 
-    // Subscribe only when Explore tab is active to avoid startup thrash
-    if (!isExploreActive) {
-      Log.debug('VideoEvents: Explore tab inactive; not subscribing',
-          name: 'VideoEventsProvider', category: LogCategory.video);
-      _controller = StreamController<List<VideoEvent>>.broadcast();
-      // Emit whatever is cached so grids can show something if needed
-      final cached = List<VideoEvent>.from(videoEventService.discoveryVideos);
-      scheduleMicrotask(() {
-        if (_canEmit) _controller!.add(cached);
-      });
-
-      ref.onDispose(() {
-        _debounceTimer?.cancel();
-        _controller?.close();
-        _controller = null;
-      });
-      return _controller!.stream;
-    }
-
-    Log.debug('VideoEvents: Explore active, subscribing to discovery videos',
+    // Always subscribe when provider is watched - disposal handles cleanup
+    // Note: On web, IndexedStack pre-renders all tabs, so ExploreScreen widgets
+    // are built even when main tab is not active. This is expected behavior.
+    Log.debug('VideoEvents: Starting discovery subscription (tab active: $isExploreActive)',
         name: 'VideoEventsProvider', category: LogCategory.video);
 
     videoEventService.subscribeToDiscovery(limit: 100);
@@ -78,8 +63,25 @@ class VideoEvents extends _$VideoEvents {
     // Emit current events immediately from discovery list
     final currentEvents =
         List<VideoEvent>.from(videoEventService.discoveryVideos);
+
+    // Reorder to show unseen videos first
+    final seenVideosState = ref.watch(seenVideosProvider);
+
+    final unseen = <VideoEvent>[];
+    final seen = <VideoEvent>[];
+
+    for (final video in currentEvents) {
+      if (seenVideosState.seenVideoIds.contains(video.id)) {
+        seen.add(video);
+      } else {
+        unseen.add(video);
+      }
+    }
+
+    final reorderedEvents = [...unseen, ...seen];
+
     if (_canEmit) {
-      _controller!.add(currentEvents);
+      _controller!.add(reorderedEvents);
     }
 
     // Listen to VideoEventService changes reactively (proper Riverpod way)
@@ -87,8 +89,22 @@ class VideoEvents extends _$VideoEvents {
       final newEvents =
           List<VideoEvent>.from(videoEventService.discoveryVideos);
 
+      // Reorder to show unseen videos first
+      final unseenNew = <VideoEvent>[];
+      final seenNew = <VideoEvent>[];
+
+      for (final video in newEvents) {
+        if (seenVideosState.seenVideoIds.contains(video.id)) {
+          seenNew.add(video);
+        } else {
+          unseenNew.add(video);
+        }
+      }
+
+      final reorderedNew = [...unseenNew, ...seenNew];
+
       // Store pending events for debounced emission
-      _pendingEvents = newEvents;
+      _pendingEvents = reorderedNew;
 
       // Cancel any existing timer
       _debounceTimer?.cancel();
@@ -97,7 +113,7 @@ class VideoEvents extends _$VideoEvents {
       _debounceTimer = Timer(const Duration(milliseconds: 500), () {
         if (_pendingEvents != null && _canEmit) {
           Log.debug(
-            '📺 VideoEvents: Batched update - ${_pendingEvents!.length} discovery videos',
+            '📺 VideoEvents: Batched update - ${_pendingEvents!.length} discovery videos (${unseenNew.length} unseen, ${seenNew.length} seen)',
             name: 'VideoEventsProvider',
             category: LogCategory.video,
           );

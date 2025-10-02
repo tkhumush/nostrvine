@@ -62,7 +62,10 @@ class _ProfileScreenPureState extends ConsumerState<ProfileScreenPure>
 
     setState(() {});
 
-    Log.info('👤 ProfileScreenPure: Initialized for ${_isOwnProfile ? "own" : "other"} profile: ${_targetPubkey?.substring(0, 8)}...',
+    final pubkeyPreview = _targetPubkey != null && _targetPubkey!.length > 8
+        ? '${_targetPubkey!.substring(0, 8)}...'
+        : _targetPubkey ?? 'unknown';
+    Log.info('👤 ProfileScreenPure: Initialized for ${_isOwnProfile ? "own" : "other"} profile: $pubkeyPreview',
         category: LogCategory.video);
   }
 

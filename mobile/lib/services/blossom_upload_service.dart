@@ -18,6 +18,7 @@ class BlossomUploadResult {
   final String? videoId;
   final String? cdnUrl;
   final String? gifUrl;
+  final String? thumbnailUrl;
   final String? blurhash;
   final String? errorMessage;
 
@@ -26,6 +27,7 @@ class BlossomUploadResult {
     this.videoId,
     this.cdnUrl,
     this.gifUrl,
+    this.thumbnailUrl,
     this.blurhash,
     this.errorMessage,
   });
@@ -392,6 +394,7 @@ class BlossomUploadService {
                   success: true,
                   cdnUrl: mediaUrl,
                   videoId: videoId,
+                  thumbnailUrl: thumbnailUrl,
                 );
               } else {
                 return BlossomUploadResult(
@@ -478,6 +481,241 @@ class BlossomUploadService {
       return BlossomUploadResult(
         success: false,
         errorMessage: 'Blossom upload failed: $e',
+      );
+    }
+  }
+
+  /// Upload an image file (e.g. thumbnail) to the configured Blossom server
+  ///
+  /// This uses the same Blossom BUD-01 protocol as video uploads but with image MIME type
+  Future<BlossomUploadResult> uploadImage({
+    required File imageFile,
+    required String nostrPubkey,
+    String mimeType = 'image/jpeg',
+    void Function(double)? onProgress,
+  }) async {
+    try {
+      // Check if Blossom is enabled and configured
+      final isEnabled = await isBlossomEnabled();
+      if (!isEnabled) {
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'Blossom upload is not enabled',
+        );
+      }
+
+      final serverUrl = await getBlossomServer();
+      if (serverUrl == null || serverUrl.isEmpty) {
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'No Blossom server configured',
+        );
+      }
+
+      // Parse and validate server URL
+      final uri = Uri.tryParse(serverUrl);
+      if (uri == null) {
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'Invalid Blossom server URL',
+        );
+      }
+
+      // Check authentication
+      if (!authService.isAuthenticated) {
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'Not authenticated',
+        );
+      }
+
+      Log.info('Uploading image to Blossom server: $serverUrl',
+          name: 'BlossomUploadService', category: LogCategory.video);
+
+      // Report initial progress
+      onProgress?.call(0.1);
+
+      // Calculate file hash for Blossom
+      final fileBytes = await imageFile.readAsBytes();
+      final fileHash = HashUtil.sha256Hash(fileBytes);
+      final fileSize = fileBytes.length;
+
+      Log.info('Image file hash: $fileHash, size: $fileSize bytes',
+          name: 'BlossomUploadService', category: LogCategory.video);
+
+      // Create Blossom auth event
+      final authEvent = await _createBlossomAuthEvent(
+        url: '$serverUrl/upload',
+        method: 'PUT',
+        fileHash: fileHash,
+        fileSize: fileSize,
+      );
+
+      if (authEvent == null) {
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'Failed to create Blossom authentication',
+        );
+      }
+
+      // Prepare authorization header
+      final authEventJson = jsonEncode(authEvent.toJson());
+      final authHeader = 'Nostr ${base64.encode(utf8.encode(authEventJson))}';
+
+      Log.info('Step 1: Requesting upload URL for image from Blossom server',
+          name: 'BlossomUploadService', category: LogCategory.video);
+
+      final uploadRequestData = {
+        'size': fileSize,
+        'type': mimeType,
+        'sha256': fileHash,
+      };
+      final uploadRequestJson = jsonEncode(uploadRequestData);
+
+      // Step 1: Request upload URL with metadata (BUD-01 compliant)
+      final metadataResponse = await dio.put(
+        '$serverUrl/upload',
+        data: uploadRequestJson,
+        options: Options(
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+
+      // Handle HTTP 409 Conflict - file already exists on server
+      if (metadataResponse.statusCode == 409) {
+        Log.info('✅ Image already exists on Blossom server (hash: $fileHash)',
+            name: 'BlossomUploadService', category: LogCategory.video);
+
+        onProgress?.call(1.0);
+
+        // Return success with the existing file URL
+        return BlossomUploadResult(
+          success: true,
+          cdnUrl: '$serverUrl/$fileHash',
+          videoId: fileHash,
+        );
+      }
+
+      // Check for successful metadata upload
+      if (metadataResponse.statusCode == 200) {
+        Log.info('✅ Step 1 complete - got upload URL',
+            name: 'BlossomUploadService', category: LogCategory.video);
+
+        onProgress?.call(0.3);
+
+        final uploadUrl = metadataResponse.data['url'] as String?;
+        final uid = metadataResponse.data['uid'] as String?;
+
+        if (uploadUrl == null) {
+          return BlossomUploadResult(
+            success: false,
+            errorMessage: 'No upload URL provided by Blossom server',
+          );
+        }
+
+        Log.info('Step 2: Uploading image data to $uploadUrl',
+            name: 'BlossomUploadService', category: LogCategory.video);
+
+        // Step 2: Upload actual image data to the provided URL
+        final response = await dio.put(
+          uploadUrl,
+          data: Stream.fromIterable([fileBytes]),
+          options: Options(
+            headers: {
+              'Content-Type': mimeType,
+              'Content-Length': fileSize.toString(),
+            },
+            validateStatus: (status) => status != null && status < 500,
+          ),
+          onSendProgress: (sent, total) {
+            if (total > 0) {
+              final uploadProgress = 0.3 + (sent / total) * 0.6; // 30% to 90%
+              onProgress?.call(uploadProgress);
+            }
+          },
+        );
+
+        onProgress?.call(0.95);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          Log.info('✅ Step 2 complete - image uploaded successfully',
+              name: 'BlossomUploadService', category: LogCategory.video);
+
+          // Step 3: Get blob descriptor to confirm upload
+          final blobResponse = await dio.get('$serverUrl/$fileHash');
+
+          if (blobResponse.statusCode == 200) {
+            final blobData = blobResponse.data;
+
+            if (blobData is Map) {
+              final imageUrl = blobData['url'] as String?;
+
+              if (imageUrl != null && imageUrl.isNotEmpty) {
+                final imageId = uid ?? imageUrl.split('/').last;
+
+                onProgress?.call(1.0);
+
+                Log.info('✅ Image upload successful: $imageUrl',
+                    name: 'BlossomUploadService', category: LogCategory.video);
+
+                return BlossomUploadResult(
+                  success: true,
+                  cdnUrl: imageUrl,
+                  videoId: imageId,
+                );
+              } else {
+                return BlossomUploadResult(
+                  success: false,
+                  errorMessage: 'Invalid blob descriptor: missing URL',
+                );
+              }
+            } else {
+              return BlossomUploadResult(
+                success: false,
+                errorMessage: 'Invalid blob descriptor format',
+              );
+            }
+          } else {
+            Log.error('❌ Failed to get blob descriptor: ${blobResponse.statusCode}',
+                name: 'BlossomUploadService', category: LogCategory.video);
+            return BlossomUploadResult(
+              success: false,
+              errorMessage: 'Failed to get blob descriptor: ${blobResponse.statusCode}',
+            );
+          }
+        } else if (response.statusCode == 401) {
+          Log.error('❌ Blossom authentication failed: ${response.data}',
+              name: 'BlossomUploadService', category: LogCategory.video);
+          return BlossomUploadResult(
+            success: false,
+            errorMessage: 'Authentication failed - check your Nostr keys',
+          );
+        } else {
+          Log.error('❌ Image upload failed: ${response.statusCode} - ${response.data}',
+              name: 'BlossomUploadService', category: LogCategory.video);
+          return BlossomUploadResult(
+            success: false,
+            errorMessage: 'Image upload failed: ${response.statusCode}',
+          );
+        }
+      } else {
+        Log.error('❌ Metadata upload failed: ${metadataResponse.statusCode}',
+            name: 'BlossomUploadService', category: LogCategory.video);
+        return BlossomUploadResult(
+          success: false,
+          errorMessage: 'Metadata upload failed: ${metadataResponse.statusCode}',
+        );
+      }
+    } catch (e) {
+      Log.error('Image upload exception: $e',
+          name: 'BlossomUploadService', category: LogCategory.video);
+      return BlossomUploadResult(
+        success: false,
+        errorMessage: 'Image upload failed: $e',
       );
     }
   }

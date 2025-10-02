@@ -20,14 +20,6 @@ class RelaySettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _RelaySettingsScreenState extends ConsumerState<RelaySettingsScreen> {
-  final TextEditingController _relayController = TextEditingController();
-  bool _isAddingRelay = false;
-
-  @override
-  void dispose() {
-    _relayController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,117 +151,6 @@ class _RelaySettingsScreenState extends ConsumerState<RelaySettingsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: VineBottomNav(),
     );
-  }
-
-  void _showAddRelayDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Add External Relay',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _relayController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Relay URL',
-                labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'wss://relay.example.com',
-                hintStyle: TextStyle(color: Colors.grey[600]),
-                prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey[600]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: VineTheme.vineGreen),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onSubmitted: (_) => _addRelay(),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Example: wss://relay.damus.io',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _relayController.clear();
-              Navigator.of(dialogContext).pop();
-            },
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey[400]),
-            ),
-          ),
-          TextButton(
-            onPressed: _isAddingRelay ? null : _addRelay,
-            child: Text(
-              _isAddingRelay ? 'Adding...' : 'Add',
-              style: const TextStyle(color: VineTheme.vineGreen),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _addRelay() async {
-    final relayUrl = _relayController.text.trim();
-
-    if (relayUrl.isEmpty) {
-      _showError('Please enter a relay URL');
-      return;
-    }
-
-    if (!relayUrl.startsWith('wss://') && !relayUrl.startsWith('ws://')) {
-      _showError('Relay URL must start with wss:// or ws://');
-      return;
-    }
-
-    setState(() => _isAddingRelay = true);
-
-    try {
-      final nostrService = ref.read(nostrServiceProvider);
-
-      // Check if relay already exists
-      if (nostrService.relays.contains(relayUrl)) {
-        _showError('This relay is already configured');
-        return;
-      }
-
-      await nostrService.addRelay(relayUrl);
-
-      _relayController.clear();
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added relay: $relayUrl'),
-            backgroundColor: Colors.green[700],
-          ),
-        );
-      }
-
-      Log.info('Successfully added relay: $relayUrl',
-          name: 'RelaySettingsScreen');
-    } catch (e) {
-      Log.error('Failed to add relay: $e', name: 'RelaySettingsScreen');
-      _showError('Failed to add relay: ${e.toString()}');
-    } finally {
-      if (mounted) {
-        setState(() => _isAddingRelay = false);
-      }
-    }
   }
 
   Future<void> _removeRelay(String relayUrl) async {

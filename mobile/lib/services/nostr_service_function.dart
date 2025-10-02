@@ -3,7 +3,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:collection';
 
 import 'package:flutter_embedded_nostr_relay/flutter_embedded_nostr_relay.dart'
     as embedded;
@@ -40,11 +39,6 @@ class NostrServiceFunction implements INostrService {
   final Map<String, StreamController<Event>> _subscriptions = {};
   final Map<String, bool> _relayAuthStates = {};
   final _authStateController = StreamController<Map<String, bool>>.broadcast();
-
-  // Global recent event dedupe across all active subscriptions
-  final Queue<String> _recentEventQueue = Queue<String>();
-  final Set<String> _recentEventSet = <String>{};
-  static const int _recentEventMax = 5000;
 
   // Embedded relay with function channel
   embedded.EmbeddedNostrRelay? _embeddedRelay;
@@ -151,20 +145,9 @@ class NostrServiceFunction implements INostrService {
       final subId = response.subscriptionId;
       final event = response.event;
 
-      // Dedupe check
-      if (_recentEventSet.contains(event.id)) {
-        return;
-      }
-
-      // Add to recent events
-      _recentEventQueue.add(event.id);
-      _recentEventSet.add(event.id);
-
-      // Maintain max size
-      while (_recentEventQueue.length > _recentEventMax) {
-        final oldId = _recentEventQueue.removeFirst();
-        _recentEventSet.remove(oldId);
-      }
+      // No global dedupe - the same event should be delivered to multiple subscriptions
+      // that match it (discovery, homeFeed, profile, etc.). Each subscription layer
+      // (VideoEventService) handles per-feed deduplication via seenEventIds.
 
       // Convert to SDK Event and emit
       final controller = _subscriptionStreams[subId];
@@ -468,8 +451,6 @@ class NostrServiceFunction implements INostrService {
     // Clear state
     _subscriptions.clear();
     _subscriptionStreams.clear();
-    _recentEventQueue.clear();
-    _recentEventSet.clear();
     _relayAuthStates.clear();
     await _authStateController.close();
 

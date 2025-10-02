@@ -44,7 +44,7 @@ final class SocialNotifierProvider
   }
 }
 
-String _$socialNotifierHash() => r'11d5627047c59975f30790b580ab42a52c103414';
+String _$socialNotifierHash() => r'f38cefbaa40e9a6070acb4c1cd21ab9995f50cb6';
 
 /// Social state notifier with reactive state management
 

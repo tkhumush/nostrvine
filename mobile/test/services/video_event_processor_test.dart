@@ -23,14 +23,16 @@ void main() {
       processor.dispose();
     });
 
-    test('should process kind 22 video events', () async {
+    test('should process kind 34236 video events', () async {
       // Arrange
       final receivedEvents = <VideoEvent>[];
+      final errors = <String>[];
       processor.videoEventStream.listen(receivedEvents.add);
+      processor.errorStream.listen(errors.add);
 
       final testEvent = Event(
         '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        22,
+        34236, // Addressable short video (NIP-71)
         [
           ['url', 'https://example.com/video.mp4'],
           ['t', 'nostr'],
@@ -44,6 +46,9 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 10));
 
       // Assert
+      if (errors.isNotEmpty) {
+        fail('Errors occurred: ${errors.join(", ")}');
+      }
       expect(receivedEvents.length, 1);
       expect(receivedEvents.first.id, 'test_video_id');
       expect(receivedEvents.first.videoUrl, 'https://example.com/video.mp4');
@@ -100,19 +105,37 @@ void main() {
       skip: 'Needs investigation - events not being processed',
     );
 
-    test('should handle repost events (kind 6)', () async {
+    test('should process repost events (kind 6) with embedded video', () async {
       // Arrange
       final receivedEvents = <VideoEvent>[];
+      final errors = <String>[];
       processor.videoEventStream.listen(receivedEvents.add);
+      processor.errorStream.listen(errors.add);
+
+      // Create original video event JSON (NIP-18 reposts embed the original event)
+      final originalVideoJson = '''
+{
+  "id": "original_video_id",
+  "pubkey": "original_author_pubkey",
+  "created_at": ${DateTime.now().millisecondsSinceEpoch ~/ 1000},
+  "kind": 34236,
+  "tags": [
+    ["url", "https://example.com/video.mp4"],
+    ["t", "nostr"]
+  ],
+  "content": "Original video content",
+  "sig": "fake_signature"
+}''';
 
       final repostEvent = Event(
         '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         6, // kind 6 is repost
         [
-          ['e', 'original_video_id', 'wss://localhost:8080'],
+          ['e', 'original_video_id', 'wss://relay.example.com'],
           ['p', 'original_author_pubkey'],
+          ['k', '34236'], // kind of the reposted event
         ],
-        'Reposting this cool video',
+        originalVideoJson, // NIP-18: reposts embed the original event in content
         createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       )..id = 'repost_id';
 
@@ -121,8 +144,21 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 10));
 
       // Assert
-      // Currently reposts are logged but not processed
-      expect(receivedEvents.length, 0);
+      if (errors.isNotEmpty) {
+        fail('Errors occurred: ${errors.join(", ")}');
+      }
+      expect(receivedEvents.length, 1, reason: 'Should emit the original video');
+      expect(receivedEvents.first.isRepost, isTrue,
+          reason: 'Should be marked as repost');
+      expect(receivedEvents.first.reposterId, equals('repost_id'),
+          reason: 'Should have repost event ID');
+      expect(receivedEvents.first.reposterPubkey,
+          equals('1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'),
+          reason: 'Should have reposter pubkey');
+      expect(receivedEvents.first.id, equals('original_video_id'),
+          reason: 'Should preserve original video ID');
+      expect(receivedEvents.first.videoUrl, equals('https://example.com/video.mp4'),
+          reason: 'Should preserve original video URL');
     });
   });
 }

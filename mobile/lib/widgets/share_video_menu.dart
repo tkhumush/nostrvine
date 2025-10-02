@@ -594,7 +594,9 @@ class _ShareVideoMenuState extends ConsumerState<ShareVideoMenu> {
       final sharingService = ref.read(videoSharingServiceProvider);
       final shareText = sharingService.generateShareText(widget.video);
 
-      await Share.share(shareText);
+      await SharePlus.instance.share(
+        ShareParams(text: shareText),
+      );
 
       if (mounted) {
         Navigator.of(context).pop();

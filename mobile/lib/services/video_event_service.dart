@@ -15,6 +15,7 @@ import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/subscription_manager.dart';
 import 'package:openvine/services/user_profile_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:openvine/utils/log_batcher.dart';
 import 'package:openvine/constants/nip71_migration.dart';
 
 /// Pagination state for tracking cursor position and loading status per subscription
@@ -576,10 +577,13 @@ class VideoEventService extends ChangeNotifier {
         paginationState.markEventSeen(event.id);
       }
 
-      Log.debug(
-          '📥 Received $subscriptionType event: kind=${event.kind}, author=${event.pubkey.substring(0, 8)}..., id=${event.id.substring(0, 8)}...',
-          name: 'VideoEventService',
-          category: LogCategory.video);
+      // Use batched logging for repetitive event logs
+      VideoEventLogBatcher.batchVideoEvent(
+        eventId: event.id,
+        authorPubkey: event.pubkey,
+        subscriptionType: subscriptionType.toString(),
+        kind: event.kind,
+      );
 
       if (!NIP71VideoKinds.isVideoKind(event.kind) && event.kind != 6) {
         Log.warning('⏩ Skipping non-video/repost event (kind ${event.kind})',
@@ -616,10 +620,11 @@ class VideoEventService extends ChangeNotifier {
       // Handle different event kinds
       if (NIP71VideoKinds.isVideoKind(event.kind)) {
         // Direct video event
-        Log.debug(
-            '📥 Received NIP-71 video event from relay: ${event.id.substring(0, 8)}... (subscription: $subscriptionType)',
-            name: 'VideoEventService',
-            category: LogCategory.video);
+        // Use batched logging for NIP-71 events
+        VideoEventLogBatcher.batchNip71Event(
+          eventId: event.id,
+          subscriptionType: subscriptionType.toString(),
+        );
 
         // Debug: Check for d tag
         final hasDTag =
@@ -2260,6 +2265,9 @@ class VideoEventService extends ChangeNotifier {
 
   @override
   void dispose() {
+    // Flush any remaining batched logs
+    LogBatcher.flush();
+
     _retryTimer?.cancel();
     _authStateSubscription?.cancel();
     unsubscribeFromVideoFeed();

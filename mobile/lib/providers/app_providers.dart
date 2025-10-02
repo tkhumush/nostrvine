@@ -408,11 +408,16 @@ Future<CuratedListService> curatedListService(Ref ref) async {
   final authService = ref.watch(authServiceProvider);
   final prefs = await ref.watch(sharedPreferencesProvider.future);
 
-  return CuratedListService(
+  final service = CuratedListService(
     nostrService: nostrService,
     authService: authService,
     prefs: prefs,
   );
+
+  // Initialize the service to create default list and sync with relays
+  await service.initialize();
+
+  return service;
 }
 
 /// Bookmark service for NIP-51 bookmarks

@@ -13,7 +13,6 @@ import 'package:openvine/models/video_event.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
 import 'package:openvine/providers/social_providers.dart';
-import 'package:openvine/providers/user_profile_providers.dart';
 
 import 'video_feed_item_error_handling_test.mocks.dart';
 

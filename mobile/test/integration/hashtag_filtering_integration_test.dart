@@ -38,29 +38,21 @@ class MinimalMockNostrService implements INostrService {
   @override
   List<String> get relays => ['wss://localhost:8080'];
 
-  @override
   Map<String, dynamic> get relayStatuses => {};
 
-  @override
   void addListener(listener) {}
 
-  @override
   void removeListener(listener) {}
 
-  @override
   Future<void> dispose() async {}
 
-  @override
   bool get hasListeners => false;
 
-  @override
   void notifyListeners() {}
 
   // Implement required methods as no-ops for testing
-  @override
   Future<void> initialize({List<String>? customRelays}) async {}
 
-  @override
   Stream<Event> subscribeToEvents({
     required List<Filter> filters,
     bool bypassLimits = false,
@@ -68,7 +60,6 @@ class MinimalMockNostrService implements INostrService {
   }) =>
       const Stream<Event>.empty();
 
-  @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 

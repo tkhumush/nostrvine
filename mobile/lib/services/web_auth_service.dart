@@ -3,8 +3,8 @@
 
 import 'dart:async';
 import 'package:openvine/services/nip07_service.dart';
+import 'package:openvine/services/nsec_bunker_client.dart';
 import 'package:openvine/utils/unified_logger.dart';
-// import 'nsec_bunker_service.dart'; // Temporarily disabled due to nostr library compatibility
 
 /// Available authentication methods for web
 enum WebAuthMethod {
@@ -68,14 +68,14 @@ class Nip07Signer implements WebSigner {
   }
 }
 
-/// Bunker signer implementation (temporarily disabled)
+/// Bunker signer implementation
 /// REFACTORED: Removed ChangeNotifier - now uses pure state management via Riverpod
 class BunkerSigner implements WebSigner {
   BunkerSigner();
 
   @override
   Future<Map<String, dynamic>?> signEvent(Map<String, dynamic> event) async {
-    // Temporarily return null - bunker not implemented yet
+    // Legacy implementation - kept for backward compatibility
     Log.warning('Bunker signing temporarily unavailable',
         name: 'WebAuthService', category: LogCategory.system);
     return null;
@@ -83,7 +83,36 @@ class BunkerSigner implements WebSigner {
 
   @override
   void dispose() {
-    // No-op for now
+    // No-op for legacy implementation
+  }
+}
+
+/// Actual bunker signer implementation
+class BunkerSignerImpl implements WebSigner {
+  final NsecBunkerClient _client;
+
+  BunkerSignerImpl(this._client);
+
+  @override
+  Future<Map<String, dynamic>?> signEvent(Map<String, dynamic> event) async {
+    if (!_client.isConnected) {
+      Log.error('Cannot sign: bunker not connected',
+          name: 'BunkerSigner', category: LogCategory.auth);
+      return null;
+    }
+
+    try {
+      return await _client.signEvent(event);
+    } catch (e) {
+      Log.error('Bunker signing error: $e',
+          name: 'BunkerSigner', category: LogCategory.auth);
+      return null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _client.disconnect();
   }
 }
 
@@ -96,7 +125,7 @@ class WebAuthService {
 
   // Service instances
   final Nip07Service _nip07Service = Nip07Service();
-  // final NsecBunkerService _bunkerService = NsecBunkerService(); // Temporarily disabled
+  NsecBunkerClient? _bunkerClient; // Injected or created as needed
 
   // Current authentication state
   WebAuthMethod _currentMethod = WebAuthMethod.none;
@@ -127,10 +156,10 @@ class WebAuthService {
       methods.add(WebAuthMethod.nip07);
     }
 
-    // Bunker temporarily disabled
-    // if (kIsWeb) {
-    //   methods.add(WebAuthMethod.bunker);
-    // }
+    // Bunker is available when client is set
+    if (_bunkerClient != null) {
+      methods.add(WebAuthMethod.bunker);
+    }
 
     return methods;
   }
@@ -188,14 +217,71 @@ class WebAuthService {
     }
   }
 
-  /// Authenticate using nsec bunker (temporarily disabled)
+  /// Authenticate using nsec bunker
   Future<WebAuthResult> authenticateWithBunker(String bunkerUri) async {
-    Log.warning('Bunker authentication temporarily unavailable',
-        name: 'WebAuthService', category: LogCategory.system);
-    return WebAuthResult.failure(
-      'Bunker authentication is temporarily unavailable',
-      code: 'TEMPORARILY_UNAVAILABLE',
-    );
+    if (_bunkerClient == null) {
+      Log.warning('Bunker authentication temporarily unavailable',
+          name: 'WebAuthService', category: LogCategory.system);
+      return WebAuthResult.failure(
+        'Bunker authentication is temporarily unavailable',
+        code: 'TEMPORARILY_UNAVAILABLE',
+      );
+    }
+    return authenticateWithBunkerEnabled(bunkerUri);
+  }
+
+  /// Authenticate with bunker when enabled (for testing)
+  Future<WebAuthResult> authenticateWithBunkerEnabled(String bunkerUri) async {
+    try {
+      Log.debug('Starting bunker authentication with URI',
+          name: 'WebAuthService', category: LogCategory.auth);
+
+      // Disconnect any existing auth
+      await disconnect();
+
+      if (_bunkerClient == null) {
+        return WebAuthResult.failure(
+          'Bunker client not configured',
+          code: 'CLIENT_NOT_CONFIGURED',
+        );
+      }
+
+      // Parse and authenticate with bunker URI
+      final authResult = await _bunkerClient!.authenticateFromUri(bunkerUri);
+      if (!authResult.success) {
+        return WebAuthResult.failure(
+          authResult.error ?? 'Bunker authentication failed',
+          code: 'AUTH_FAILED',
+        );
+      }
+
+      // Connect to bunker relay
+      final connected = await _bunkerClient!.connect();
+      if (!connected) {
+        return WebAuthResult.failure(
+          'Failed to connect to bunker relay',
+          code: 'CONNECTION_FAILED',
+        );
+      }
+
+      // Set up authentication state
+      _currentMethod = WebAuthMethod.bunker;
+      _currentPublicKey = authResult.userPubkey;
+      _currentSigner = BunkerSignerImpl(_bunkerClient!);
+      _isAuthenticated = true;
+
+      Log.info('Bunker authentication successful',
+          name: 'WebAuthService', category: LogCategory.auth);
+
+      return WebAuthResult.success(WebAuthMethod.bunker, authResult.userPubkey!);
+    } catch (e) {
+      Log.error('Bunker authentication error: $e',
+          name: 'WebAuthService', category: LogCategory.auth);
+      return WebAuthResult.failure(
+        'Unexpected bunker error: $e',
+        code: 'UNEXPECTED_ERROR',
+      );
+    }
   }
 
   /// Sign an event using the current authentication method
@@ -228,7 +314,7 @@ class WebAuthService {
 
     // Disconnect services
     _nip07Service.disconnect();
-    // await _bunkerService.disconnect(); // Temporarily disabled
+    _bunkerClient?.disconnect();
 
     Log.info('Web authentication disconnected',
         name: 'WebAuthService', category: LogCategory.system);
@@ -278,5 +364,48 @@ class WebAuthService {
 
   void dispose() {
     disconnect();
+  }
+
+  // Test support methods
+  void setBunkerClient(NsecBunkerClient client) {
+    _bunkerClient = client;
+  }
+
+  void setAuthenticatedWithBunker(String pubkey) {
+    _currentMethod = WebAuthMethod.bunker;
+    _currentPublicKey = pubkey;
+    _currentSigner = BunkerSignerImpl(_bunkerClient!);
+    _isAuthenticated = true;
+  }
+
+  void setAuthenticatedWithNip07(String pubkey) {
+    _currentMethod = WebAuthMethod.nip07;
+    _currentPublicKey = pubkey;
+    _currentSigner = Nip07Signer(_nip07Service);
+    _isAuthenticated = true;
+  }
+
+  Map<String, dynamic>? parseBunkerUri(String uri) {
+    try {
+      final parsed = Uri.parse(uri);
+      if (parsed.scheme != 'bunker') {
+        return null;
+      }
+
+      final pubkey = parsed.userInfo;
+      final relay = parsed.host;
+      final queryParams = parsed.queryParameters;
+      final secret = queryParams['secret'];
+      final permissions = queryParams['perms']?.split(',') ?? [];
+
+      return {
+        'pubkey': pubkey,
+        'relay': relay,
+        'secret': secret,
+        'permissions': permissions,
+      };
+    } catch (e) {
+      return null;
+    }
   }
 }

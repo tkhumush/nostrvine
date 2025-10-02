@@ -82,7 +82,6 @@ abstract class NostrServiceWeb implements INostrService {
       final messageType = decoded[0] as String;
 
       if (messageType == 'EVENT' && decoded.length >= 3) {
-        final subscriptionId = decoded[1] as String;
         final eventJson = decoded[2] as Map<String, dynamic>;
 
         // Convert to SDK Event

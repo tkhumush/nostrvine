@@ -199,7 +199,7 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
                   const SizedBox(height: 12),
                   Text(
                     'Blossom is a decentralized media storage protocol that allows you to upload videos to any compatible server. '
-                    'When enabled, your videos will be uploaded to your chosen Blossom server instead of OpenVine\'s default storage.',
+                    'When enabled, your videos will be uploaded to your chosen Blossom server instead of diVine\'s default storage.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha:0.8),
                       fontSize: 14,
@@ -218,9 +218,9 @@ class _BlossomSettingsScreenState extends ConsumerState<BlossomSettingsScreen> {
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
             subtitle: Text(
-              _isBlossomEnabled 
+              _isBlossomEnabled
                   ? 'Videos will be uploaded to your Blossom server'
-                  : 'Videos will be uploaded to OpenVine\'s servers',
+                  : 'Videos will be uploaded to diVine\'s servers',
               style: TextStyle(color: Colors.white.withValues(alpha:0.6)),
             ),
             value: _isBlossomEnabled,

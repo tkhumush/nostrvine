@@ -191,7 +191,9 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
       try {
         final analyticsService = ref.read(analyticsServiceProvider);
         final authService = ref.read(authServiceProvider);
+        final seenVideosService = ref.read(seenVideosServiceProvider);
 
+        // Send to backend analytics
         analyticsService.trackDetailedVideoViewWithUser(
           widget.video,
           userId: authService.currentPublicKeyHex,
@@ -203,6 +205,13 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
           completedVideo: _loopCount > 0 ||
               (_totalWatchDuration.inMilliseconds >=
                   (totalDuration?.inMilliseconds ?? 0) * 0.9),
+        );
+
+        // Persist to local storage for "show fresh content" feature
+        seenVideosService.recordVideoView(
+          widget.video.id,
+          loopCount: _loopCount,
+          watchDuration: _totalWatchDuration,
         );
 
         Log.debug(

@@ -442,10 +442,12 @@ class CuratedListService {
       }
 
       final list = _lists[listIndex];
+
+      // For replaceable events (kind 30005), we don't need a deletion event
+      // The event is automatically replaced when publishing with the same d-tag
+
       _lists.removeAt(listIndex);
       await _saveLists();
-
-      // TODO: Send deletion event to Nostr if it was published
 
       Log.debug('📱️ Deleted list: ${list.name}',
           name: 'CuratedListService', category: LogCategory.system);

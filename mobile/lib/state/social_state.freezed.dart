@@ -16,7 +16,8 @@ T _$identity<T>(T value) => value;
 mixin _$SocialState {
 
 // Like-related state
- Set<String> get likedEventIds; Map<String, int> get likeCounts; Map<String, String> get likeEventIdToReactionId;// Repost-related state
+ Set<String> get likedEventIds; Map<String, int> get likeCounts;// NEW likes from Nostr only (add to originalLikes for total)
+ Map<String, String> get likeEventIdToReactionId;// Repost-related state
  Set<String> get repostedEventIds; Map<String, String> get repostEventIdToRepostId;// Follow-related state
  List<String> get followingPubkeys; Map<String, Map<String, int>> get followerStats; Event? get currentUserContactListEvent;// Loading and error state
  bool get isLoading; bool get isInitialized; String? get error;// Operation-specific loading states
@@ -240,7 +241,9 @@ class _SocialState extends SocialState {
   return EqualUnmodifiableMapView(_likeCounts);
 }
 
+// NEW likes from Nostr only (add to originalLikes for total)
  final  Map<String, String> _likeEventIdToReactionId;
+// NEW likes from Nostr only (add to originalLikes for total)
 @override@JsonKey() Map<String, String> get likeEventIdToReactionId {
   if (_likeEventIdToReactionId is EqualUnmodifiableMapView) return _likeEventIdToReactionId;
   // ignore: implicit_dynamic_type

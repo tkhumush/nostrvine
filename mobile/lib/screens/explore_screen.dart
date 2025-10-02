@@ -237,11 +237,27 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
     // Watch video events from our pure provider
     final videoEventsAsync = ref.watch(videoEventsProvider);
 
-    return videoEventsAsync.when(
-      loading: () => Center(
-        child: CircularProgressIndicator(color: VineTheme.vineGreen),
-      ),
-      error: (error, stack) => Center(
+    Log.debug(
+      '🔍 PopularNowTab: AsyncValue state - isLoading: ${videoEventsAsync.isLoading}, '
+      'hasValue: ${videoEventsAsync.hasValue}, hasError: ${videoEventsAsync.hasError}, '
+      'value length: ${videoEventsAsync.value?.length ?? 0}',
+      name: 'ExploreScreen',
+      category: LogCategory.video,
+    );
+
+    // CRITICAL: Check hasValue FIRST before isLoading
+    // StreamProviders can have both isLoading:true and hasValue:true during rebuilds
+    if (videoEventsAsync.hasValue && videoEventsAsync.value != null) {
+      final videos = videoEventsAsync.value!;
+      Log.info('✅ PopularNowTab: Data state - ${videos.length} videos',
+          name: 'ExploreScreen', category: LogCategory.video);
+      return _buildVideoGrid(videos, 'Popular Now');
+    }
+
+    if (videoEventsAsync.hasError) {
+      Log.error('❌ PopularNowTab: Error state - ${videoEventsAsync.error}',
+          name: 'ExploreScreen', category: LogCategory.video);
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -253,13 +269,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              '$error',
+              '${videoEventsAsync.error}',
               style: TextStyle(color: VineTheme.secondaryText, fontSize: 12),
             ),
           ],
         ),
-      ),
-      data: (videos) => _buildVideoGrid(videos, 'Popular Now'),
+      );
+    }
+
+    // Only show loading if we truly have no data yet
+    Log.info('⏳ PopularNowTab: Showing loading indicator',
+        name: 'ExploreScreen', category: LogCategory.video);
+    return Center(
+      child: CircularProgressIndicator(color: VineTheme.vineGreen),
     );
   }
 
@@ -267,11 +289,34 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
     // Sort videos by loop count (most loops first)
     final videoEventsAsync = ref.watch(videoEventsProvider);
 
-    return videoEventsAsync.when(
-      loading: () => Center(
-        child: CircularProgressIndicator(color: VineTheme.vineGreen),
-      ),
-      error: (error, stack) => Center(
+    Log.debug(
+      '🔍 TrendingTab: AsyncValue state - isLoading: ${videoEventsAsync.isLoading}, '
+      'hasValue: ${videoEventsAsync.hasValue}, hasError: ${videoEventsAsync.hasError}, '
+      'value length: ${videoEventsAsync.value?.length ?? 0}',
+      name: 'ExploreScreen',
+      category: LogCategory.video,
+    );
+
+    // CRITICAL: Check hasValue FIRST before isLoading
+    // StreamProviders can have both isLoading:true and hasValue:true during rebuilds
+    if (videoEventsAsync.hasValue && videoEventsAsync.value != null) {
+      final videos = videoEventsAsync.value!;
+      Log.info('✅ TrendingTab: Data state - ${videos.length} videos',
+          name: 'ExploreScreen', category: LogCategory.video);
+      // Sort by loop count (descending order - most popular first)
+      final sortedVideos = List<VideoEvent>.from(videos);
+      sortedVideos.sort((a, b) {
+        final aLoops = a.originalLoops ?? 0;
+        final bLoops = b.originalLoops ?? 0;
+        return bLoops.compareTo(aLoops); // Descending order
+      });
+      return _buildTrendingTabWithHashtags(sortedVideos);
+    }
+
+    if (videoEventsAsync.hasError) {
+      Log.error('❌ TrendingTab: Error state - ${videoEventsAsync.error}',
+          name: 'ExploreScreen', category: LogCategory.video);
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -283,17 +328,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
             ),
           ],
         ),
-      ),
-      data: (videos) {
-        // Sort by loop count (descending order - most popular first)
-        final sortedVideos = List<VideoEvent>.from(videos);
-        sortedVideos.sort((a, b) {
-          final aLoops = a.originalLoops ?? 0;
-          final bLoops = b.originalLoops ?? 0;
-          return bLoops.compareTo(aLoops); // Descending order
-        });
-        return _buildTrendingTabWithHashtags(sortedVideos);
-      },
+      );
+    }
+
+    // Only show loading if we truly have no data yet
+    Log.info('⏳ TrendingTab: Showing loading indicator',
+        name: 'ExploreScreen', category: LogCategory.video);
+    return Center(
+      child: CircularProgressIndicator(color: VineTheme.vineGreen),
     );
   }
 

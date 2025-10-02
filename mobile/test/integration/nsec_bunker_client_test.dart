@@ -1,8 +1,6 @@
 // ABOUTME: Integration tests for NIP-46 nsec bunker client
 // ABOUTME: Tests authentication, connection, and remote signing functionality
 
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/services/nsec_bunker_client.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -30,16 +28,6 @@ void main() {
         // Arrange
         const username = 'testuser';
         const password = 'testpass';
-
-        final mockResponse = {
-          'bunker': {
-            'relay_url': 'wss://relay.bunker.com',
-            'bunker_pubkey': 'abcd1234' * 8, // 64 chars
-            'secret': 'secret123',
-            'permissions': ['sign_event', 'get_public_key'],
-          },
-          'pubkey': '1234abcd' * 8, // 64 chars
-        };
 
         // Note: In real test, we'd need to inject the http client
         // For now, this is a structure test

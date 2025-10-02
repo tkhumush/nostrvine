@@ -2,18 +2,14 @@
 // ABOUTME: Tests the complete AUTH flow and verifies Kind 22 events can be retrieved after AUTH completion
 
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/models/video_event.dart';
-import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:openvine/services/nostr_service.dart';
 import 'package:openvine/services/subscription_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:nostr_sdk/event.dart';
-import 'package:nostr_sdk/filter.dart';
 
 void main() {
   group('AUTH and Kind 22 Event Retrieval - Real relay3.openvine.co Relay', () {
@@ -156,7 +152,7 @@ void main() {
       await Future.delayed(const Duration(seconds: 15));
 
       // Stop polling
-      eventPollingTimer?.cancel();
+      eventPollingTimer.cancel();
 
       // Check if we received any Kind 22 events
       Log.info('Total events received: ${receivedEvents.length}',
@@ -270,7 +266,7 @@ void main() {
       await Future.delayed(const Duration(seconds: 20));
 
       // Stop polling
-      retryEventPollingTimer?.cancel();
+      retryEventPollingTimer.cancel();
 
       Log.info('Final results:',
           name: 'AuthTest', category: LogCategory.system);

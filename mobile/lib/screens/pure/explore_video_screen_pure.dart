@@ -1,14 +1,14 @@
-// ABOUTME: Pure explore video screen using revolutionary Riverpod architecture
-// ABOUTME: Inline video player that maintains explore context using composition architecture
+// ABOUTME: Pure explore video screen using VideoPageView widget
+// ABOUTME: Simplified implementation using consolidated video feed component
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
-import 'package:openvine/widgets/video_feed_item.dart';
+import 'package:openvine/widgets/video_page_view.dart';
 import 'package:openvine/utils/unified_logger.dart';
 
-/// Pure explore video screen using revolutionary single-controller Riverpod architecture
+/// Pure explore video screen using VideoPageView for consistent behavior
 class ExploreVideoScreenPure extends ConsumerStatefulWidget {
   const ExploreVideoScreenPure({
     super.key,
@@ -28,34 +28,22 @@ class ExploreVideoScreenPure extends ConsumerStatefulWidget {
 }
 
 class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure> {
-  int _currentIndex = 0;
-  PageController? _controller;
+  late int _initialIndex;
 
   @override
   void initState() {
     super.initState();
 
     // Find starting video index or use provided index
-    _currentIndex = widget.startingIndex ??
+    _initialIndex = widget.startingIndex ??
         widget.videoList.indexWhere((video) => video.id == widget.startingVideo.id);
 
-    if (_currentIndex == -1) {
-      _currentIndex = 0; // Fallback to first video
+    if (_initialIndex == -1) {
+      _initialIndex = 0; // Fallback to first video
     }
 
-    Log.info('🎯 ExploreVideoScreenPure: Initialized with ${widget.videoList.length} videos, starting at index $_currentIndex',
+    Log.info('🎯 ExploreVideoScreenPure: Initialized with ${widget.videoList.length} videos, starting at index $_initialIndex',
         category: LogCategory.video);
-
-    _controller = PageController(initialPage: _currentIndex);
-
-    // Set the initial active video once the UI is ready
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_currentIndex >= 0 && _currentIndex < widget.videoList.length) {
-        ref.read(activeVideoProvider.notifier)
-            .setActiveVideo(widget.videoList[_currentIndex].id);
-        _prewarmNeighbors(_currentIndex);
-      }
-    });
   }
 
   @override
@@ -81,37 +69,18 @@ class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure>
   @override
   Widget build(BuildContext context) {
     // ExploreVideoScreenPure is now a body widget - parent handles Scaffold
-    return PageView.builder(
-        key: Key('explore-video-${widget.startingVideo.id}'),
-        controller: _controller,
-        scrollDirection: Axis.vertical,
-        itemCount: widget.videoList.length,
-        onPageChanged: (index) {
-          setState(() => _currentIndex = index);
-          if (index >= 0 && index < widget.videoList.length) {
-            ref.read(activeVideoProvider.notifier)
-                .setActiveVideo(widget.videoList[index].id);
-            _prewarmNeighbors(index);
-          }
-        },
-        itemBuilder: (context, index) => VideoFeedItem(
-          video: widget.videoList[index],
-          index: index,
-          hasBottomNavigation: false, // Explore feed mode has no bottom navigation
-        ),
-      );
-  }
-
-  void _prewarmNeighbors(int index) {
-    final ids = <String>{};
-    for (final i in [index - 1, index, index + 1]) {
-      if (i >= 0 && i < widget.videoList.length) {
-        final v = widget.videoList[i];
-        if (v.videoUrl != null && v.videoUrl!.isNotEmpty) {
-          ids.add(v.id);
-        }
-      }
-    }
-    ref.read(prewarmManagerProvider.notifier).setPrewarmed(ids, cap: 3);
+    return VideoPageView(
+      key: Key('explore-video-${widget.startingVideo.id}'),
+      videos: widget.videoList,
+      initialIndex: _initialIndex,
+      hasBottomNavigation: false, // Explore feed mode has no bottom navigation
+      enablePrewarming: true,
+      enablePreloading: false, // Explore screen doesn't need preloading
+      enableLifecycleManagement: false, // Parent screen handles lifecycle
+      onPageChanged: (index, video) {
+        Log.debug('📄 Page changed to index $index (${video.id.substring(0, 8)}...)',
+            name: 'ExploreVideoScreen', category: LogCategory.video);
+      },
+    );
   }
 }

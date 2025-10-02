@@ -2,7 +2,6 @@
 // ABOUTME: Tests that Kind 0 events are fetched when video authors are discovered
 
 import 'dart:async';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_embedded_nostr_relay/flutter_embedded_nostr_relay.dart'
     as embedded;

@@ -3,11 +3,11 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/social_providers.dart' as social;
 import 'package:openvine/providers/user_profile_providers.dart';
+import 'package:openvine/providers/seen_videos_notifier.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/state/video_feed_state.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -16,30 +16,89 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'home_feed_provider.g.dart';
 
 /// Home feed provider - shows videos only from people you follow
-@Riverpod(keepAlive: false)
+/// keepAlive: true prevents disposal and unnecessary rebuilds during navigation
+///
+/// Rebuilds occur when:
+/// - Contact list changes (follow/unfollow)
+/// - 10 minutes have passed since last refresh
+/// - User pulls to refresh
+@Riverpod(keepAlive: true)
 class HomeFeed extends _$HomeFeed {
   Timer? _profileFetchTimer;
+  Timer? _autoRefreshTimer;
+  static int _buildCounter = 0;
+  static DateTime? _lastBuildTime;
+  static const _autoRefreshInterval = Duration(minutes: 10);
 
   @override
   Future<VideoFeedState> build() async {
+    _buildCounter++;
+    final buildId = _buildCounter;
+    final now = DateTime.now();
+    final timeSinceLastBuild = _lastBuildTime != null
+        ? now.difference(_lastBuildTime!).inMilliseconds
+        : null;
+
     Log.info(
-      '🏠 HomeFeed: Starting home feed build (following only)',
+      '🏠 HomeFeed: BUILD #$buildId START at ${now.millisecondsSinceEpoch}ms'
+      '${timeSinceLastBuild != null ? ' (${timeSinceLastBuild}ms since last build)' : ''}',
       name: 'HomeFeedProvider',
       category: LogCategory.video,
     );
 
-    // Clean up timer on dispose
+    if (timeSinceLastBuild != null && timeSinceLastBuild < 2000) {
+      Log.warning(
+        '⚠️  HomeFeed: RAPID REBUILD DETECTED! Only ${timeSinceLastBuild}ms since last build. '
+        'This may indicate a provider dependency issue.',
+        name: 'HomeFeedProvider',
+        category: LogCategory.video,
+      );
+    }
+
+    _lastBuildTime = now;
+
+    // Clean up timers on dispose
     ref.onDispose(() {
+      Log.info('🏠 HomeFeed: BUILD #$buildId DISPOSED', name: 'HomeFeedProvider', category: LogCategory.video);
       _profileFetchTimer?.cancel();
+      _autoRefreshTimer?.cancel();
     });
 
-    // Wait for social data to be ready before proceeding
-    // This prevents unnecessary rebuilds during app startup
-    final socialData = ref.watch(social.socialProvider);
+    // Set up auto-refresh timer (10 minutes)
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer(_autoRefreshInterval, () {
+      Log.info(
+        '🏠 HomeFeed: Auto-refresh triggered after ${_autoRefreshInterval.inMinutes} minutes',
+        name: 'HomeFeedProvider',
+        category: LogCategory.video,
+      );
+      ref.invalidateSelf();
+    });
+
+    // Listen for changes to following list and invalidate when it changes
+    ref.listen(social.socialProvider, (previous, next) {
+      final prevFollowing = previous?.followingPubkeys ?? [];
+      final nextFollowing = next.followingPubkeys;
+
+      if (prevFollowing.length != nextFollowing.length) {
+        Log.info(
+          '🏠 HomeFeed: Following list changed from ${prevFollowing.length} to ${nextFollowing.length} - invalidating feed',
+          name: 'HomeFeedProvider',
+          category: LogCategory.video,
+        );
+        ref.invalidateSelf();
+      }
+    });
+
+    Log.info('🏠 HomeFeed: BUILD #$buildId reading socialProvider (one-time read)...', name: 'HomeFeedProvider', category: LogCategory.video);
+
+    // Read social data once without creating reactive dependency
+    // Using ref.read() instead of ref.watch() prevents rebuilds when social state changes
+    final socialData = ref.read(social.socialProvider);
     final followingPubkeys = socialData.followingPubkeys;
 
     Log.info(
-      '🏠 HomeFeed: User is following ${followingPubkeys.length} people',
+      '🏠 HomeFeed: BUILD #$buildId - User is following ${followingPubkeys.length} people (social initialized: ${socialData.isInitialized})',
       name: 'HomeFeedProvider',
       category: LogCategory.video,
     );
@@ -62,31 +121,44 @@ class HomeFeed extends _$HomeFeed {
     // NostrService now handles deduplication automatically
     await videoEventService.subscribeToHomeFeed(followingPubkeys, limit: 100);
 
-    // Wait for initial events by listening to video service notifications
-    // This replaces crude timing with proper reactive state management
+    // Wait for initial batch of videos to arrive from relay
+    // Videos arrive in rapid succession, so we wait for the count to stabilize
     final completer = Completer<void>();
-    late VoidCallback listener;
+    int stableCount = 0;
+    Timer? stabilityTimer;
 
-    listener = () {
-      if (videoEventService.homeFeedVideos.isNotEmpty) {
-        videoEventService.removeListener(listener);
-        if (!completer.isCompleted) {
-          completer.complete();
-        }
+    void checkStability() {
+      final currentCount = videoEventService.homeFeedVideos.length;
+      if (currentCount != stableCount) {
+        // Count changed, reset stability timer
+        stableCount = currentCount;
+        stabilityTimer?.cancel();
+        stabilityTimer = Timer(const Duration(milliseconds: 300), () {
+          // Count stable for 300ms, we're done
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+        });
       }
-    };
+    }
 
-    videoEventService.addListener(listener);
+    videoEventService.addListener(checkStability);
 
-    // Set a reasonable timeout to prevent hanging
-    Timer(const Duration(seconds: 5), () {
-      videoEventService.removeListener(listener);
+    // Also set a maximum wait time
+    Timer(const Duration(seconds: 3), () {
       if (!completer.isCompleted) {
         completer.complete();
       }
     });
 
+    // Trigger initial check
+    checkStability();
+
     await completer.future;
+
+    // Clean up
+    videoEventService.removeListener(checkStability);
+    stabilityTimer?.cancel();
 
     // Get videos from the dedicated home feed list (server-side filtered to only following)
     final followingVideos =
@@ -98,22 +170,48 @@ class HomeFeed extends _$HomeFeed {
       category: LogCategory.video,
     );
 
-    // Sort by creation time (newest first)
-    followingVideos.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Reorder to show unseen videos first
+    final seenVideosState = ref.watch(seenVideosProvider);
+
+    final unseen = <VideoEvent>[];
+    final seen = <VideoEvent>[];
+
+    for (final video in followingVideos) {
+      if (seenVideosState.seenVideoIds.contains(video.id)) {
+        seen.add(video);
+      } else {
+        unseen.add(video);
+      }
+    }
+
+    // Sort each list by creation time (newest first)
+    unseen.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    seen.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // Combine: unseen videos first, then seen videos
+    final reorderedVideos = [...unseen, ...seen];
+
+    Log.info(
+      '🏠 HomeFeed: Reordered to show ${unseen.length} unseen first, then ${seen.length} seen',
+      name: 'HomeFeedProvider',
+      category: LogCategory.video,
+    );
 
     // Auto-fetch profiles for new videos and wait for completion
-    await _scheduleBatchProfileFetch(followingVideos);
+    await _scheduleBatchProfileFetch(reorderedVideos);
 
     final feedState = VideoFeedState(
-      videos: followingVideos,
-      hasMoreContent: followingVideos.length >= 10,
+      videos: reorderedVideos,
+      hasMoreContent: reorderedVideos.length >= 10,
       isLoadingMore: false,
       error: null,
       lastUpdated: DateTime.now(),
     );
 
+    final buildDuration = DateTime.now().difference(now).inMilliseconds;
+
     Log.info(
-      '📋 HomeFeed: Home feed complete - ${followingVideos.length} videos from following',
+      '✅ HomeFeed: BUILD #$buildId COMPLETE - ${reorderedVideos.length} videos from following in ${buildDuration}ms',
       name: 'HomeFeedProvider',
       category: LogCategory.video,
     );

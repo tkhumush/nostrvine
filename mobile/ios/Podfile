@@ -55,8 +55,50 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       # Explicitly disable bitcode for all pods
       config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      # Remove duplicate preprocessor definitions
+      if config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+        if defs.is_a?(Array)
+          # Keep inherited and remove duplicates
+          cleaned_defs = ['$(inherited)']
+          seen = {}
+
+          defs.each do |definition|
+            next if definition == '$(inherited)'
+
+            # Extract the key part (before '=')
+            key = definition.split('=').first
+
+            # Only keep first occurrence of each key
+            unless seen[key]
+              seen[key] = true
+              cleaned_defs << definition
+            end
+          end
+
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = cleaned_defs
+        elsif defs.is_a?(String)
+          # Split string into array, deduplicate, and rejoin
+          parts = defs.split(/\s+/)
+          cleaned_parts = ['$(inherited)']
+          seen = {}
+
+          parts.each do |part|
+            next if part.empty? || part == '$(inherited)'
+
+            key = part.split('=').first
+            unless seen[key]
+              seen[key] = true
+              cleaned_parts << part
+            end
+          end
+
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = cleaned_parts.join(' ')
+        end
+      end
     end
-    
+
     # Fix framework bundle structure for App Store validation
     target.build_configurations.each do |config|
       if target.name.end_with?('-iOS')

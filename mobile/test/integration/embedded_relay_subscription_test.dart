@@ -57,7 +57,7 @@ void main() {
       );
 
       Log.info(
-          '   Filter: kinds=${filter.kinds}, authors=${filter.authors?.length} (first=${filter.authors?.first?.substring(0, 8)})');
+          '   Filter: kinds=${filter.kinds}, authors=${filter.authors?.length} (first=${filter.authors?.first.substring(0, 8)})');
 
       // Test 3: Subscribe and collect events
       Log.info('\n3. Subscribing and waiting for events...');

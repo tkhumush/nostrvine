@@ -6,7 +6,7 @@ OpenVine is a decentralized vine-like video sharing application powered by Nostr
 - **Cloudflare Workers Backend**: Serverless backend for GIF creation and media processing
 
 ## Current Focus
-**Upload System** - Using Blossom server upload with fallback to api.openvine.co backend
+**Upload System** - Using Blossom server upload (decentralized media hosting)
 
 ## Technology Stack
 - **Frontend**: Flutter (Dart) with Camera plugin
@@ -94,26 +94,20 @@ npm test                           # Run backend tests
 
 **Current**:
 ```
-Flutter App → Blossom Server  → Nostr Event
+Flutter App → Blossom Server → Nostr Event
 ```
 
 **Architecture Benefits**:
 - User-configurable Blossom media servers
-- Fallback to legacy backend for reliability
-- Direct media hosting without intermediaries
+- Fully decentralized media hosting
+- No centralized backend dependencies
 
 ## API Documentation
 
 **Backend API Reference**: See `docs/BACKEND_API_REFERENCE.md` for complete documentation of all backend endpoints.
 
 **Domain Architecture**:
-- `api.openvine.co` - Legacy backend (fallback option)
-- User-configured Blossom servers - **PRIMARY** - Decentralized media hosting
-
-**Key Endpoints** (Legacy - being deprecated):
-- File uploads: `POST api.openvine.co/api/upload`
-- Video analytics: `POST api.openvine.co/analytics/view`
-- Trending content: `GET api.openvine.co/analytics/trending/vines`
+- User-configured Blossom servers - Decentralized media hosting (primary)
 
 ## Native Build Scripts
 **IMPORTANT**: Use these scripts instead of direct Flutter builds for iOS/macOS to prevent CocoaPods sync errors.
@@ -162,6 +156,58 @@ Flutter App → Blossom Server  → Nostr Event
 4. Confirm clean analysis before considering task complete
 
 **Never** mark a Flutter task as complete without running analysis and addressing all issues.
+
+## Learning and Memory Management
+
+- YOU MUST use the journal tool frequently to capture technical insights, failed approaches, and user preferences
+- Before starting complex tasks, search the journal for relevant past experiences and lessons learned
+- Document architectural decisions and their outcomes for future reference
+- Track patterns in user feedback to improve collaboration over time
+- When you notice something that should be fixed but is unrelated to your current task, document it in your journal rather than fixing it immediately
+
+
+### Golden Testing (Visual Regression Testing)
+
+OpenVine uses **golden_toolkit** and **alchemist** for visual regression testing. Golden tests capture screenshots of widgets/screens and compare them against reference images to detect unintended UI changes.
+
+**Quick Commands**:
+```bash
+# Update/generate golden images
+./scripts/golden.sh update
+
+# Verify golden tests pass
+./scripts/golden.sh verify
+
+# Update specific test
+./scripts/golden.sh update test/goldens/widgets/user_avatar_golden_test.dart
+
+# Show changes to golden images
+./scripts/golden.sh diff
+```
+
+**When to Use Golden Tests**:
+- **New UI Components**: Add golden tests for new widgets to establish visual baseline
+- **UI Modifications**: Update goldens when making intentional visual changes
+- **Before PRs**: Run `./scripts/golden.sh verify` to ensure no visual regressions
+
+**Golden Test Structure**:
+```
+test/goldens/
+├── widgets/     # Component-level golden tests
+├── screens/     # Full screen golden tests
+├── flows/       # Multi-screen flow tests
+└── ci/          # CI-specific goldens
+```
+
+**Writing Golden Tests**:
+```dart
+testGoldens('Widget renders correctly', (tester) async {
+  await tester.pumpWidgetBuilder(MyWidget());
+  await screenMatchesGolden(tester, 'widget_name');
+});
+```
+
+See `mobile/docs/GOLDEN_TESTING_GUIDE.md` for complete golden testing documentation.
 
 ### Asynchronous Programming Standards
 **CRITICAL RULE**: NEVER use arbitrary delays or `Future.delayed()` as a solution to timing issues. This is crude, unreliable, and unprofessional.

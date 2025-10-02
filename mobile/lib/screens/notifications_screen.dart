@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/notification_model.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/screens/pure/explore_video_screen_pure.dart';
+import 'package:openvine/screens/pure/profile_screen_pure.dart';
 import 'package:openvine/theme/app_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/notification_list_item.dart';
@@ -357,22 +359,43 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   void _navigateToVideo(BuildContext context, String videoEventId) {
-    // Navigate to video feed and find this specific video
     Log.info('Navigating to video: $videoEventId',
         name: 'NotificationsScreen', category: LogCategory.ui);
 
-    // For now, navigate back to home screen where user can find the video
-    // TODO: Implement direct navigation to specific video
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // Get video from video event service (search all feed types)
+    final videoEventService = ref.read(videoEventServiceProvider);
 
-    // Show snackbar to indicate what video we're looking for
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Showing video from notification'),
-        duration: Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
+    // Try to find video in discovery videos first, then other feeds
+    final allVideos = [
+      ...videoEventService.discoveryVideos,
+      ...videoEventService.homeFeedVideos,
+      ...videoEventService.profileVideos,
+    ];
+
+    final video = allVideos.cast().firstWhere(
+          (v) => v != null && v.id == videoEventId,
+          orElse: () => null,
+        );
+
+    if (video == null) {
+      // Video not found, show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Video not found'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Navigate to video player with this specific video
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ExploreVideoScreenPure(
+          startingVideo: video,
+          videoList: [video],
+          contextTitle: 'From Notification',
+          startingIndex: 0,
         ),
       ),
     );
@@ -382,10 +405,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     Log.info('Navigating to profile: $userPubkey',
         name: 'NotificationsScreen', category: LogCategory.ui);
 
-    // Import and navigate to profile screen
-    Navigator.of(context).pushNamed(
-      '/profile',
-      arguments: {'pubkey': userPubkey},
+    // Navigate to profile screen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProfileScreenPure(profilePubkey: userPubkey),
+      ),
     );
   }
 }

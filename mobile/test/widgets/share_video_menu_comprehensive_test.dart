@@ -19,8 +19,6 @@ import 'package:openvine/services/curated_list_service.dart';
 import 'package:openvine/services/social_service.dart';
 import 'package:openvine/services/video_sharing_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:share_plus/share_plus.dart';
-
 
 @GenerateNiceMocks([
   MockSpec<ContentDeletionService>(),
@@ -28,7 +26,6 @@ import 'package:share_plus/share_plus.dart';
   MockSpec<CuratedListService>(),
   MockSpec<SocialService>(),
   MockSpec<VideoSharingService>(),
-  MockSpec<Share>(),
 ])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

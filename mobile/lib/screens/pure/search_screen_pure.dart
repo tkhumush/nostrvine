@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/video_events_providers.dart';
+import 'package:openvine/screens/pure/profile_screen_pure.dart';
+import 'package:openvine/screens/hashtag_feed_screen.dart';
 import 'package:openvine/widgets/pure/video_grid_widget.dart';
 import 'package:openvine/utils/unified_logger.dart';
 
@@ -308,7 +310,11 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
             ),
             onTap: () {
               Log.info('🔍 SearchScreenPure: Tapped user: $user', category: LogCategory.video);
-              // TODO: Navigate to user profile
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreenPure(profilePubkey: user),
+                ),
+              );
             },
           ),
         );
@@ -378,7 +384,11 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
             ),
             onTap: () {
               Log.info('🔍 SearchScreenPure: Tapped hashtag: $hashtag', category: LogCategory.video);
-              // TODO: Navigate to hashtag feed
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => HashtagFeedScreen(hashtag: hashtag),
+                ),
+              );
             },
           ),
         );

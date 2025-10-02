@@ -13,10 +13,11 @@ import 'package:openvine/screens/comments_screen.dart';
 import 'package:openvine/widgets/video_thumbnail_widget.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/widgets/share_video_menu.dart';
+import 'package:openvine/widgets/video_metrics_tracker.dart';
 import 'package:openvine/main.dart';
 
 /// Video feed item using individual controller architecture
-class VideoFeedItem extends ConsumerWidget {
+class VideoFeedItem extends ConsumerStatefulWidget {
   const VideoFeedItem({
     super.key,
     required this.video,
@@ -31,6 +32,14 @@ class VideoFeedItem extends ConsumerWidget {
   final VoidCallback? onTap;
   final bool forceShowOverlay;
   final bool hasBottomNavigation;
+
+  @override
+  ConsumerState<VideoFeedItem> createState() => _VideoFeedItemState();
+}
+
+class _VideoFeedItemState extends ConsumerState<VideoFeedItem> {
+  Offset? _tapStartPosition;
+  DateTime? _tapStartTime;
 
   /// Translate error messages to user-friendly text
   static String _getErrorMessage(String? errorDescription) {
@@ -58,9 +67,10 @@ class VideoFeedItem extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final video = widget.video;
     final videoIdDisplay = video.id.length > 8 ? video.id.substring(0, 8) : video.id;
-    Log.debug('🏗️ VideoFeedItem.build() for video $videoIdDisplay..., index: $index',
+    Log.debug('🏗️ VideoFeedItem.build() for video $videoIdDisplay..., index: ${widget.index}',
         name: 'VideoFeedItem', category: LogCategory.ui);
 
     // Skip rendering if no video URL
@@ -85,7 +95,7 @@ class VideoFeedItem extends ConsumerWidget {
       key: Key('video_${video.id}'),
       onVisibilityChanged: (info) {
         final isVisible = info.visibleFraction > 0.7;
-        Log.debug('👁️ Visibility callback: $videoIdDisplay... fraction=${info.visibleFraction.toStringAsFixed(3)}, isVisible=$isVisible, index=$index',
+        Log.debug('👁️ Visibility callback: $videoIdDisplay... fraction=${info.visibleFraction.toStringAsFixed(3)}, isVisible=$isVisible',
             name: 'VideoFeedItem', category: LogCategory.ui);
 
         try {
@@ -108,8 +118,9 @@ class VideoFeedItem extends ConsumerWidget {
         }
       },
       child: GestureDetector(
+        behavior: HitTestBehavior.deferToChild,
         onTap: () {
-          Log.debug('📱 Callback firing: VideoFeedItem.onTap for $videoIdDisplay...',
+          Log.debug('📱 Tap detected on VideoFeedItem for $videoIdDisplay...',
               name: 'VideoFeedItem', category: LogCategory.ui);
           try {
             if (isActive) {
@@ -126,12 +137,12 @@ class VideoFeedItem extends ConsumerWidget {
                 controller.play();
               }
             } else {
-              // Make this video active when tapped; builder will start playback when initialized
+              // Make this video active when tapped
               ref.read(activeVideoProvider.notifier).setActiveVideo(video.id);
             }
-            onTap?.call();
+            widget.onTap?.call();
           } catch (e) {
-            Log.error('❌ Error in VideoFeedItem.onTap for $videoIdDisplay...: $e',
+            Log.error('❌ Error in VideoFeedItem tap handler for $videoIdDisplay...: $e',
                 name: 'VideoFeedItem', category: LogCategory.ui);
           }
         },
@@ -155,15 +166,19 @@ class VideoFeedItem extends ConsumerWidget {
                       individualVideoControllerProvider(controllerParams),
                     );
 
-                    // Listen to controller value so UI updates when initialized/playing state changes
-                    return ValueListenableBuilder<VideoPlayerValue>(
-                      valueListenable: controller,
-                      builder: (context, value, _) {
-                        // Let the individual controller handle autoplay based on active state
-                        // Don't interfere with playback control here
+                    // Wrap with VideoMetricsTracker to track engagement and mark as seen
+                    return VideoMetricsTracker(
+                      video: video,
+                      controller: controller,
+                      // Listen to controller value so UI updates when initialized/playing state changes
+                      child: ValueListenableBuilder<VideoPlayerValue>(
+                        valueListenable: controller,
+                        builder: (context, value, _) {
+                          // Let the individual controller handle autoplay based on active state
+                          // Don't interfere with playback control here
 
-                        // Check for video error state
-                        if (value.hasError) {
+                          // Check for video error state
+                          if (value.hasError) {
                           final errorMessage = _getErrorMessage(value.errorDescription);
                           return Stack(
                             fit: StackFit.expand,
@@ -238,11 +253,15 @@ class VideoFeedItem extends ConsumerWidget {
                           );
                         }
 
-                        // Cover the available space regardless of source aspect ratio
-                        // to avoid zero-size textures on desktop.
+                        // Use BoxFit.contain for square/landscape videos to avoid cropping
+                        // Use BoxFit.cover for portrait videos to fill the screen
+                        final aspectRatio = value.size.width / value.size.height;
+                        final isPortraitVideo = aspectRatio < 0.9; // Portrait if width < height (with 10% tolerance)
+
                         return SizedBox.expand(
                           child: FittedBox(
-                            fit: BoxFit.cover,
+                            fit: isPortraitVideo ? BoxFit.cover : BoxFit.contain,
+                            alignment: Alignment.topCenter,
                             child: SizedBox(
                               width: value.size.width == 0 ? 1 : value.size.width,
                               height: value.size.height == 0 ? 1 : value.size.height,
@@ -250,7 +269,8 @@ class VideoFeedItem extends ConsumerWidget {
                             ),
                           ),
                         );
-                      },
+                        },
+                      ),
                     );
                   },
                 )
@@ -265,8 +285,8 @@ class VideoFeedItem extends ConsumerWidget {
               // Video overlay with actions
               VideoOverlayActions(
                 video: video,
-                isVisible: forceShowOverlay || isActive,
-                hasBottomNavigation: hasBottomNavigation,
+                isVisible: widget.forceShowOverlay || isActive,
+                hasBottomNavigation: widget.hasBottomNavigation,
               ),
             ],
           ),
@@ -399,28 +419,6 @@ class VideoOverlayActions extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                 ],
-                Consumer(
-                  builder: (context, ref, child) {
-                    final userProfileNotifier = ref.read(userProfileProvider.notifier);
-                    final profile = userProfileNotifier.getCachedProfile(video.pubkey);
-                    final displayName = profile?.displayName ?? profile?.name ?? 'Unknown';
-
-                    return Text(
-                      '@$displayName',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(1, 1),
-                            blurRadius: 2,
-                            color: Colors.black54,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
           ),
@@ -459,11 +457,11 @@ class VideoOverlayActions extends ConsumerWidget {
                       size: 32,
                     ),
               ),
-              // Show current like count or original Vine likes
+              // Show total like count: new likes + original Vine likes
               if (likeCount > 0 || (video.originalLikes != null && video.originalLikes! > 0)) ...[
                 const SizedBox(height: 4),
                 Text(
-                  likeCount > 0 ? likeCount.toString() : '${video.originalLikes}',
+                  '${likeCount + (video.originalLikes ?? 0)}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,

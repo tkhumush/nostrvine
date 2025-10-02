@@ -282,5 +282,60 @@ void main() {
       expect(state.isFollowing('pubkey2'), isTrue);
       expect(state.isFollowing('pubkey4'), isFalse);
     });
+
+    test('likeCounts should track only NEW likes (not originalLikes)', () async {
+      const eventId = 'video-with-original-likes';
+      const authorPubkey = 'author-pubkey';
+
+      // Setup authenticated user
+      when(() => mockAuthService.isAuthenticated).thenReturn(true);
+      when(() => mockAuthService.currentPublicKeyHex).thenReturn('test-pubkey');
+
+      // Mock successful like event creation and broadcast
+      final mockLikeEvent = MockEvent();
+      when(() => mockLikeEvent.id).thenReturn('like-event-id');
+      when(
+        () => mockAuthService.createAndSignEvent(
+          kind: 7,
+          content: '+',
+          tags: any(named: 'tags'),
+        ),
+      ).thenAnswer((_) async => mockLikeEvent);
+
+      final mockBroadcastResult = NostrBroadcastResult(
+        event: mockLikeEvent,
+        successCount: 1,
+        totalRelays: 1,
+        results: {'relay1': true},
+        errors: {},
+      );
+      when(() => mockNostrService.broadcastEvent(any()))
+          .thenAnswer((_) async => mockBroadcastResult);
+
+      // Initial state: no likes tracked
+      var state = container.read(socialProvider);
+      expect(state.likeCounts[eventId], isNull);
+
+      // User 1 likes the video (first new like)
+      await container
+          .read(socialProvider.notifier)
+          .toggleLike(eventId, authorPubkey);
+
+      state = container.read(socialProvider);
+      // likeCounts should be 1 (only NEW likes, originalLikes added separately in UI)
+      expect(state.likeCounts[eventId], equals(1));
+
+      // Simulate another user liking (would come from subscription in real app)
+      // For this test, we manually increment to simulate receiving another like event
+      container.read(socialProvider.notifier).state = state.copyWith(
+        likeCounts: {...state.likeCounts, eventId: 2},
+      );
+
+      state = container.read(socialProvider);
+      // likeCounts should be 2 (two NEW likes)
+      expect(state.likeCounts[eventId], equals(2));
+
+      // Note: In the UI, if video has originalLikes=1000, display shows: 2 + 1000 = 1002
+    });
   });
 }

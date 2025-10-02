@@ -9,21 +9,24 @@ part of 'home_feed_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Home feed provider - shows videos only from people you follow
+/// keepAlive: true prevents disposal and unnecessary rebuilds during navigation
 
 @ProviderFor(HomeFeed)
 const homeFeedProvider = HomeFeedProvider._();
 
 /// Home feed provider - shows videos only from people you follow
+/// keepAlive: true prevents disposal and unnecessary rebuilds during navigation
 final class HomeFeedProvider
     extends $AsyncNotifierProvider<HomeFeed, VideoFeedState> {
   /// Home feed provider - shows videos only from people you follow
+  /// keepAlive: true prevents disposal and unnecessary rebuilds during navigation
   const HomeFeedProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'homeFeedProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -36,9 +39,10 @@ final class HomeFeedProvider
   HomeFeed create() => HomeFeed();
 }
 
-String _$homeFeedHash() => r'ad5cec33946791f5972d1b40e9d728c0ab88dd9f';
+String _$homeFeedHash() => r'28453b963ce1f735dfc9ad590d05460a023a132c';
 
 /// Home feed provider - shows videos only from people you follow
+/// keepAlive: true prevents disposal and unnecessary rebuilds during navigation
 
 abstract class _$HomeFeed extends $AsyncNotifier<VideoFeedState> {
   FutureOr<VideoFeedState> build();

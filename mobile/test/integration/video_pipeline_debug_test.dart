@@ -2,14 +2,11 @@
 // ABOUTME: Tests the real flow: VideoEventsProvider -> VideoEventService -> SubscriptionManager -> Relay
 
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:nostr_sdk/event.dart';
-import 'package:nostr_sdk/filter.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/utils/unified_logger.dart';
-import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/subscription_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/providers/video_events_providers.dart';
@@ -237,7 +234,7 @@ void main() {
             category: LogCategory.system);
         rethrow;
       } finally {
-        eventPollingTimer?.cancel();
+        eventPollingTimer.cancel();
       }
     });
   });

@@ -4,8 +4,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../helpers/test_helpers.dart';
-import '../helpers/widget_test_helper.dart';
 
 void main() {
   group('iOS Network Image Deadlock Prevention', () {

@@ -15,7 +15,6 @@ class CameraServiceImpl extends CameraService {
   CameraMacOSController? _macOSController;
   bool _isRecording = false;
   DateTime? _recordingStartTime;
-  XFile? _currentRecording;
   CameraDescription? _selectedCamera;
   FlashMode _currentFlashMode = FlashMode.off;
 

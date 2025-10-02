@@ -10,7 +10,6 @@ import 'package:openvine/helpers/follow_actions_helper.dart';
 import 'package:openvine/services/social_service.dart';
 import 'package:openvine/services/auth_service.dart';
 import 'package:openvine/providers/app_providers.dart';
-import 'package:openvine/providers/optimistic_follow_provider.dart';
 
 import 'profile_follow_unfollow_test.mocks.dart';
 

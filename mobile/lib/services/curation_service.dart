@@ -537,9 +537,86 @@ class CurationService {
     _error = null;
 
     try {
-      // TODO: Implement actual Nostr queries for kind 30005 events
-      // For now, just refresh sample data
-      _populateSampleSets();
+      Log.debug('Fetching kind 30005 curation sets from Nostr...',
+          name: 'CurationService', category: LogCategory.system);
+
+      // Query for video curation sets (kind 30005)
+      final filter = Filter(
+        kinds: [30005],
+        authors: curatorPubkeys,
+        limit: 500,
+      );
+
+      // Use bypassLimits for one-time fetch to get all results quickly
+      final eventStream = _nostrService.subscribeToEvents(
+        filters: [filter],
+        bypassLimits: true,
+      );
+
+      int fetchedCount = 0;
+      final completer = Completer<void>();
+
+      // Listen for events with timeout
+      final subscription = eventStream.listen(
+        (event) {
+          try {
+            if (event.kind != 30005) {
+              Log.warning(
+                  'Received unexpected event kind ${event.kind} (expected 30005)',
+                  name: 'CurationService',
+                  category: LogCategory.system);
+              return;
+            }
+
+            final curationSet = CurationSet.fromNostrEvent(event);
+            _curationSets[curationSet.id] = curationSet;
+            fetchedCount++;
+
+            Log.verbose(
+                'Fetched curation set: ${curationSet.title} (${curationSet.videoIds.length} videos)',
+                name: 'CurationService',
+                category: LogCategory.system);
+          } catch (e) {
+            Log.error('Failed to parse curation set from event: $e',
+                name: 'CurationService', category: LogCategory.system);
+          }
+        },
+        onError: (error) {
+          Log.error('Error fetching curation sets: $error',
+              name: 'CurationService', category: LogCategory.system);
+          if (!completer.isCompleted) {
+            completer.completeError(error);
+          }
+        },
+        onDone: () {
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+        },
+      );
+
+      // Wait for completion or timeout (10 seconds)
+      await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          Log.debug(
+              'Curation set fetch timed out after 10s (fetched $fetchedCount sets)',
+              name: 'CurationService',
+              category: LogCategory.system);
+        },
+      );
+
+      await subscription.cancel();
+
+      Log.debug('Fetched $fetchedCount curation sets from Nostr',
+          name: 'CurationService', category: LogCategory.system);
+
+      // If no sets were found, populate sample data as fallback
+      if (fetchedCount == 0) {
+        Log.debug('No curation sets found, using sample data',
+            name: 'CurationService', category: LogCategory.system);
+        _populateSampleSets();
+      }
 
       _isLoading = false;
     } catch (e) {
@@ -548,6 +625,9 @@ class CurationService {
 
       Log.error('Error refreshing curation sets: $e',
           name: 'CurationService', category: LogCategory.system);
+
+      // Fallback to sample data on error
+      _populateSampleSets();
     }
   }
 

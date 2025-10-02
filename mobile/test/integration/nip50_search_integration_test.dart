@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/search_provider.dart';
 import 'package:openvine/state/search_state.dart';
 
+// Generated provider for SearchNotifier is imported via search_provider.dart
+
 void main() {
   group('NIP-50 Search Integration Tests', () {
     late ProviderContainer container;
@@ -102,14 +104,14 @@ void main() {
     });
 
     group('Search Provider Dependencies', () {
-      test('should provide searchNotifierProvider', () {
-        final searchNotifier = container.read(searchNotifierProvider);
-        expect(searchNotifier, isA<SearchState>());
-        expect(searchNotifier.isInitial, isTrue);
+      test('should provide searchProvider', () {
+        final searchState = container.read(searchProvider);
+        expect(searchState, isA<SearchState>());
+        expect(searchState.isInitial, isTrue);
       });
 
-      test('should provide access to searchNotifierProvider.notifier', () {
-        final searchNotifier = container.read(searchNotifierProvider.notifier);
+      test('should provide access to searchProvider.notifier', () {
+        final searchNotifier = container.read(searchProvider.notifier);
         expect(searchNotifier, isNotNull);
       });
     });

@@ -148,10 +148,10 @@ Future<void> _startOpenVineApp() async {
   if (const String.fromEnvironment('LOG_LEVEL').isEmpty) {
     if (kDebugMode) {
       // Debug builds: enable debug logging for development visibility
-      // Note: LogCategory.relay excluded to prevent verbose WebSocket message logging
+      // RELAY category temporarily enabled for web debugging
       UnifiedLogger.setLogLevel(LogLevel.debug);
       UnifiedLogger.enableCategories(
-          {LogCategory.system, LogCategory.auth, LogCategory.video});
+          {LogCategory.system, LogCategory.auth, LogCategory.video, LogCategory.relay});
     } else {
       // Release builds: minimal logging to reduce performance impact
       UnifiedLogger.setLogLevel(LogLevel.warning);
@@ -508,30 +508,67 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
         _initializationStatus = 'Ready!';
       });
 
-      // DEFER social provider initialization to not block UI
-      // Social connections can load in the background while user sees the app
+      // Initialize social provider with CACHED data first (fast), then refresh from relay (background)
+      // This allows instant startup while ensuring fresh data arrives later
       StartupPerformanceService.instance.deferUntilUIReady(() async {
         if (!mounted) return;
         try {
+          final socialStart = DateTime.now();
+          Log.info(
+            '👥 [LIFECYCLE] SocialProvider: Starting background initialization (cached first) at ${socialStart.millisecondsSinceEpoch}ms',
+            name: 'Main',
+            category: LogCategory.system,
+          );
+
           await StartupPerformanceService.instance.measureWork(
             'social_provider',
             () async {
-              CrashReportingService.instance.logInitializationStep('Starting SocialProvider (deferred)');
+              CrashReportingService.instance.logInitializationStep('Starting SocialProvider (background)');
               await ref
                   .read(social_providers.socialProvider.notifier)
                   .initialize();
-              CrashReportingService.instance.logInitializationStep('✓ SocialProvider initialized (deferred)');
+              CrashReportingService.instance.logInitializationStep('✓ SocialProvider initialized (background)');
             }
           );
-          Log.info('Social provider initialized successfully (deferred)',
-              name: 'Main', category: LogCategory.system);
+
+          final socialDuration = DateTime.now().difference(socialStart).inMilliseconds;
+          Log.info(
+            '✅ [LIFECYCLE] SocialProvider: Background initialization COMPLETE in ${socialDuration}ms',
+            name: 'Main',
+            category: LogCategory.system,
+          );
         } catch (e) {
           CrashReportingService.instance.logInitializationStep('✗ SocialProvider failed: $e');
-          Log.warning('Social provider initialization failed: $e',
-              name: 'Main', category: LogCategory.system);
-          // Continue anyway - social features will work with empty following list
+          Log.error(
+            '❌ [LIFECYCLE] SocialProvider initialization failed: $e',
+            name: 'Main',
+            category: LogCategory.system,
+          );
+          // Continue anyway - social features will work with cached following list
         }
       }, taskName: 'social_provider_init');
+
+      // DEFER curated lists fetch - very low priority background sync
+      StartupPerformanceService.instance.deferUntilUIReady(() async {
+        if (!mounted) return;
+        try {
+          // Wait additional time to ensure this is truly low priority
+          await Future.delayed(const Duration(seconds: 2));
+
+          Log.debug('Fetching user curated lists from relays (background)',
+              name: 'Main', category: LogCategory.system);
+
+          // This triggers the provider which calls initialize()
+          // The initialize() method creates default list and syncs from relays
+          await ref.read(curatedListServiceProvider.future);
+
+          Log.debug('User curated lists fetched successfully',
+              name: 'Main', category: LogCategory.system);
+        } catch (e) {
+          Log.debug('Failed to fetch user curated lists (non-critical): $e',
+              name: 'Main', category: LogCategory.system);
+        }
+      }, taskName: 'curated_lists_sync');
 
       Log.info('All services initialized successfully',
           name: 'Main', category: LogCategory.system);

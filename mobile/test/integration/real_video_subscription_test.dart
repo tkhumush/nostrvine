@@ -226,7 +226,7 @@ void main() {
         rethrow;
       } finally {
         // Cancel the polling timer instead of removing listener
-        eventPollingTimer?.cancel();
+        eventPollingTimer.cancel();
       }
     });
   });

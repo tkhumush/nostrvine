@@ -1203,9 +1203,11 @@ class SocialService {
       }
 
       final set = _followSets[setIndex];
-      _followSets.removeAt(setIndex);
 
-      // TODO: Send deletion event to Nostr if it was published
+      // For replaceable events (kind 30000), we don't need a deletion event
+      // The event is automatically replaced when publishing with the same d-tag
+
+      _followSets.removeAt(setIndex);
 
       Log.debug('🗑️ Deleted follow set: ${set.name}',
           name: 'SocialService', category: LogCategory.system);

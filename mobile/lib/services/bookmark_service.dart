@@ -453,10 +453,12 @@ class BookmarkService with NostrListServiceMixin {
       }
 
       final set = _bookmarkSets[setIndex];
+
+      // For replaceable events (kind 30003), we don't need a deletion event
+      // The event is automatically replaced when publishing with the same d-tag
+
       _bookmarkSets.removeAt(setIndex);
       await _saveBookmarks();
-
-      // TODO: Send deletion event to Nostr if it was published
 
       Log.debug('Deleted bookmark set: ${set.name}',
           name: 'BookmarkService', category: LogCategory.system);

@@ -29,6 +29,7 @@ class VineRecordingUIState {
   bool get isRecording => recordingState == VineRecordingState.recording;
   bool get isInitialized => recordingState != VineRecordingState.processing && recordingState != VineRecordingState.error;
   bool get isError => recordingState == VineRecordingState.error;
+  bool get hasSegments => segments.isNotEmpty;
   Duration get recordingDuration => totalRecordedDuration;
   String? get errorMessage => isError ? 'Recording error occurred' : null;
 

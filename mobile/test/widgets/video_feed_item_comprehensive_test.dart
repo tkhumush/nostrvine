@@ -377,8 +377,6 @@ void main() {
         if (realVideos.isEmpty) return;
         final testVideo = realVideos.first;
 
-        bool visibilityCallbackFired = false;
-
         await tester.pumpWidget(
           ProviderScope(
             child: MaterialApp(
@@ -388,7 +386,6 @@ void main() {
                   child: VideoFeedItem(
                     video: testVideo,
                     index: 0,
-                    onTap: () => visibilityCallbackFired = true,
                   ),
                 ),
               ),
@@ -496,7 +493,6 @@ void main() {
           tester.element(find.byType(VideoFeedItem)),
         );
         final socialState = container.read(socialProvider);
-        final initialLikeState = socialState.isLiked(testVideo.id);
 
         // Test that social system is available for interaction
         expect(socialState, isNotNull);

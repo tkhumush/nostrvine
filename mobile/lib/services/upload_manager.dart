@@ -11,6 +11,7 @@ import 'package:openvine/services/circuit_breaker_service.dart';
 import 'package:openvine/services/blossom_upload_service.dart';
 import 'package:openvine/services/crash_reporting_service.dart';
 import 'package:openvine/services/upload_initialization_helper.dart';
+import 'package:openvine/services/video_thumbnail_service.dart';
 import 'package:openvine/utils/async_utils.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -473,7 +474,7 @@ class UploadManager {
         description: upload.description,
         hashtags: upload.hashtags,
         onProgress: (progress) {
-          _updateUploadProgress(upload.id, progress);
+          _updateUploadProgress(upload.id, progress * 0.8); // Reserve 20% for thumbnail
         },
       ).timeout(
         _retryConfig.networkTimeout,
@@ -492,6 +493,44 @@ class UploadManager {
           throw timeoutError;
         },
       );
+
+      // If video upload succeeded, generate and upload thumbnail locally
+      if (result.success && result.cdnUrl != null) {
+        Log.info('🖼️ Video uploaded successfully, now generating local thumbnail',
+            name: 'UploadManager', category: LogCategory.video);
+
+        try {
+          final thumbnailUrl = await _generateAndUploadThumbnail(
+            videoFile: videoFile,
+            nostrPubkey: upload.nostrPubkey,
+            upload: upload,
+          );
+
+          if (thumbnailUrl != null) {
+            Log.info('✅ Local thumbnail uploaded: $thumbnailUrl',
+                name: 'UploadManager', category: LogCategory.video);
+
+            // Update result with thumbnail URL
+            return BlossomUploadResult(
+              success: true,
+              videoId: result.videoId,
+              cdnUrl: result.cdnUrl,
+              thumbnailUrl: thumbnailUrl,
+              gifUrl: result.gifUrl,
+              blurhash: result.blurhash,
+              errorMessage: result.errorMessage,
+            );
+          } else {
+            Log.warning('⚠️ Local thumbnail generation/upload failed, using server thumbnail if available',
+                name: 'UploadManager', category: LogCategory.video);
+          }
+        } catch (e) {
+          Log.warning('⚠️ Local thumbnail upload error (non-fatal): $e',
+              name: 'UploadManager', category: LogCategory.video);
+        }
+
+        _updateUploadProgress(upload.id, 1.0);
+      }
 
       Log.info('✅ Upload execution completed',
           name: 'UploadManager', category: LogCategory.video);
@@ -531,6 +570,80 @@ class UploadManager {
     } else {
       throw Exception(
           result.errorMessage ?? 'Upload failed with unknown error');
+    }
+  }
+
+  /// Generate thumbnail from video and upload to Blossom server
+  Future<String?> _generateAndUploadThumbnail({
+    required File videoFile,
+    required String nostrPubkey,
+    required PendingUpload upload,
+  }) async {
+    try {
+      Log.info('📸 Extracting thumbnail from video: ${videoFile.path}',
+          name: 'UploadManager', category: LogCategory.video);
+
+      // Generate thumbnail at optimal timestamp
+      final thumbnailPath = await VideoThumbnailService.extractThumbnail(
+        videoPath: videoFile.path,
+        timeMs: 500, // Extract at 500ms
+        quality: 85,
+      );
+
+      if (thumbnailPath == null) {
+        Log.warning('❌ Failed to extract thumbnail from video',
+            name: 'UploadManager', category: LogCategory.video);
+        return null;
+      }
+
+      final thumbnailFile = File(thumbnailPath);
+      if (!thumbnailFile.existsSync()) {
+        Log.warning('❌ Thumbnail file not found after extraction',
+            name: 'UploadManager', category: LogCategory.video);
+        return null;
+      }
+
+      Log.info('✅ Thumbnail extracted, uploading to Blossom server',
+          name: 'UploadManager', category: LogCategory.video);
+
+      _updateUploadProgress(upload.id, 0.85);
+
+      // Upload thumbnail to Blossom server
+      final thumbnailResult = await _blossomService.uploadImage(
+        imageFile: thumbnailFile,
+        nostrPubkey: nostrPubkey,
+        mimeType: 'image/jpeg',
+        onProgress: (progress) {
+          // Map thumbnail progress to 85%-100% of total upload
+          _updateUploadProgress(upload.id, 0.85 + (progress * 0.15));
+        },
+      );
+
+      // Clean up local thumbnail file
+      try {
+        await thumbnailFile.delete();
+        Log.debug('🧹 Cleaned up local thumbnail file',
+            name: 'UploadManager', category: LogCategory.video);
+      } catch (e) {
+        Log.warning('Failed to delete local thumbnail file: $e',
+            name: 'UploadManager', category: LogCategory.video);
+      }
+
+      if (thumbnailResult.success && thumbnailResult.cdnUrl != null) {
+        Log.info('✅ Thumbnail uploaded successfully: ${thumbnailResult.cdnUrl}',
+            name: 'UploadManager', category: LogCategory.video);
+        return thumbnailResult.cdnUrl;
+      } else {
+        Log.warning('❌ Thumbnail upload failed: ${thumbnailResult.errorMessage}',
+            name: 'UploadManager', category: LogCategory.video);
+        return null;
+      }
+    } catch (e, stackTrace) {
+      Log.error('❌ Thumbnail generation/upload error: $e',
+          name: 'UploadManager', category: LogCategory.video);
+      Log.verbose('Stack trace: $stackTrace',
+          name: 'UploadManager', category: LogCategory.video);
+      return null;
     }
   }
 
@@ -1138,10 +1251,10 @@ class UploadManager {
     // Handle both BlossomUploadResult and DirectUploadResult structures
     String? thumbnailUrl;
     try {
-      // Try to get thumbnailUrl if it exists (DirectUploadResult)
+      // Get thumbnailUrl from upload result (both services should provide it)
       thumbnailUrl = result.thumbnailUrl as String?;
     } catch (e) {
-      // BlossomUploadResult doesn't have thumbnailUrl, that's ok
+      // Fallback if thumbnailUrl is not available
       thumbnailUrl = null;
     }
 
