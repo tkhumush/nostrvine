@@ -910,7 +910,7 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       ExploreScreen(key: _exploreScreenKey),
       // If starting on profile tab, create it immediately; otherwise use placeholder
       widget.initialTabIndex == 3
-          ? profile.ProfileScreenScrollable(key: _profileScreenKey, profilePubkey: null)
+          ? profile.ProfileScreenScrollable(key: ValueKey('profile_${authService.currentPublicKeyHex ?? 'own'}'), profilePubkey: null)
           : Container(),
     ];
 
@@ -964,11 +964,13 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (index == 3) {
       Log.info('👆 Profile tab tapped - resetting to own profile', name: 'MainNavigation', category: LogCategory.ui);
       // Reset to current user's profile when tapping the tab
+      final container = ProviderScope.containerOf(context);
+      final currentUserPubkey = container.read(authServiceProvider).currentPublicKeyHex;
       _viewingProfilePubkey = null;
       setState(() {
-        // MUST use _profileScreenKey to allow didUpdateWidget to fire
+        // Use ValueKey with actual user pubkey to force recreation when switching profiles
         _screens[3] = profile.ProfileScreenScrollable(
-          key: _profileScreenKey,
+          key: ValueKey('profile_${currentUserPubkey ?? 'own'}'),
           profilePubkey: null
         );
       });
@@ -1068,9 +1070,9 @@ class MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     setState(() {
       _viewingProfilePubkey = profilePubkey;
-      // ALWAYS use the same GlobalKey - Flutter will call didUpdateWidget instead of recreating
+      // Use ValueKey with the pubkey to force widget recreation when viewing different profiles
       _screens[3] = profile.ProfileScreenScrollable(
-        key: _profileScreenKey,
+        key: ValueKey('profile_${profilePubkey ?? 'own'}'),
         profilePubkey: _viewingProfilePubkey,
       );
       _currentIndex = 3;

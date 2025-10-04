@@ -48,7 +48,7 @@ final class ProfileVideosNotifierProvider
 }
 
 String _$profileVideosNotifierHash() =>
-    r'a681461849e6bb95e73ad62d19e044961c2e4486';
+    r'a833f0619a78cf9533919c643d3608843f10a15d';
 
 /// Notifier for managing profile videos state
 /// keepAlive: false allows disposal when profile not visible - prevents ghost video playback

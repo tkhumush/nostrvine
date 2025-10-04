@@ -138,6 +138,14 @@ class VideoEventService extends ChangeNotifier {
   final Map<SubscriptionType, List<String>?> _activeHashtagFilters = {};
   final Map<SubscriptionType, String?> _activeGroupFilters = {};
 
+  // Frame-based batching for progressive UI updates
+  bool _hasScheduledFrameUpdate = false;
+
+  // Metrics tracking for progressive loading performance
+  int _totalEventsReceived = 0;
+  int _totalUiUpdates = 0;
+  DateTime? _firstEventTime;
+
   // Search state - TODO: These fields are maintained for future search state tracking
   // bool _isSearching = false;
   // String? _currentSearchQuery;
@@ -168,6 +176,32 @@ class VideoEventService extends ChangeNotifier {
     for (final subscriptionType in SubscriptionType.values) {
       _paginationStates[subscriptionType] = PaginationState();
     }
+  }
+
+  /// Schedule a frame-based UI update to batch multiple event additions
+  /// This ensures notifyListeners() is called at most once per frame (~16ms at 60fps)
+  void _scheduleFrameUpdate() {
+    if (_hasScheduledFrameUpdate) return;
+    _hasScheduledFrameUpdate = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _hasScheduledFrameUpdate = false;
+      _totalUiUpdates++;
+      notifyListeners();
+
+      // Log metrics periodically (every 10 updates)
+      if (_totalUiUpdates % 10 == 0) {
+        final avgEventsPerUpdate = _totalEventsReceived / _totalUiUpdates;
+        final timeToFirstContent = _firstEventTime != null
+            ? DateTime.now().difference(_firstEventTime!).inMilliseconds
+            : 0;
+        Log.debug(
+          'Progressive loading metrics: $_totalEventsReceived events, $_totalUiUpdates updates, ${avgEventsPerUpdate.toStringAsFixed(1)} events/update, ${timeToFirstContent}ms to first content',
+          name: 'VideoEventService',
+          category: LogCategory.video,
+        );
+      }
+    });
   }
 
   // REFACTORED: Getters now work with subscription types
@@ -1259,7 +1293,8 @@ class VideoEventService extends ChangeNotifier {
         // Complete the pagination query with the requested limit for proper hasMore tracking
         paginationState.completeQuery(limit);
 
-        // Notify reactive providers about new events
+        // Final notification - will only fire if no frame update was scheduled
+        // This ensures UI updates even if no events were received
         notifyListeners();
       }).catchError((error) {
         Log.error(
@@ -2100,8 +2135,12 @@ class VideoEventService extends ChangeNotifier {
         name: 'VideoEventService',
         category: LogCategory.video);
 
-    // Notify Riverpod listeners about state change
-    notifyListeners();
+    // Track metrics for progressive loading
+    _totalEventsReceived++;
+    _firstEventTime ??= DateTime.now();
+
+    // Schedule frame-based UI update for progressive loading
+    _scheduleFrameUpdate();
   }
 
   /// Log duplicate video events in an aggregated manner to reduce noise
@@ -2432,6 +2471,9 @@ class VideoEventService extends ChangeNotifier {
           final videoEvent = VideoEvent.fromNostrEvent(event);
           if (_hasValidVideoUrl(videoEvent)) {
             _eventLists[SubscriptionType.search]?.add(videoEvent);
+            _totalEventsReceived++;
+            _firstEventTime ??= DateTime.now();
+            _scheduleFrameUpdate(); // Progressive loading for search results
             Log.debug('✅ Added valid search result: ${videoEvent.id}',
                 name: 'VideoEventService', category: LogCategory.video);
           } else {

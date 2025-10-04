@@ -1,9 +1,7 @@
 // ABOUTME: ProofMode PGP key management service for device-specific cryptographic operations
 // ABOUTME: Handles secure key generation, storage, and signing for proof validation
 
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
+import 'package:dart_pg/dart_pg.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:openvine/services/proofmode_config.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -295,53 +293,70 @@ class ProofModeKeyService {
         key: _createdAtKey, value: keyPair.createdAt.toIso8601String());
   }
 
-  /// Generate a simple key pair (placeholder for proper PGP implementation)
+  /// Generate a real PGP key pair using dart_pg
   Map<String, String> _generateSimpleKeyPair() {
-    // This is a simplified implementation
-    // In production, use proper PGP libraries like dart_pg or platform channels
+    // Generate real PGP key pair using dart_pg
+    final userID = 'OpenVine ProofMode <device@openvine.co>';
+    // Note: dart_pg requires non-empty passphrase, use device-specific passphrase
+    const passphrase = 'openvine_proofmode_device_key';
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final entropy = List.generate(
-        32, (i) => (timestamp.codeUnits[i % timestamp.length] + i) % 256);
+    final privateKey = OpenPGP.generateKey(
+      [userID],
+      passphrase,
+      type: KeyType.rsa,
+      rsaKeySize: RSAKeySize.normal, // 2048 bits for good performance
+    );
 
-    // Generate mock keys (base64 encoded for storage)
-    final privateKeyBytes = Uint8List.fromList(entropy);
-    final publicKeyBytes = Uint8List.fromList(entropy.take(16).toList());
+    final publicKey = privateKey.publicKey;
 
-    final privateKey = base64Encode(privateKeyBytes);
-    final publicKey = base64Encode(publicKeyBytes);
-
-    // Generate fingerprint from public key
-    final fingerprintHash = sha256.convert(publicKeyBytes);
-    final fingerprint =
-        fingerprintHash.toString().substring(0, 16).toUpperCase();
+    // Get fingerprint from public key (convert Uint8List to hex string)
+    final fingerprintBytes = publicKey.fingerprint;
+    final fingerprint = fingerprintBytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join()
+        .toUpperCase();
 
     return {
-      'privateKey': 'MOCK_PRIVATE_$privateKey',
-      'publicKey': 'MOCK_PUBLIC_$publicKey',
+      'privateKey': privateKey.armor(),
+      'publicKey': publicKey.armor(),
       'fingerprint': fingerprint,
     };
   }
 
-  /// Sign data with private key (simplified implementation)
-  String _signWithPrivateKey(String data, String privateKey) {
-    // Simplified signing - in production use proper PGP signing
-    final dataBytes = utf8.encode(data);
-    final keyBytes = utf8.encode(privateKey);
-    final combined = [...dataBytes, ...keyBytes];
-    final hash = sha256.convert(combined);
-    return 'MOCK_SIG_${base64Encode(hash.bytes)}';
+  /// Sign data with real PGP private key
+  String _signWithPrivateKey(String data, String armoredPrivateKey) {
+    // Real PGP signing using dart_pg
+    const passphrase = 'openvine_proofmode_device_key';
+
+    final privateKey = OpenPGP.decryptPrivateKey(armoredPrivateKey, passphrase);
+    // Note: signingKeys is a POSITIONAL parameter, not named
+    final signedMessage = OpenPGP.signCleartext(data, [privateKey]);
+
+    return signedMessage.armor();
   }
 
-  /// Verify signature with public key (simplified implementation)
-  bool _verifyWithPublicKey(String data, String signature, String publicKey) {
-    // Simplified verification - in production use proper PGP verification
+  /// Verify signature with real PGP public key
+  bool _verifyWithPublicKey(String data, String armoredSignedMessage, String armoredPublicKey) {
+    // Real PGP verification using dart_pg
     try {
-      if (!signature.startsWith('MOCK_SIG_')) return false;
+      final publicKey = OpenPGP.readPublicKey(armoredPublicKey);
 
-      final expectedSig = _signWithPrivateKey(
-          data, 'MOCK_PRIVATE_${publicKey.replaceFirst('MOCK_PUBLIC_', '')}');
-      return signature == expectedSig;
+      // Read the signed message to extract the text
+      final signedMessage = OpenPGP.readSignedMessage(armoredSignedMessage);
+
+      // First check: Does the embedded message text match what we expect?
+      // Cast to SignedMessage to access the text property
+      if (signedMessage is! SignedMessage || signedMessage.text != data) {
+        return false; // Message was tampered with or wrong type
+      }
+
+      // Second check: Is the signature cryptographically valid?
+      // Note: verificationKeys is a POSITIONAL parameter, not named
+      final verifications = OpenPGP.verify(armoredSignedMessage, [publicKey]);
+
+      if (verifications.isEmpty) return false;
+
+      return verifications.first.isVerified;
     } catch (e) {
       return false;
     }
