@@ -462,6 +462,53 @@ class VideoEvent {
   final int? originalComments; // Original comment count from classic Vine
   final int? originalReposts; // Original repost count from classic Vine
 
+  /// ProofMode: Get verification level from tags
+  String? get proofModeVerificationLevel {
+    return rawTags['proof-verification-level'];
+  }
+
+  /// ProofMode: Get proof manifest from tags
+  String? get proofModeManifest {
+    return rawTags['proof-manifest'];
+  }
+
+  /// ProofMode: Get device attestation from tags
+  String? get proofModeDeviceAttestation {
+    return rawTags['proof-device-attestation'];
+  }
+
+  /// ProofMode: Get PGP public key fingerprint from tags
+  String? get proofModePgpFingerprint {
+    return rawTags['proof-pgp-fingerprint'];
+  }
+
+  /// ProofMode: Check if video has any proof
+  bool get hasProofMode {
+    return proofModeVerificationLevel != null ||
+           proofModeManifest != null ||
+           proofModePgpFingerprint != null;
+  }
+
+  /// ProofMode: Check if video is verified mobile (highest level)
+  bool get isVerifiedMobile {
+    return proofModeVerificationLevel == 'verified_mobile';
+  }
+
+  /// ProofMode: Check if video is verified web (medium level)
+  bool get isVerifiedWeb {
+    return proofModeVerificationLevel == 'verified_web';
+  }
+
+  /// ProofMode: Check if video has basic proof (low level)
+  bool get hasBasicProof {
+    return proofModeVerificationLevel == 'basic_proof';
+  }
+
+  /// Original Vine: Check if this is a recovered original vine
+  bool get isOriginalVine {
+    return originalLoops != null && originalLoops! > 0;
+  }
+
   /// Comparator: items with no loop count first (new vines),
   /// then items with loop count sorted by amount desc.
   /// Within groups, break ties by most recent createdAt.
