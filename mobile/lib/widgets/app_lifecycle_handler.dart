@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/providers/individual_video_providers.dart';
 import 'package:openvine/services/background_activity_manager.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/utils/log_message_batcher.dart';
@@ -72,13 +73,19 @@ class _AppLifecycleHandlerState extends ConsumerState<AppLifecycleHandler>
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
         Log.info(
-          '📱 App backgrounded - pausing all videos and suspending background activities',
+          '📱 App backgrounded - clearing active video and pausing all videos',
           name: 'AppLifecycleHandler',
           category: LogCategory.system,
         );
         if (_tickersEnabled) {
           setState(() => _tickersEnabled = false);
         }
+
+        // CRITICAL: Clear active video FIRST
+        // This triggers VideoFeedItem listeners to pause their controllers
+        ref.read(activeVideoProvider.notifier).clearActiveVideo();
+
+        // Then pause all videos and clear visibility state
         // Execute async to prevent blocking scene update
         Future.microtask(() => visibilityManager.pauseAllVideos());
 
