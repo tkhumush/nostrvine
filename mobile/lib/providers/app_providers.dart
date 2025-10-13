@@ -43,6 +43,7 @@ import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/services/video_sharing_service.dart';
 import 'package:openvine/services/video_visibility_manager.dart';
 import 'package:openvine/services/web_auth_service.dart';
+import 'package:openvine/services/background_activity_manager.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -62,6 +63,12 @@ ConnectionStatusService connectionStatusService(Ref ref) {
 @riverpod
 VideoVisibilityManager videoVisibilityManager(Ref ref) {
   return VideoVisibilityManager();
+}
+
+/// Background activity manager singleton for tracking app foreground/background state
+@Riverpod(keepAlive: true)
+BackgroundActivityManager backgroundActivityManager(Ref ref) {
+  return BackgroundActivityManager();
 }
 
 /// Analytics service with opt-out support

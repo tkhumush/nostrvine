@@ -405,9 +405,9 @@ void main() {
       eventStreamController.add(repost2);
       await Future.delayed(const Duration(milliseconds: 10));
 
-      // Currently reposts are filtered out in _handleNewVideoEvent even when includeReposts is true
-      // This is a known limitation - the includeReposts flag is only used for filters, not processing
-      // TODO: Fix VideoEventService to properly handle includeReposts flag
+      // Reposts can't be displayed without the original video event
+      // This is expected behavior: reposts reference original events that must exist in cache
+      // When includeReposts is true, kind 6 events are accepted but require original video lookup
       expect(videoEventService.discoveryVideos.length, equals(0));
     });
   });

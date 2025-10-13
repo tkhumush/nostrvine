@@ -882,6 +882,8 @@ class NostrService implements INostrService {
         'p2p_enabled': _p2pEnabled,
         'p2p_peers': _p2pService?.peers.length ?? 0,
         'p2p_connections': _p2pService?.connections.length ?? 0,
+        'p2p_advertising': _p2pService?.isAdvertising ?? false,
+        'p2p_discovering': _p2pService?.isDiscovering ?? false,
       };
     } catch (e) {
       return {'error': e.toString()};

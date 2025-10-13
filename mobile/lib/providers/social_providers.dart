@@ -26,8 +26,14 @@ class SocialNotifier extends _$SocialNotifier {
   String? _userLikesSubscriptionId;
   String? _userRepostsSubscriptionId;
 
+  // Save subscription manager for safe disposal
+  dynamic _subscriptionManager;
+
   @override
   SocialState build() {
+    // Save subscription manager reference before disposal callback
+    _subscriptionManager = ref.read(subscriptionManagerProvider);
+
     ref.onDispose(_cleanupSubscriptions);
 
     return SocialState.initial;
@@ -1224,23 +1230,28 @@ class SocialNotifier extends _$SocialNotifier {
 
   void _cleanupSubscriptions() {
     try {
-      // Only try to clean up if the ref is still valid
-      final subscriptionManager = ref.read(subscriptionManagerProvider);
+      // Use saved subscription manager reference instead of ref.read()
+      // CRITICAL: Never use ref.read() in disposal callbacks
+      if (_subscriptionManager == null) {
+        Log.warning('Subscription manager not available for cleanup',
+            name: 'SocialNotifier', category: LogCategory.system);
+        return;
+      }
 
       if (_likeSubscriptionId != null) {
-        subscriptionManager.cancelSubscription(_likeSubscriptionId!);
+        _subscriptionManager.cancelSubscription(_likeSubscriptionId!);
       }
       if (_followSubscriptionId != null) {
-        subscriptionManager.cancelSubscription(_followSubscriptionId!);
+        _subscriptionManager.cancelSubscription(_followSubscriptionId!);
       }
       if (_repostSubscriptionId != null) {
-        subscriptionManager.cancelSubscription(_repostSubscriptionId!);
+        _subscriptionManager.cancelSubscription(_repostSubscriptionId!);
       }
       if (_userLikesSubscriptionId != null) {
-        subscriptionManager.cancelSubscription(_userLikesSubscriptionId!);
+        _subscriptionManager.cancelSubscription(_userLikesSubscriptionId!);
       }
       if (_userRepostsSubscriptionId != null) {
-        subscriptionManager.cancelSubscription(_userRepostsSubscriptionId!);
+        _subscriptionManager.cancelSubscription(_userRepostsSubscriptionId!);
       }
     } catch (e) {
       // Container might be disposed, ignore cleanup errors

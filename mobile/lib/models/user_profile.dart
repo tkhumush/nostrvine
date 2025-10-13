@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'package:hive_ce/hive.dart';
 import 'package:nostr_sdk/event.dart';
+import 'package:openvine/utils/nostr_encoding.dart';
 
 part 'user_profile.g.dart';
 
@@ -122,9 +123,12 @@ class UserProfile {
 
   /// Get npub encoding of pubkey
   String get npub {
-    // TODO: Implement bech32 encoding for npub format
-    // For now, return shortened pubkey
-    return shortPubkey;
+    try {
+      return NostrEncoding.encodePublicKey(pubkey);
+    } catch (e) {
+      // Fallback to shortened pubkey if encoding fails
+      return shortPubkey;
+    }
   }
 
   /// Check if profile has basic information

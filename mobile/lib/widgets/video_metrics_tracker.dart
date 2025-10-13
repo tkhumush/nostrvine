@@ -40,9 +40,18 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
   // Track if we've sent end event to avoid duplicates
   bool _hasSentEndEvent = false;
 
+  // Save provider references for safe access during dispose
+  dynamic _analyticsService;
+  dynamic _authService;
+  dynamic _seenVideosService;
+
   @override
   void initState() {
     super.initState();
+    // CRITICAL: Save provider references BEFORE any async work
+    _analyticsService = ref.read(analyticsServiceProvider);
+    _authService = ref.read(authServiceProvider);
+    _seenVideosService = ref.read(seenVideosServiceProvider);
     _initializeTracking();
   }
 
@@ -159,13 +168,10 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
     _hasTrackedView = true;
     _hasSentEndEvent = false;
 
-    // Send view start event with user ID
-    final analyticsService = ref.read(analyticsServiceProvider);
-    final authService = ref.read(authServiceProvider);
-
-    analyticsService.trackDetailedVideoViewWithUser(
+    // Use saved provider references
+    _analyticsService.trackDetailedVideoViewWithUser(
       widget.video,
-      userId: authService.currentPublicKeyHex,
+      userId: _authService.currentPublicKeyHex,
       source: 'mobile',
       eventType: 'view_start',
     );
@@ -189,14 +195,11 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
     // Only send if we have meaningful data
     if (_totalWatchDuration.inSeconds > 0) {
       try {
-        final analyticsService = ref.read(analyticsServiceProvider);
-        final authService = ref.read(authServiceProvider);
-        final seenVideosService = ref.read(seenVideosServiceProvider);
-
-        // Send to backend analytics
-        analyticsService.trackDetailedVideoViewWithUser(
+        // Use saved provider references instead of ref.read()
+        // CRITICAL: Never use ref.read() in dispose-related methods
+        _analyticsService.trackDetailedVideoViewWithUser(
           widget.video,
-          userId: authService.currentPublicKeyHex,
+          userId: _authService.currentPublicKeyHex,
           source: 'mobile',
           eventType: 'view_end',
           watchDuration: _totalWatchDuration,
@@ -208,7 +211,7 @@ class _VideoMetricsTrackerState extends ConsumerState<VideoMetricsTracker> {
         );
 
         // Persist to local storage for "show fresh content" feature
-        seenVideosService.recordVideoView(
+        _seenVideosService.recordVideoView(
           widget.video.id,
           loopCount: _loopCount,
           watchDuration: _totalWatchDuration,

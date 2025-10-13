@@ -209,7 +209,11 @@ VideoPlayerController individualVideoController(
     cacheTimer?.cancel();
     Log.info('🧹 Disposing VideoPlayerController for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...',
         name: 'IndividualVideoController', category: LogCategory.system);
-    controller.dispose();
+    // Defer controller disposal to avoid triggering listener callbacks during lifecycle
+    // This prevents "Cannot use Ref inside life-cycles" errors when listeners try to access providers
+    Future.microtask(() {
+      controller.dispose();
+    });
   });
 
   // NOTE: Play/pause logic has been moved to VideoFeedItem widget

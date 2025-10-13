@@ -128,7 +128,6 @@ void main() {
           userProfileProvider.overrideWith(() =>
               customUserProfiles ??
               MockUserProfileNotifier(onFetchProfiles: (_) {})),
-          // TODO: Update social provider overrides for new architecture
         ],
       );
     }
@@ -158,14 +157,6 @@ void main() {
     tearDown(() {
       container.dispose();
     });
-
-    // TODO: Update test for new VideoFeedState architecture
-    /*test('should initialize with following feed mode by default', () async {
-      final feedState = await container.read(videoFeedProvider.future);
-
-      expect(feedState.feedMode, equals(FeedMode.following));
-      expect(feedState.isFollowingFeed, isTrue);
-    });*/
 
     test('should use Classic Vines as fallback when no following list',
         () async {
@@ -231,12 +222,6 @@ void main() {
           containsAll(['pubkey1', 'pubkey2']));
     });
 
-    // TODO: Reimplement hashtag filtering test for new architecture
-    // Old test removed - feedModeNotifierProvider no longer exists
-
-    // TODO: Reimplement profile filtering test for new architecture
-    // Old test removed - feedModeNotifierProvider no longer exists
-
     test('should sort videos by creation time (newest first)', () async {
       // Set following list BEFORE reading provider
       container.read(social.socialProvider.notifier).updateFollowingList(
@@ -282,9 +267,6 @@ void main() {
       expect(fetchedPubkeys.isNotEmpty || fetchedPubkeys.isEmpty,
           isTrue); // Accept either outcome based on hasProfile logic
     });
-
-    // TODO: Reimplement curated and discovery feed mode tests for new architecture
-    // Old tests removed - feedModeNotifierProvider no longer exists
 
     test('should handle refresh action', () async {
       // Initial read

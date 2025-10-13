@@ -29,10 +29,17 @@ class ExploreVideoScreenPure extends ConsumerStatefulWidget {
 
 class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure> {
   late int _initialIndex;
+  ActiveVideoNotifier? _activeVideoNotifier; // Save notifier for safe disposal
+  String? _activeVideoIdAtInit; // Save active video ID for logging
 
   @override
   void initState() {
     super.initState();
+
+    // Save notifier reference for safe disposal
+    // CRITICAL: Must do this before any async work
+    _activeVideoNotifier = ref.read(activeVideoProvider.notifier);
+    _activeVideoIdAtInit = ref.read(activeVideoProvider).currentVideoId;
 
     // Find starting video index or use provided index
     _initialIndex = widget.startingIndex ??
@@ -49,19 +56,20 @@ class _ExploreVideoScreenPureState extends ConsumerState<ExploreVideoScreenPure>
   @override
   void dispose() {
     // CRITICAL: Clear active video when leaving to stop playback
-    // This MUST happen to prevent background audio playing
-    try {
-      final activeId = ref.read(activeVideoProvider).currentVideoId;
-      Log.info('🛑 ExploreVideoScreenPure disposing - clearing active video: ${activeId != null ? activeId.substring(0, 8) : "none"}',
-          name: 'ExploreVideoScreen', category: LogCategory.video);
+    // Use saved notifier reference - NEVER use ref.read() in dispose()
+    if (_activeVideoNotifier != null) {
+      try {
+        Log.info('🛑 ExploreVideoScreenPure disposing - clearing active video: ${_activeVideoIdAtInit != null ? _activeVideoIdAtInit!.substring(0, 8) : "none"}',
+            name: 'ExploreVideoScreen', category: LogCategory.video);
 
-      ref.read(activeVideoProvider.notifier).clearActiveVideo();
+        _activeVideoNotifier!.clearActiveVideo();
 
-      Log.info('✅ Active video cleared successfully',
-          name: 'ExploreVideoScreen', category: LogCategory.video);
-    } catch (e) {
-      Log.error('❌ Error clearing active video on dispose: $e',
-          name: 'ExploreVideoScreen', category: LogCategory.video);
+        Log.info('✅ Active video cleared successfully',
+            name: 'ExploreVideoScreen', category: LogCategory.video);
+      } catch (e) {
+        Log.error('❌ Error clearing active video on dispose: $e',
+            name: 'ExploreVideoScreen', category: LogCategory.video);
+      }
     }
     super.dispose();
   }

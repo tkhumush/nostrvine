@@ -10,12 +10,10 @@ import 'package:nostr_sdk/event.dart';
 import 'package:openvine/models/pending_upload.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/services/auth_service.dart';
-import 'package:openvine/services/blurhash_service.dart';
 import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/personal_event_cache_service.dart';
 import 'package:openvine/services/upload_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
-import 'package:openvine/services/video_thumbnail_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/utils/proofmode_publishing_helpers.dart';
 import 'package:openvine/constants/nip71_migration.dart';
@@ -192,73 +190,14 @@ class VideoEventPublisher {
       imetaComponents.add('url ${upload.cdnUrl!}');
       imetaComponents.add('m video/mp4');
 
-      // Generate thumbnail and blurhash from local video file
-      if (upload.localVideoPath.isNotEmpty) {
-        try {
-          // Extract thumbnail bytes from the video at 500ms with timeout
-          // to prevent hanging if thumbnail extraction stalls
-          final thumbnailBytes =
-              await VideoThumbnailService.extractThumbnailBytes(
-            videoPath: upload.localVideoPath,
-            timeMs: 500, // Extract thumbnail at 500ms
-            quality: 75, // Medium quality for smaller data URIs
-          ).timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              Log.warning('⏱️ Thumbnail extraction timed out after 10 seconds',
-                  name: 'VideoEventPublisher', category: LogCategory.video);
-              return null;
-            },
-          );
-
-          if (thumbnailBytes != null) {
-            // Create base64 data URI for embedded thumbnail
-            final base64Thumbnail = base64.encode(thumbnailBytes);
-            final thumbnailDataUri = 'data:image/jpeg;base64,$base64Thumbnail';
-            final thumbnailSizeKB = (thumbnailBytes.length / 1024).toStringAsFixed(1);
-
-            imetaComponents.add('image $thumbnailDataUri');
-            Log.info('✅ Embedded thumbnail as data URI (${thumbnailSizeKB}KB)',
-                name: 'VideoEventPublisher', category: LogCategory.video);
-
-            // Also generate blurhash for progressive loading with timeout
-            final blurhash =
-                await BlurhashService.generateBlurhash(thumbnailBytes).timeout(
-              const Duration(seconds: 3),
-              onTimeout: () {
-                Log.warning('⏱️ Blurhash generation timed out after 3 seconds',
-                    name: 'VideoEventPublisher', category: LogCategory.video);
-                return null;
-              },
-            );
-            if (blurhash != null) {
-              imetaComponents.add('blurhash $blurhash');
-              Log.info(
-                  'Generated blurhash from video: ${blurhash.substring(0, 10)}...',
-                  name: 'VideoEventPublisher',
-                  category: LogCategory.video);
-            }
-          } else {
-            Log.warning('❌ Failed to extract thumbnail from video',
-                name: 'VideoEventPublisher', category: LogCategory.video);
-          }
-        } catch (e) {
-          Log.warning('Failed to generate thumbnail/blurhash from video: $e',
-              name: 'VideoEventPublisher', category: LogCategory.video);
-        }
-      }
-
-      // Fallback: Use uploaded thumbnail URL if available (e.g. from successful upload)
+      // Use uploaded thumbnail CDN URL from Blossom upload
       if (upload.thumbnailPath != null && upload.thumbnailPath!.isNotEmpty) {
         final thumbnailPath = upload.thumbnailPath!;
-        // Only include HTTP/HTTPS URLs as fallback
+        // Only include HTTP/HTTPS CDN URLs
         if (thumbnailPath.startsWith('http://') || thumbnailPath.startsWith('https://')) {
-          // Only add if we didn't already embed a thumbnail above
-          if (!imetaComponents.any((c) => c.startsWith('image '))) {
-            imetaComponents.add('image $thumbnailPath');
-            Log.info('✅ Using uploaded thumbnail URL: $thumbnailPath',
-                name: 'VideoEventPublisher', category: LogCategory.video);
-          }
+          imetaComponents.add('image $thumbnailPath');
+          Log.info('✅ Using uploaded thumbnail CDN URL: $thumbnailPath',
+              name: 'VideoEventPublisher', category: LogCategory.video);
         }
       }
 

@@ -550,45 +550,88 @@ OpenVine uses a **Riverpod-based reactive architecture** for managing video feed
 ### Core Components
 
 **VideoEventService** (`mobile/lib/services/video_event_service.dart`):
-- Manages Nostr video event subscriptions by type (homeFeed, discovery, trending, etc.)
-- Uses per-subscription-type event lists (`_eventLists` map)
+- Central service managing Nostr video event subscriptions by type
+- Maintains separate event lists per subscription type via `_eventLists` map
 - Supports multiple feed types: `SubscriptionType.homeFeed`, `SubscriptionType.discovery`, `SubscriptionType.hashtag`, etc.
-- Provides getters: `homeFeedVideos`, `discoveryVideos`, `getVideos(subscriptionType)`
+- Provides type-safe getters: `homeFeedVideos`, `discoveryVideos`, `getVideos(subscriptionType)`
+- Handles pagination, deduplication, and real-time event streaming
+- Automatically filters and sorts events per subscription type
 
-**VideoManager** (`mobile/lib/providers/video_manager_providers.dart`):
-- Riverpod provider managing video player controllers and preloading
-- **CRITICAL**: Listens to BOTH `videoEventsProvider` (discovery) AND `homeFeedProvider` (home feed)
-- Automatically adds received videos to internal state via `_addVideoEvent()`
-- Prevents `VideoManagerException: Video not found in manager state` errors during preloading
-- Manages memory efficiently with controller limits and cleanup
+**Feed Providers** (Riverpod Stream/AsyncNotifier providers):
 
-**Feed Providers**:
-- `videoEventsProvider` → Discovery videos (general public feed)
-- `homeFeedProvider` → Videos from users you follow only
-- Both providers automatically sync with VideoManager for seamless playback
+`videoEventsProvider` (`mobile/lib/providers/video_events_providers.dart`):
+- Stream provider for discovery/explore feed (all public videos)
+- Watches `VideoEventService.discoveryVideos` reactively
+- Reorders videos to show unseen content first
+- Debounces rapid updates (500ms) for performance
+- Used by `ExploreScreen` for Popular Now and Trending tabs
+
+`homeFeedProvider` (`mobile/lib/providers/home_feed_provider.dart`):
+- AsyncNotifier provider for personalized home feed
+- Shows videos ONLY from users you follow
+- Watches `VideoEventService.homeFeedVideos` reactively
+- Reorders videos to prioritize unseen content
+- Auto-refreshes every 10 minutes
+- Invalidates when following list changes
+- Used by `VideoFeedScreen` for main home feed
 
 ### Video Feed Flow
 
-1. **Nostr Events** → VideoEventService receives and categorizes by subscription type
-2. **Provider Reactivity** → `videoEventsProvider` and `homeFeedProvider` emit updates
-3. **VideoManager Sync** → Automatically adds videos from both providers to internal state
-4. **UI Display** → Video feed screens render from respective providers
-5. **Preloading** → VideoManager can preload any video because it has all videos in state
+1. **Subscription Request**
+   - UI screen requests videos via provider (`homeFeedProvider` or `videoEventsProvider`)
+   - Provider calls `VideoEventService.subscribeToHomeFeed()` or `subscribeToDiscovery()`
 
-### Feed Types
+2. **Nostr Event Streaming**
+   - VideoEventService subscribes to Nostr relay via `NostrService`
+   - Events arrive in real-time and are categorized by `SubscriptionType`
+   - Service maintains separate `_eventLists[SubscriptionType.homeFeed]`, `_eventLists[SubscriptionType.discovery]`, etc.
 
-- **Home Feed** (`VideoFeedScreen` with `homeFeedProvider`): Shows videos only from followed users
-- **Discovery Feed** (`explore_screen.dart` with `videoEventsProvider`): Shows all public videos
-- **Hashtag Feeds**: Filter videos by hashtags
-- **Profile Feeds**: Show videos from specific users
+3. **Provider Reactivity**
+   - Providers listen to `VideoEventService` via `ChangeNotifier`
+   - When events arrive, service calls `notifyListeners()`
+   - Providers react and emit updated video lists to UI
 
-### Critical Fix (2024-07-30)
+4. **UI Display**
+   - Screens consume providers: `ref.watch(homeFeedProvider)` or `ref.watch(videoEventsProvider)`
+   - Video widgets render with reactive updates
+   - Individual video players handle their own playback state
 
-Fixed broken bridge between VideoEventService and VideoManager:
-- VideoManager was only listening to discovery videos (`videoEventsProvider`)
-- Home feed videos (`homeFeedProvider`) weren't being added to VideoManager state
-- Result: Videos appeared in feed providers but caused preload failures
-- **Solution**: Added home feed listener to VideoManager alongside discovery listener
+5. **Pagination**
+   - User scrolls to bottom → calls `provider.loadMore()`
+   - Provider requests more events: `videoEventService.loadMoreEvents(subscriptionType)`
+   - Service fetches older events and appends to appropriate `_eventLists` entry
+   - Providers automatically emit updated lists
+
+### Feed Types and Screens
+
+**Home Feed** (`VideoFeedScreen` with `homeFeedProvider`):
+- Personalized feed showing videos ONLY from followed users
+- Server-side filtered by `authors` filter in Nostr REQ
+- Reorders to show unseen videos first
+- Auto-fetches author profiles for display
+
+**Discovery/Explore Feed** (`ExploreScreen` with `videoEventsProvider`):
+- Public feed showing all videos (no author filter)
+- Multiple tabs: Popular Now (recent), Trending (by loop count)
+- Uses same underlying `discoveryVideos` list with different sorting
+
+**Hashtag Feeds** (via `VideoEventService.subscribeToHashtagVideos()`):
+- Filter videos by specific hashtag
+- Uses `SubscriptionType.hashtag` with separate event list
+
+**Profile Feeds** (via `VideoEventService.getVideosByAuthor()`):
+- Shows videos from a specific user
+- Searches across all subscription types for videos by pubkey
+- Used for user profile pages to display author's video history
+
+### Key Architecture Benefits
+
+- **Separation of Concerns**: VideoEventService handles data, providers handle reactivity, screens handle UI
+- **Type-Safe Subscriptions**: Each feed type has its own event list, preventing cross-contamination
+- **Automatic Deduplication**: VideoEventService prevents duplicate events across all subscription types
+- **Efficient Updates**: Providers debounce rapid updates and only emit when data changes
+- **Memory Management**: Event lists have size limits (120 events) to prevent memory growth
+- **Reactive by Design**: All UI updates happen automatically via Riverpod's watch/listen mechanisms
 
 ## AI Rules for Flutter
 

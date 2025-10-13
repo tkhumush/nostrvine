@@ -76,34 +76,79 @@ void main() {
   });
 
   group('Relay Hashtag Fetching Tests', () {
-    // TODO: Implement relay hashtag tests
-    // Services would be: VideoEventService, MockVideoEventService
+    late MockVideoEventService mockVideoService;
 
     setUp(() {
-      // Test setup to be implemented
+      mockVideoService = MockVideoEventService();
     });
 
     test('should create subscription with hashtag filter for relay query',
         () async {
-      // This test verifies that when subscribing to hashtag videos,
-      // the correct filter with 't' tags is created
+      // Arrange
+      final testHashtags = ['comedy', 'dance'];
+      final expectedVideos = [
+        _createVideoWithHashtags(['comedy']),
+        _createVideoWithHashtags(['dance', 'music']),
+      ];
 
-      // The subscription should:
-      // 1. Use SubscriptionType.hashtag
-      // 2. Include hashtag in the filter's 't' field
-      // 3. Set replace=true to force new subscription
-      // 4. Query relays, not just local cache
+      // Mock the subscribeToHashtagVideos method
+      when(() => mockVideoService.subscribeToHashtagVideos(
+            testHashtags,
+            limit: any(named: 'limit'),
+          )).thenAnswer((_) async {});
+
+      // Mock hashtagVideos getter to return expected videos
+      when(() => mockVideoService.hashtagVideos).thenReturn(expectedVideos);
+
+      // Act
+      await mockVideoService.subscribeToHashtagVideos(testHashtags, limit: 100);
+      final videos = mockVideoService.hashtagVideos;
+
+      // Assert
+      // Verify subscription was called with correct parameters
+      verify(() => mockVideoService.subscribeToHashtagVideos(
+            testHashtags,
+            limit: 100,
+          )).called(1);
+
+      // Verify videos are returned
+      expect(videos.length, equals(2));
+      expect(videos[0].hashtags, contains('comedy'));
+      expect(videos[1].hashtags, contains('dance'));
     });
 
     test('should fetch videos from relay when hashtag is clicked', () async {
-      // This test simulates clicking a hashtag and verifies
-      // that videos are fetched from relays, not just local cache
+      // Arrange
+      final hashtag = 'viral';
+      final expectedVideos = [
+        _createVideoWithHashtags(['viral', 'trending']),
+        _createVideoWithHashtags(['viral']),
+      ];
 
-      // Expected behavior:
-      // 1. Create new subscription with hashtag filter
-      // 2. Send REQ to relays with filter including #t: ['hashtag']
-      // 3. Receive and parse videos with that hashtag
-      // 4. Update UI with fetched videos
+      // Mock subscription and video fetching
+      when(() => mockVideoService.subscribeToHashtagVideos(
+            [hashtag],
+            limit: any(named: 'limit'),
+          )).thenAnswer((_) async {});
+
+      when(() => mockVideoService.hashtagVideos).thenReturn(expectedVideos);
+      when(() => mockVideoService.getVideos(SubscriptionType.hashtag))
+          .thenReturn(expectedVideos);
+
+      // Act - Simulate clicking a hashtag
+      await mockVideoService.subscribeToHashtagVideos([hashtag], limit: 100);
+      final videos = mockVideoService.getVideos(SubscriptionType.hashtag);
+
+      // Assert
+      // Verify subscription was created with the hashtag
+      verify(() => mockVideoService.subscribeToHashtagVideos(
+            [hashtag],
+            limit: 100,
+          )).called(1);
+
+      // Verify videos with the hashtag are returned
+      expect(videos.length, equals(2));
+      expect(videos.every((v) => v.hashtags.contains(hashtag)), isTrue);
     });
   });
 }

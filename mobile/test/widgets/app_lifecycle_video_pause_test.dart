@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
-import 'package:openvine/models/video_event.dart';
 import 'package:openvine/widgets/app_lifecycle_handler.dart';
-import 'package:openvine/utils/unified_logger.dart';
 
 void main() {
   setUp(() {

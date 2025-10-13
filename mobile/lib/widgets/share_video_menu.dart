@@ -12,6 +12,7 @@ import 'package:openvine/services/curated_list_service.dart';
 import 'package:openvine/services/social_service.dart';
 import 'package:openvine/services/video_sharing_service.dart';
 import 'package:openvine/theme/vine_theme.dart';
+import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:openvine/widgets/user_avatar.dart';
@@ -1130,9 +1131,15 @@ class _SendToUserDialogState extends ConsumerState<_SendToUserDialog> {
 
       // Handle different search formats
       if (query.startsWith('npub1')) {
-        // TODO: Convert npub to hex pubkey using bech32 decoding
-        // For now, just use the query as-is and let the service handle it
-        pubkeyToSearch = query;
+        // Convert npub to hex pubkey using bech32 decoding
+        try {
+          pubkeyToSearch = NostrEncoding.decodePublicKey(query);
+        } catch (e) {
+          Log.error('Failed to decode npub: $e',
+              name: 'ShareVideoMenu', category: LogCategory.ui);
+          // Invalid npub format - skip search
+          pubkeyToSearch = null;
+        }
       } else if (query.length == 64 &&
           RegExp(r'^[0-9a-fA-F]+$').hasMatch(query)) {
         // Looks like a hex pubkey

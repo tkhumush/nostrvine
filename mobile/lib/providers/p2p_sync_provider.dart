@@ -45,8 +45,8 @@ final p2pSyncStatusProvider = FutureProvider<P2PSyncStatus>((ref) async {
       isEnabled: stats?['p2p_enabled'] as bool? ?? false,
       peersCount: stats?['p2p_peers'] as int? ?? 0,
       connectionsCount: stats?['p2p_connections'] as int? ?? 0,
-      isAdvertising: false, // TODO: Get actual advertising state
-      isDiscovering: false, // TODO: Get actual discovery state
+      isAdvertising: stats?['p2p_advertising'] as bool? ?? false,
+      isDiscovering: stats?['p2p_discovering'] as bool? ?? false,
     );
   }
 

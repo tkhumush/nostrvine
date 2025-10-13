@@ -515,10 +515,16 @@ class NotificationServiceEnhanced {
   }
 
   /// Request notification permissions from platform
+  /// FUTURE: Integrate flutter_local_notifications for real platform notifications
+  /// Required: Platform-specific permission handling (iOS/Android/macOS)
   Future<void> _requestPermissions() async {
     try {
-      // TODO: Implement proper notification permissions
-      // For now, simulate granted permissions
+      // Currently simulating granted permissions
+      // Real implementation needs:
+      // - flutter_local_notifications package integration
+      // - iOS: Info.plist configuration + UNUserNotificationCenter
+      // - Android: AndroidManifest.xml permissions + NotificationManager
+      // - macOS: Entitlements + UNUserNotificationCenter
       _permissionsGranted = true;
       Log.info('Notification permissions granted (simulated)',
           name: 'NotificationServiceEnhanced', category: LogCategory.system);
@@ -530,10 +536,11 @@ class NotificationServiceEnhanced {
   }
 
   /// Show platform-specific notification
+  /// FUTURE: Integrate flutter_local_notifications for real platform notifications
   Future<void> _showPlatformNotification(NotificationModel notification) async {
     try {
-      // TODO: Implement actual platform notifications
-      // This would use flutter_local_notifications or similar
+      // Currently using debug logging instead of real notifications
+      // Real implementation needs flutter_local_notifications integration
       Log.debug(
           '📱 Platform notification: ${notification.typeIcon} ${notification.message}',
           name: 'NotificationServiceEnhanced',

@@ -343,7 +343,7 @@ void main() {
       const testUserPubkey = 'test_user_pubkey';
 
       test('should fetch liked events for user', () async {
-        // Mock user's reaction events
+        // Mock user's reaction events (kind 7)
         final reactionEvents = [
           () {
             const pk =
@@ -377,24 +377,63 @@ void main() {
           }(),
         ];
 
-        // Mock actual video events
-        // TODO: This test needs to be fixed to properly mock both reaction and video streams
+        // Mock actual video events (kind 34236)
+        final videoEvents = [
+          () {
+            const pk =
+                '1123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+            final pub = getPublicKey(pk);
+            final e = Event(
+                pub,
+                34236,
+                [
+                  ['d', 'video1']
+                ],
+                'Video 1 content');
+            e.sign(pk);
+            return e;
+          }(),
+          () {
+            const pk =
+                '2123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+            final pub = getPublicKey(pk);
+            final e = Event(
+                pub,
+                34236,
+                [
+                  ['d', 'video2']
+                ],
+                'Video 2 content');
+            e.sign(pk);
+            return e;
+          }(),
+        ];
 
+        // Mock two sequential subscription calls
+        var callCount = 0;
         when(mockNostrService.subscribeToEvents(filters: anyNamed('filters')))
-            .thenAnswer((_) {
-          // First call returns reactions, second call returns videos
-          return Stream.fromIterable(reactionEvents);
+            .thenAnswer((invocation) {
+          callCount++;
+          if (callCount == 1) {
+            // First call returns reactions (kind 7)
+            return Stream.fromIterable(reactionEvents);
+          } else {
+            // Second call returns actual video events by IDs
+            return Stream.fromIterable(videoEvents);
+          }
         });
 
         final result = await socialService.fetchLikedEvents(testUserPubkey);
 
-        // Verify the subscription was called to get reactions
+        // Verify two subscriptions were called (reactions, then videos)
         verify(mockNostrService.subscribeToEvents(filters: anyNamed('filters')))
-            .called(1);
+            .called(2);
 
-        // Note: The actual implementation uses two subscriptions and complex async logic
-        // A more comprehensive test would need to mock both subscription calls
+        // Should return the actual video events
         expect(result, isA<List<Event>>());
+        expect(result.length, equals(2));
+        expect(result[0].kind, equals(34236));
+        expect(result[1].kind, equals(34236));
       });
 
       test('should return empty list when user has no liked events', () async {

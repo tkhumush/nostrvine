@@ -22,40 +22,90 @@ abstract class IVideoCacheService {
   int getDuplicateCount();
 }
 
-// The implementation will be created after tests fail
+// The implementation created to pass the tests
 class VideoCacheService implements IVideoCacheService {
-  // TODO: Implement after writing failing tests
-  @override
-  List<VideoEvent> get cachedVideos => throw UnimplementedError();
+  final List<VideoEvent> _cachedVideos = [];
+  final Set<String> _videoIds = {};
+  int _duplicateCount = 0;
 
   @override
-  int get cacheSize => throw UnimplementedError();
+  List<VideoEvent> get cachedVideos => List.unmodifiable(_cachedVideos);
 
   @override
-  void addVideo(VideoEvent video) => throw UnimplementedError();
+  int get cacheSize => _cachedVideos.length;
 
   @override
-  void addVideos(List<VideoEvent> videos) => throw UnimplementedError();
+  void addVideo(VideoEvent video) {
+    // Check for duplicates
+    if (_videoIds.contains(video.id)) {
+      _duplicateCount++;
+      return;
+    }
+
+    // Add to ID set
+    _videoIds.add(video.id);
+
+    // Priority-based insertion: classic vines go at the top
+    if (video.pubkey == AppConstants.classicVinesPubkey) {
+      // Find position to insert (after other classic vines, before regular videos)
+      int insertPosition = 0;
+      while (insertPosition < _cachedVideos.length &&
+          _cachedVideos[insertPosition].pubkey ==
+              AppConstants.classicVinesPubkey) {
+        insertPosition++;
+      }
+      _cachedVideos.insert(insertPosition, video);
+    } else {
+      // Regular videos go at the end
+      _cachedVideos.add(video);
+    }
+  }
 
   @override
-  VideoEvent? getVideoById(String id) => throw UnimplementedError();
+  void addVideos(List<VideoEvent> videos) {
+    for (final video in videos) {
+      addVideo(video);
+    }
+  }
 
   @override
-  List<VideoEvent> getVideosByAuthor(String pubkey) =>
-      throw UnimplementedError();
+  VideoEvent? getVideoById(String id) {
+    try {
+      return _cachedVideos.firstWhere((video) => video.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  List<VideoEvent> getVideosByHashtags(List<String> hashtags) =>
-      throw UnimplementedError();
+  List<VideoEvent> getVideosByAuthor(String pubkey) {
+    return _cachedVideos.where((video) => video.pubkey == pubkey).toList();
+  }
 
   @override
-  void clearCache() => throw UnimplementedError();
+  List<VideoEvent> getVideosByHashtags(List<String> hashtags) {
+    return _cachedVideos.where((video) {
+      // Check if video has any of the search hashtags
+      return video.hashtags.any((tag) => hashtags.contains(tag));
+    }).toList();
+  }
 
   @override
-  bool containsVideo(String id) => throw UnimplementedError();
+  void clearCache() {
+    _cachedVideos.clear();
+    _videoIds.clear();
+    _duplicateCount = 0;
+  }
 
   @override
-  int getDuplicateCount() => throw UnimplementedError();
+  bool containsVideo(String id) {
+    return _videoIds.contains(id);
+  }
+
+  @override
+  int getDuplicateCount() {
+    return _duplicateCount;
+  }
 }
 
 void main() {

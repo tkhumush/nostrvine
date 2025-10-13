@@ -57,6 +57,7 @@ class VideoPageView extends ConsumerStatefulWidget {
 class _VideoPageViewState extends ConsumerState<VideoPageView> {
   late PageController _pageController;
   int _currentIndex = 0;
+  ActiveVideoNotifier? _activeVideoNotifier; // Save notifier for safe disposal
 
   /// Check if this VideoPageView's tab is currently visible
   bool get _isTabVisible {
@@ -74,12 +75,17 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
     _currentIndex = widget.initialIndex;
     _pageController = widget.controller ?? PageController(initialPage: widget.initialIndex);
 
-    // Set initial active video ONLY if this tab is visible
+    // Save active video notifier reference for safe disposal later
+    // Must do this BEFORE any async work to ensure it's available in dispose()
     if (widget.enableLifecycleManagement) {
+      _activeVideoNotifier = ref.read(activeVideoProvider.notifier);
+    }
+
+    // Set initial active video ONLY if this tab is visible
+    if (widget.enableLifecycleManagement && _activeVideoNotifier != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_isTabVisible && _currentIndex >= 0 && _currentIndex < widget.videos.length) {
-          ref.read(activeVideoProvider.notifier)
-              .setActiveVideo(widget.videos[_currentIndex].id);
+          _activeVideoNotifier!.setActiveVideo(widget.videos[_currentIndex].id);
           if (widget.enablePrewarming) {
             _prewarmNeighbors(_currentIndex);
           }
@@ -104,11 +110,10 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
             });
 
             // If tab became visible, set active video
-            if (isVisibleNow && widget.enableLifecycleManagement) {
+            if (isVisibleNow && widget.enableLifecycleManagement && _activeVideoNotifier != null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (_currentIndex >= 0 && _currentIndex < widget.videos.length) {
-                  ref.read(activeVideoProvider.notifier)
-                      .setActiveVideo(widget.videos[_currentIndex].id);
+                  _activeVideoNotifier!.setActiveVideo(widget.videos[_currentIndex].id);
                 }
               });
             }
@@ -120,9 +125,11 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
 
   @override
   void dispose() {
-    if (widget.enableLifecycleManagement) {
+    // Use saved notifier reference to safely clear active video during dispose
+    // CRITICAL: Never use ref.read() in dispose() - it's unsafe after unmount
+    if (widget.enableLifecycleManagement && _activeVideoNotifier != null) {
       try {
-        ref.read(activeVideoProvider.notifier).clearActiveVideo();
+        _activeVideoNotifier!.clearActiveVideo();
       } catch (e) {
         Log.error('Error clearing active video on dispose: $e',
             name: 'VideoPageView', category: LogCategory.video);
@@ -178,9 +185,9 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
       final video = widget.videos[index];
 
       // Update active video ONLY if this tab is visible
-      if (widget.enableLifecycleManagement && _isTabVisible) {
+      if (widget.enableLifecycleManagement && _isTabVisible && _activeVideoNotifier != null) {
         try {
-          ref.read(activeVideoProvider.notifier).setActiveVideo(video.id);
+          _activeVideoNotifier!.setActiveVideo(video.id);
         } catch (e) {
           Log.error('Error setting active video: $e',
               name: 'VideoPageView', category: LogCategory.video);

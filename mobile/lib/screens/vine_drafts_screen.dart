@@ -31,11 +31,9 @@ class _VineDraftsScreenState extends State<VineDraftsScreen> {
     });
 
     try {
-      // TODO: Load drafts from storage
+      // Draft storage not yet implemented - returns empty list
       // Using microtask to ensure at least one frame of loading state
-      // When implementing actual storage, this will be replaced with real async operation
       await Future.microtask(() {
-        // Simulating storage access that would be async
         _drafts = [];
       });
 
@@ -322,7 +320,7 @@ class _VineDraftsScreenState extends State<VineDraftsScreen> {
 
   Future<void> _confirmDeleteDraft(VineDraft draft) async {
     try {
-      // TODO: Delete draft from storage
+      // Draft storage not yet implemented - remove from memory only
       setState(() {
         _drafts.remove(draft);
       });
@@ -376,7 +374,7 @@ class _VineDraftsScreenState extends State<VineDraftsScreen> {
 
   Future<void> _clearAllDrafts() async {
     try {
-      // TODO: Clear all drafts from storage
+      // Draft storage not yet implemented - clear from memory only
       setState(() {
         _drafts.clear();
       });
