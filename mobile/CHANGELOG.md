@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Tab Visibility Listener for Video Clearing (2025-10-13)
+
+#### Bug Fixes
+- **Added tab visibility listeners to clear active video when switching tabs** - Prevents video playback in background tabs
+  - `MainScreen` now listens for tab changes and clears active video when navigating away from video feeds
+  - Ensures videos stop playing when user switches to Profile, Camera, or Explore tabs
+  - Uses `_currentTabIndex` tracking to detect tab navigation events
+  - Calls `VideoOverlayManager.clearActiveVideo()` on tab switches away from video content
+
+#### Technical Details
+- Modified `lib/screens/main_screen.dart`:
+  - Added tab visibility tracking in `_onTabSelected()` method
+  - Detects navigation away from Home and Explore tabs (indices 0 and 2)
+  - Clears active video controller to stop background playback
+  - Logs tab changes for debugging video lifecycle issues
+
+### Added - Phase 1 App Lifecycle Video Pause Tests (2025-10-13)
+
+#### Tests
+- **Added comprehensive app lifecycle video pause tests** - Validates video behavior during app state changes
+  - Tests video pause/resume on app backgrounding and foregrounding
+  - Validates proper WidgetsBindingObserver registration and cleanup
+  - Ensures VideoOverlayManager responds correctly to lifecycle events
+  - Confirms video state transitions through pause, resume, and inactive states
+
+#### Technical Details
+- Created `test/integration/app_lifecycle_video_pause_test.dart`:
+  - Tests observer registration in VideoOverlayManager
+  - Validates video pause when app enters background (AppLifecycleState.paused)
+  - Confirms video resume when app returns to foreground (AppLifecycleState.resumed)
+  - Tests cleanup on VideoOverlayManager disposal
+  - Uses proper async/await patterns for lifecycle state changes
+
 ### Fixed - Video Playback During Camera Recording (2025-10-08)
 
 #### Bug Fixes
