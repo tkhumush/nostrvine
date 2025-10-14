@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/home_screen_controllers.dart';
 import 'package:openvine/providers/route_feed_providers.dart';
+import 'package:openvine/providers/user_profile_providers.dart';
 import 'package:openvine/router/page_context_provider.dart';
 import 'package:openvine/router/route_utils.dart';
 
@@ -21,6 +22,7 @@ class HomeScreenRouter extends ConsumerStatefulWidget {
 class _HomeScreenRouterState extends ConsumerState<HomeScreenRouter> {
   PageController? _controller;
   int? _lastUrlIndex;
+  int? _lastPrefetchIndex;
 
   @override
   void dispose() {
@@ -74,6 +76,32 @@ class _HomeScreenRouterState extends ConsumerState<HomeScreenRouter> {
                   _controller!.jumpToPage(safeIndex);
                 }
               });
+            }
+
+            // Prefetch profiles for adjacent videos (±1 index) only when URL index changes
+            if (urlIndex != _lastPrefetchIndex) {
+              _lastPrefetchIndex = urlIndex;
+              final safeIndex = urlIndex.clamp(0, itemCount - 1);
+              final pubkeysToPrefetech = <String>[];
+
+              // Prefetch previous video's profile
+              if (safeIndex > 0) {
+                pubkeysToPrefetech.add(videos[safeIndex - 1].pubkey);
+              }
+
+              // Prefetch next video's profile
+              if (safeIndex < itemCount - 1) {
+                pubkeysToPrefetech.add(videos[safeIndex + 1].pubkey);
+              }
+
+              // Schedule prefetch for next frame to avoid doing work during build
+              if (pubkeysToPrefetech.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  ref.read(userProfileProvider.notifier)
+                      .prefetchProfilesImmediately(pubkeysToPrefetech);
+                });
+              }
             }
 
             return RefreshIndicator(

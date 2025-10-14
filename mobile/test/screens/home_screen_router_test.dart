@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/home_feed_provider.dart';
+import 'package:openvine/providers/user_profile_providers.dart';
 import 'package:openvine/router/app_router.dart';
 import 'package:openvine/screens/home_screen_router.dart';
 import 'package:openvine/state/video_feed_state.dart';
@@ -47,9 +48,12 @@ void main() {
     ];
 
     testWidgets('initial URL /home/0 renders first video', (tester) async {
+      final mockNotifier = FakeUserProfileNotifier(onPrefetch: (_) {});
+
       final container = ProviderContainer(
         overrides: [
           homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
         ],
       );
       addTearDown(container.dispose);
@@ -73,12 +77,19 @@ void main() {
       // Verify first video is shown
       expect(find.text('Home Video 1/3'), findsOneWidget);
       expect(find.text('ID: home-video-1'), findsOneWidget);
+
+      // Flush any pending post-frame callbacks
+      await tester.pump();
+      await tester.pump();
     });
 
     testWidgets('URL /home/1 renders second video', (tester) async {
+      final mockNotifier = FakeUserProfileNotifier(onPrefetch: (_) {});
+
       final container = ProviderContainer(
         overrides: [
           homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
         ],
       );
       addTearDown(container.dispose);
@@ -102,12 +113,19 @@ void main() {
       // Verify second video is shown
       expect(find.text('Home Video 2/3'), findsOneWidget);
       expect(find.text('ID: home-video-2'), findsOneWidget);
+
+      // Flush any pending post-frame callbacks
+      await tester.pump();
+      await tester.pump();
     });
 
     testWidgets('changing URL updates PageView', (tester) async {
+      final mockNotifier = FakeUserProfileNotifier(onPrefetch: (_) {});
+
       final container = ProviderContainer(
         overrides: [
           homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
         ],
       );
       addTearDown(container.dispose);
@@ -132,15 +150,22 @@ void main() {
       // Verify PageView shows video 3
       expect(find.text('Home Video 3/3'), findsOneWidget);
       expect(find.text('ID: home-video-3'), findsOneWidget);
+
+      // Flush any pending post-frame callbacks
+      await tester.pump();
+      await tester.pump();
     });
 
     testWidgets('no provider mutations in widget lifecycle', (tester) async {
       // This test verifies the core router-driven principle:
       // Widgets should NEVER mutate providers during initState/dispose
 
+      final mockNotifier = FakeUserProfileNotifier(onPrefetch: (_) {});
+
       final container = ProviderContainer(
         overrides: [
           homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
         ],
       );
       addTearDown(container.dispose);
@@ -157,6 +182,10 @@ void main() {
       // Navigate to home
       container.read(goRouterProvider).go('/home/0');
       await tester.pumpAndSettle();
+
+      // Flush any pending post-frame callbacks before disposal
+      await tester.pump();
+      await tester.pump();
 
       // Dispose the widget tree (simulates navigation away)
       await tester.pumpWidget(const SizedBox());
@@ -195,9 +224,12 @@ void main() {
     });
 
     testWidgets('pull-to-refresh triggers refresh', (tester) async {
+      final mockNotifier = FakeUserProfileNotifier(onPrefetch: (_) {});
+
       final container = ProviderContainer(
         overrides: [
           homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
         ],
       );
       addTearDown(container.dispose);
@@ -224,6 +256,44 @@ void main() {
 
       // After refresh, videos should still be visible
       expect(find.text('Home Video 1/3'), findsOneWidget);
+
+      // Flush any pending post-frame callbacks
+      await tester.pump();
+      await tester.pump();
+    });
+
+    testWidgets('prefetches profiles around current index', (tester) async {
+      final prefetchedPubkeys = <String>[];
+
+      // Create mock notifier that tracks prefetch calls
+      final mockNotifier = FakeUserProfileNotifier(
+        onPrefetch: (pubkeys) => prefetchedPubkeys.addAll(pubkeys),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          homeFeedProvider.overrideWith(() => HomeFeedMock(mockVideos)),
+          userProfileProvider.overrideWith(() => mockNotifier),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: container.read(goRouterProvider),
+          ),
+        ),
+      );
+
+      // Navigate to home/1 (middle video)
+      container.read(goRouterProvider).go('/home/1');
+      await tester.pumpAndSettle();
+
+      // Should prefetch profiles for index 0 and 2 (±1 from current)
+      expect(prefetchedPubkeys, containsAll(['pubkey-1', 'pubkey-3']));
+      expect(prefetchedPubkeys, isNot(contains('pubkey-2'))); // current, not prefetch
     });
   });
 }
@@ -241,5 +311,17 @@ class HomeFeedMock extends HomeFeed {
       hasMoreContent: false,
       isLoadingMore: false,
     );
+  }
+}
+
+/// Fake UserProfileNotifier for testing prefetch behavior
+class FakeUserProfileNotifier extends UserProfileNotifier {
+  FakeUserProfileNotifier({required this.onPrefetch});
+
+  final void Function(List<String>) onPrefetch;
+
+  @override
+  Future<void> prefetchProfilesImmediately(List<String> pubkeys) async {
+    onPrefetch(pubkeys);
   }
 }
