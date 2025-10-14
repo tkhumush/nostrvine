@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<false/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
 	<key>com.apple.security.device.audio-input</key>
@@ -26,5 +26,14 @@
 	<array>
 		<string>/tmp/</string>
 	</array>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+	<array>
+		<string>/Users/rabble/code/andotherstuff/openvine/mobile/</string>
+		<string>/opt/homebrew/bin/ffmpeg</string>
+	</array>
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+	<key>com.apple.security.cs.disable-executable-page-protection</key>
+	<true/>
 </dict>
 </plist>

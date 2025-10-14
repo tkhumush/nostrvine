@@ -258,7 +258,7 @@ class BlossomUploadService {
       // PUT request with raw bytes (Blossom spec)
       final response = await dio.put(
         '$serverUrl/upload',
-        data: Stream.fromIterable(fileBytes.map((e) => [e])),
+        data: fileBytes,
         options: Options(
           headers: headers,
           validateStatus: (status) => status != null && status < 500,
@@ -448,7 +448,7 @@ class BlossomUploadService {
       // Blossom spec: PUT with raw bytes
       final response = await dio.put(
         '$serverUrl/upload',
-        data: Stream.fromIterable(fileBytes.map((e) => [e])),
+        data: fileBytes,
         options: Options(
           headers: {
             'Authorization': authHeader,

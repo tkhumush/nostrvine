@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
+import 'package:openvine/providers/app_foreground_provider.dart';
 import 'package:openvine/services/background_activity_manager.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/utils/log_message_batcher.dart';
@@ -58,6 +59,10 @@ class _AppLifecycleHandlerState extends ConsumerState<AppLifecycleHandler>
           name: 'AppLifecycleHandler',
           category: LogCategory.system,
         );
+
+        // Notify foreground state provider - enables visibility detection
+        ref.read(appForegroundProvider.notifier).setForeground(true);
+
         if (!_tickersEnabled) {
           setState(() => _tickersEnabled = true);
         }
@@ -77,11 +82,16 @@ class _AppLifecycleHandlerState extends ConsumerState<AppLifecycleHandler>
           name: 'AppLifecycleHandler',
           category: LogCategory.system,
         );
+
+        // CRITICAL: Notify foreground state provider FIRST - disables visibility detection
+        // This prevents VisibilityDetector callbacks from reactivating videos
+        ref.read(appForegroundProvider.notifier).setForeground(false);
+
         if (_tickersEnabled) {
           setState(() => _tickersEnabled = false);
         }
 
-        // CRITICAL: Clear active video FIRST
+        // CRITICAL: Clear active video
         // This triggers VideoFeedItem listeners to pause their controllers
         ref.read(activeVideoProvider.notifier).clearActiveVideo();
 

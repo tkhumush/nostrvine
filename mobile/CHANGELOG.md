@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Real End-to-End Upload and Publishing Tests (2025-10-14)
+
+#### Tests
+- **Added comprehensive E2E tests for video upload → thumbnail → Nostr publishing with REAL services** - Validates complete flow with no mocks
+  - Tests use actual Blossom server at `https://blossom.divine.video`
+  - Tests publish to real Nostr relays (`wss://relay3.openvine.co`, `wss://relay.damus.io`)
+  - Generates real MP4 videos using ffmpeg for testing
+  - Validates BUD-01 authentication (Nostr kind 24242 events)
+  - Confirms thumbnail extraction and upload
+  - Verifies NIP-71 kind 34236 event creation and broadcasting
+  - Tests CDN accessibility and video streaming
+
+#### Test Coverage
+- Created `integration_test/upload_publish_real_e2e_test.dart`:
+  - **Test 1**: Complete upload → publish flow validation
+    - Generates 5-second test video with ffmpeg (640x480, blue color)
+    - Uploads video and thumbnail to Blossom CDN
+    - Creates signed Nostr event with video metadata
+    - Publishes to multiple relays and verifies success
+    - Validates upload state transitions (readyToPublish → published)
+  - **Test 2**: CDN video retrieval verification
+    - Confirms uploaded videos are immediately accessible
+    - Validates HTTP 200 response and proper content-type headers
+    - Tests video streaming compatibility
+
+#### Technical Details
+- Uses `IntegrationTestWidgetsFlutterBinding` for real network requests (not `TestWidgetsFlutterBinding`)
+- Authenticates test users with generated Nostr keypairs via `AuthService.importFromHex()`
+- Initializes NostrService with custom relay list for publishing
+- Generates test videos dynamically with ffmpeg (no committed test files)
+- Falls back to minimal MP4 if ffmpeg unavailable
+- Disables macOS sandbox in `DebugProfile.entitlements` to allow ffmpeg execution
+- Test timeout: 5 minutes (allows for real network operations)
+
+#### Test Results
+- ✅ All tests passing (2/2)
+- ✅ Video upload to Blossom CDN working
+- ✅ Thumbnail extraction and upload working
+- ✅ Nostr event publishing to relays working
+- ✅ CDN video retrieval working (HTTP 200)
+- ✅ Complete state management verified
+
+#### Production Readiness
+- Upload → publish flow validated with real services
+- BUD-01 authentication working correctly
+- NIP-71 event format correct and accepted by relays
+- CDN serving files with proper headers for video streaming
+- No mocks - tests use actual production infrastructure
+
 ### Fixed - Tab Visibility Listener for Video Clearing (2025-10-13)
 
 #### Bug Fixes

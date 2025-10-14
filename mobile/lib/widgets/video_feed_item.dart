@@ -265,28 +265,13 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem> {
     return VisibilityDetector(
       key: Key('video_${video.id}'),
       onVisibilityChanged: (info) {
+        // NOTE: VisibilityDetector is ONLY used for analytics/metrics tracking
+        // VideoPageView is the single source of truth for which video is active
+        // DO NOT call setActiveVideo() here - it creates conflicts with PageView's authority
         final isVisible = info.visibleFraction > 0.7;
-        Log.debug('👁️ Visibility callback: $videoIdDisplay... fraction=${info.visibleFraction.toStringAsFixed(3)}, isVisible=$isVisible',
+        Log.debug('👁️ Visibility changed: $videoIdDisplay... fraction=${info.visibleFraction.toStringAsFixed(3)}, isVisible=$isVisible',
             name: 'VideoFeedItem', category: LogCategory.ui);
-
-        try {
-          final currentActiveState = ref.read(activeVideoProvider);
-          if (isVisible) {
-            if (currentActiveState.currentVideoId != video.id) {
-              Log.debug('📱 Video $videoIdDisplay... visible, setting as active',
-                  name: 'VideoFeedItem', category: LogCategory.ui);
-              ref.read(activeVideoProvider.notifier).setActiveVideo(video.id);
-            }
-          } else {
-            // Don't clear active state when scrolling - let other videos set themselves as active
-            // Only clear if this was the active video and no other video will become active
-            Log.debug('📱 Video $videoIdDisplay... no longer visible (keeping active state for smooth transitions)',
-                name: 'VideoFeedItem', category: LogCategory.ui);
-          }
-        } catch (e) {
-          Log.error('❌ Error in VisibilityDetector callback for $videoIdDisplay...: $e',
-              name: 'VideoFeedItem', category: LogCategory.ui);
-        }
+        // Future: Could emit analytics events here if needed
       },
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -525,13 +510,15 @@ class VideoOverlayActions extends ConsumerWidget {
     final isLikeInProgress = socialState.isLikeInProgress(video.id);
     final likeCount = socialState.likeCounts[video.id] ?? 0;
 
+    // Stack does not block pointer events by default - taps pass through to GestureDetector below
+    // Only interactive elements (buttons, chips with GestureDetector) absorb taps
     return Stack(
-      children: [
-        // Publisher chip (tap to profile)
-        Positioned(
-          top: MediaQuery.of(context).viewPadding.top + 16,
-          left: 16,
-          child: Consumer(builder: (context, ref, _) {
+        children: [
+          // Publisher chip (tap to profile)
+          Positioned(
+            top: MediaQuery.of(context).viewPadding.top + 16,
+            left: 16,
+            child: Consumer(builder: (context, ref, _) {
             final profileAsync = ref.watch(fetchUserProfileProvider(video.pubkey));
             final display = profileAsync.maybeWhen(
                   data: (p) => p?.bestDisplayName ?? p?.displayName ?? p?.name,
@@ -542,33 +529,36 @@ class VideoOverlayActions extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Log.info('👤 User tapped profile: videoId=${video.id.substring(0, 8)}, authorPubkey=${video.pubkey.substring(0, 8)}',
-                        name: 'VideoFeedItem', category: LogCategory.ui);
-                    try {
-                      mainNavigationKey.currentState?.navigateToProfile(video.pubkey);
-                    } catch (e) {
-                      Log.error('Failed to navigate to profile: $e', name: 'VideoFeedItem', category: LogCategory.ui);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person, size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          display,
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                IgnorePointer(
+                  ignoring: false, // This chip SHOULD receive taps
+                  child: GestureDetector(
+                    onTap: () {
+                      Log.info('👤 User tapped profile: videoId=${video.id.substring(0, 8)}, authorPubkey=${video.pubkey.substring(0, 8)}',
+                          name: 'VideoFeedItem', category: LogCategory.ui);
+                      try {
+                        mainNavigationKey.currentState?.navigateToProfile(video.pubkey);
+                      } catch (e) {
+                        Log.error('Failed to navigate to profile: $e', name: 'VideoFeedItem', category: LogCategory.ui);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.person, size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text(
+                            display,
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -693,10 +683,12 @@ class VideoOverlayActions extends ConsumerWidget {
         Positioned(
           bottom: 0,
           right: 16,
-          child: Column(
-            children: [
-          // Like button
-          Column(
+          child: IgnorePointer(
+            ignoring: false, // Action buttons SHOULD receive taps
+            child: Column(
+              children: [
+            // Like button
+            Column(
             children: [
               IconButton(
                 onPressed: isLikeInProgress ? null : () async {
@@ -795,7 +787,8 @@ class VideoOverlayActions extends ConsumerWidget {
               size: 32,
             ),
           ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

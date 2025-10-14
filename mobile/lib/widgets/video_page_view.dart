@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/individual_video_providers.dart';
 import 'package:openvine/providers/tab_visibility_provider.dart';
+import 'package:openvine/providers/app_foreground_provider.dart';
 import 'package:openvine/providers/video_prewarmer_provider.dart';
 import 'package:openvine/widgets/video_feed_item.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -81,14 +82,34 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
       _activeVideoNotifier = ref.read(activeVideoProvider.notifier);
     }
 
-    // Set initial active video ONLY if this tab is visible
+    // Set initial active video ONLY if this tab is visible AND app is in foreground
     if (widget.enableLifecycleManagement && _activeVideoNotifier != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_isTabVisible && _currentIndex >= 0 && _currentIndex < widget.videos.length) {
+        final isAppForeground = ref.read(appForegroundProvider);
+        Log.debug('🔍 VideoPageView initState check: isAppForeground=$isAppForeground, _isTabVisible=$_isTabVisible, index=$_currentIndex',
+            name: 'VideoPageView', category: LogCategory.video);
+        if (isAppForeground && _isTabVisible && _currentIndex >= 0 && _currentIndex < widget.videos.length) {
           _activeVideoNotifier!.setActiveVideo(widget.videos[_currentIndex].id);
           if (widget.enablePrewarming) {
             _prewarmNeighbors(_currentIndex);
           }
+        } else {
+          Log.debug('⏭️ Skipping setActiveVideo in initState - conditions not met',
+              name: 'VideoPageView', category: LogCategory.video);
+        }
+      });
+    }
+
+    // Listen for app foreground changes to pause videos when backgrounded
+    if (widget.enableLifecycleManagement) {
+      ref.listenManual(appForegroundProvider, (prev, next) {
+        Log.debug('🔄 VideoPageView: App foreground changed: $prev -> $next',
+            name: 'VideoPageView', category: LogCategory.video);
+        if (!next && _activeVideoNotifier != null) {
+          // App went to background - clear active video immediately
+          _activeVideoNotifier!.clearActiveVideo();
+          Log.debug('⏭️ VideoPageView cleared active video because app backgrounded',
+              name: 'VideoPageView', category: LogCategory.video);
         }
       });
     }
@@ -109,10 +130,11 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
               // Trigger rebuild to switch between placeholders and VideoFeedItems
             });
 
-            // If tab became visible, set active video
+            // If tab became visible, set active video (only if app is in foreground)
             if (isVisibleNow && widget.enableLifecycleManagement && _activeVideoNotifier != null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_currentIndex >= 0 && _currentIndex < widget.videos.length) {
+                final isAppForeground = ref.read(appForegroundProvider);
+                if (isAppForeground && _currentIndex >= 0 && _currentIndex < widget.videos.length) {
                   _activeVideoNotifier!.setActiveVideo(widget.videos[_currentIndex].id);
                 }
               });
@@ -184,12 +206,18 @@ class _VideoPageViewState extends ConsumerState<VideoPageView> {
     if (index >= 0 && index < widget.videos.length) {
       final video = widget.videos[index];
 
-      // Update active video ONLY if this tab is visible
+      // Update active video ONLY if this tab is visible AND app is in foreground
       if (widget.enableLifecycleManagement && _isTabVisible && _activeVideoNotifier != null) {
-        try {
-          _activeVideoNotifier!.setActiveVideo(video.id);
-        } catch (e) {
-          Log.error('Error setting active video: $e',
+        final isAppForeground = ref.read(appForegroundProvider);
+        if (isAppForeground) {
+          try {
+            _activeVideoNotifier!.setActiveVideo(video.id);
+          } catch (e) {
+            Log.error('Error setting active video: $e',
+                name: 'VideoPageView', category: LogCategory.video);
+          }
+        } else {
+          Log.debug('⏭️ Skipping setActiveVideo - app is backgrounded',
               name: 'VideoPageView', category: LogCategory.video);
         }
       } else if (!_isTabVisible) {
