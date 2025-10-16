@@ -8,8 +8,11 @@ import 'package:openvine/models/video_event.dart';
 import 'package:openvine/providers/profile_feed_providers.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/router/page_context_provider.dart';
+import 'package:openvine/router/router_location_provider.dart';
 import 'package:openvine/router/route_utils.dart';
 import 'package:openvine/services/video_event_service.dart';
+import 'package:openvine/services/video_prewarmer.dart';
+import 'package:openvine/utils/nostr_encoding.dart';
 
 /// Fake VideoEventService for testing reactive behavior
 class FakeVideoEventService extends ChangeNotifier
@@ -25,8 +28,11 @@ class FakeVideoEventService extends ChangeNotifier
   List<VideoEvent> hashtagVideos(String tag) => _hashtagBuckets[tag] ?? [];
 
   @override
-  List<VideoEvent> authorVideos(String pubkeyHex) =>
-      _authorBuckets[pubkeyHex] ?? [];
+  List<VideoEvent> authorVideos(String pubkeyHex) {
+    final videos = _authorBuckets[pubkeyHex] ?? [];
+    print('DEBUG: authorVideos($pubkeyHex) returning ${videos.length} videos. Buckets: ${_authorBuckets.keys.toList()}');
+    return videos;
+  }
 
   @override
   Future<void> subscribeToHashtagVideos(List<String> hashtags,
@@ -61,14 +67,14 @@ void main() {
     late FakeVideoEventService fakeService;
     late ProviderContainer container;
 
-    // Valid test npub and its hex equivalent
-    const testNpub =
-        'npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m';
+    // Real Nostr user from relay3.openvine.co - @BJFrankowski
     const testHex =
-        '8065e9dc91f0500c86c3c88d3e67a02afb4e6fb79e6809da9e1a0cb6f8e3a0f4';
+        '1363966ad89a17df0711e270658153c2dbe5e163e06cdd6f9dba36b616846ee0';
+    late String testNpub;
 
     setUp(() {
       fakeService = FakeVideoEventService();
+      testNpub = NostrEncoding.encodePublicKey(testHex);
     });
 
     tearDown(() {
@@ -80,6 +86,7 @@ void main() {
       container = ProviderContainer(
         overrides: [
           videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
           pageContextProvider.overrideWith((ref) {
             return Stream.value(const RouteContext(type: RouteType.home));
           }),
@@ -100,6 +107,7 @@ void main() {
       container = ProviderContainer(
         overrides: [
           videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
           pageContextProvider.overrideWith((ref) {
             return Stream.value(const RouteContext(
               type: RouteType.profile,
@@ -122,6 +130,7 @@ void main() {
       container = ProviderContainer(
         overrides: [
           videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
           pageContextProvider.overrideWith((ref) {
             return Stream.value(const RouteContext(
               type: RouteType.profile,
@@ -139,6 +148,231 @@ void main() {
       expect(result.value!.videos, isEmpty);
     });
 
-    // TODO: Add subscription and reactive update tests once stream provider testing is refined
+    test('selects videos from pre-populated author bucket', () async {
+      // Arrange: Create container first
+      container = ProviderContainer(
+        overrides: [
+          videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
+          routerLocationStreamProvider.overrideWithValue(
+            Stream.value('/profile/$testNpub/0'),
+          ),
+        ],
+      );
+
+      // Wait for stream to emit and provider to initialize
+      await pumpEventQueue();
+
+      // Establish listener to ensure provider is watching for changes
+      final subscription = container.listen(
+        videosForProfileRouteProvider,
+        (_, __) {},
+      );
+
+      // Populate service AFTER listener is established
+      fakeService.emitAuthorVideos(testHex, [
+        VideoEvent(
+          id: 'video1',
+          pubkey: testHex,
+          createdAt: 1000,
+          content: 'Author video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/video1.mp4',
+        ),
+      ]);
+
+      // Wait for notification to propagate
+      await pumpEventQueue();
+
+      // Act: Read provider (selects from populated bucket)
+      final result = container.read(videosForProfileRouteProvider);
+
+      // Cleanup
+      subscription.close();
+
+      // Assert: Should show the populated video
+      expect(result.hasValue, isTrue);
+      expect(result.value!.videos.length, equals(1));
+      expect(result.value!.videos[0].id, equals('video1'));
+      expect(result.value!.videos[0].pubkey, equals(testHex));
+    });
+
+    test('shows videos from service author bucket', () async {
+      // Arrange: Create container first
+      container = ProviderContainer(
+        overrides: [
+          videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
+          routerLocationStreamProvider.overrideWithValue(
+            Stream.value('/profile/$testNpub/0'),
+          ),
+        ],
+      );
+
+      // Wait for stream to emit and provider to initialize
+      await pumpEventQueue();
+
+      // Establish listener to ensure provider is watching for changes
+      final subscription = container.listen(
+        videosForProfileRouteProvider,
+        (_, __) {},
+      );
+
+      // Populate service AFTER listener is established
+      fakeService.emitAuthorVideos(testHex, [
+        VideoEvent(
+          id: 'video1',
+          pubkey: testHex,
+          createdAt: 1000,
+          content: 'First video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/video1.mp4',
+        ),
+        VideoEvent(
+          id: 'video2',
+          pubkey: testHex,
+          createdAt: 2000,
+          content: 'Second video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/video2.mp4',
+        ),
+        VideoEvent(
+          id: 'video3',
+          pubkey: testHex,
+          createdAt: 3000,
+          content: 'Third video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/video3.mp4',
+        ),
+      ]);
+
+      // Wait for notification to propagate
+      await pumpEventQueue();
+
+      // Act
+      final result = container.read(videosForProfileRouteProvider);
+
+      // Cleanup
+      subscription.close();
+
+      // Assert: Should show all videos from the author bucket
+      expect(result.hasValue, isTrue);
+      expect(result.value!.videos.length, equals(3));
+      expect(result.value!.videos[0].id, equals('video1'));
+      expect(result.value!.videos[1].id, equals('video2'));
+      expect(result.value!.videos[2].id, equals('video3'));
+    });
+
+    test('only shows videos for the specific author', () async {
+      // Arrange: Create container first
+      // Route is /profile/:testNpub
+      container = ProviderContainer(
+        overrides: [
+          videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
+          routerLocationStreamProvider.overrideWithValue(
+            Stream.value('/profile/$testNpub/0'),
+          ),
+        ],
+      );
+
+      // Wait for stream to emit and provider to initialize
+      await pumpEventQueue();
+
+      // Establish listener to ensure provider is watching for changes
+      final subscription = container.listen(
+        videosForProfileRouteProvider,
+        (_, __) {},
+      );
+
+      // Populate service with multiple authors AFTER listener is established
+      const otherHex = 'other_author_hex_1234567890abcdef';
+
+      fakeService.emitAuthorVideos(testHex, [
+        VideoEvent(
+          id: 'target_video',
+          pubkey: testHex,
+          createdAt: 1000,
+          content: 'Target author video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/target.mp4',
+        ),
+      ]);
+
+      fakeService.emitAuthorVideos(otherHex, [
+        VideoEvent(
+          id: 'other_video',
+          pubkey: otherHex,
+          createdAt: 2000,
+          content: 'Other author video',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/other.mp4',
+        ),
+      ]);
+
+      // Wait for notification to propagate
+      await pumpEventQueue();
+
+      // Act
+      final result = container.read(videosForProfileRouteProvider);
+
+      // Cleanup
+      subscription.close();
+
+      // Assert: Should only show target author's video
+      expect(result.value!.videos.length, equals(1));
+      expect(result.value!.videos[0].id, equals('target_video'));
+      expect(result.value!.videos[0].pubkey, equals(testHex));
+    });
+
+    test('queries author bucket with hex key (npub converted)', () async {
+      // Arrange: Create container first
+      container = ProviderContainer(
+        overrides: [
+          videoEventServiceProvider.overrideWithValue(fakeService),
+          videoPrewarmerProvider.overrideWithValue(NoopPrewarmer()),
+          pageContextProvider.overrideWith((ref) {
+            return Stream.value(RouteContext(
+              type: RouteType.profile,
+              npub: testNpub, // Provider receives npub
+            ));
+          }),
+        ],
+      );
+
+      // Wait for streams to emit
+      await pumpEventQueue();
+
+      // Establish listener to ensure provider is watching for changes
+      final subscription = container.listen(
+        videosForProfileRouteProvider,
+        (_, __) {},
+      );
+
+      // Populate service AFTER listener is established
+      fakeService.emitAuthorVideos(testHex, [
+        VideoEvent(
+          id: 'video1',
+          pubkey: testHex,
+          createdAt: 1000,
+          content: 'Test',
+          timestamp: DateTime.now(),
+          videoUrl: 'https://example.com/video1.mp4',
+        ),
+      ]);
+
+      // Wait for notification to propagate
+      await pumpEventQueue();
+
+      // Act
+      final result = container.read(videosForProfileRouteProvider);
+
+      // Cleanup
+      subscription.close();
+
+      // Assert: Should query bucket with hex key (npub was converted)
+      expect(result.value!.videos.length, equals(1));
+      expect(result.value!.videos[0].pubkey, equals(testHex));
+    });
   });
 }

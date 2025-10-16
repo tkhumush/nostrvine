@@ -7,6 +7,7 @@ import 'package:openvine/router/page_context_provider.dart';
 import 'package:openvine/router/route_utils.dart';
 import 'package:openvine/state/video_feed_state.dart';
 import 'package:openvine/utils/npub_hex.dart';
+import 'package:openvine/utils/unified_logger.dart';
 
 /// Route-aware profile feed (reactive, no lifecycle writes).
 final videosForProfileRouteProvider = Provider<AsyncValue<VideoFeedState>>((ref) {
@@ -33,6 +34,8 @@ final videosForProfileRouteProvider = Provider<AsyncValue<VideoFeedState>>((ref)
   // Subscribe (service manages lifecycle internally; this is idempotent)
   final svc = ref.watch(videoEventServiceProvider);
   svc.subscribeToUserVideos(hex, limit: 100);
+  Log.info('ProfileFeedProvider: subscribed to user=$hex',
+      name: 'ProfileFeedProvider', category: LogCategory.system);
 
   // REACTIVE selection: rebuilds when service updates the list for this author
   final items = ref.watch(
