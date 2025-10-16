@@ -117,6 +117,10 @@ class SocialNotifier extends _$SocialNotifier {
   /// Step 3: Idempotent contact fetch - safe to call multiple times
   /// Handles auth race conditions by checking actual auth state, not boolean
   Future<void> _ensureContactsFetched() async {
+    // CRITICAL: Load cache FIRST for instant UI, regardless of auth state
+    // This ensures the UI shows cached followers immediately, even if auth is still checking
+    await _loadFollowingListFromCache();
+
     // If already fetching, wait for that operation to complete
     if (_contactsFetchInFlight != null) {
       Log.info(
@@ -168,9 +172,6 @@ class SocialNotifier extends _$SocialNotifier {
           '🔍 [TEMP] Auth status at fetch time: ${authService.authState.name}, pubkey: ${authService.currentPublicKeyHex?.substring(0, 8) ?? 'null'}',
           name: 'SocialNotifier',
           category: LogCategory.system);
-
-      // Load cached following list FIRST for instant UI display
-      await _loadFollowingListFromCache();
 
       Log.info(
           '🤝 SocialNotifier: Fetching contact list for authenticated user (cached: ${state.followingPubkeys.length} users)',
