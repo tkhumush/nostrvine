@@ -123,10 +123,8 @@ class AuthService {
     Log.debug('Initializing SecureAuthService',
         name: 'AuthService', category: LogCategory.auth);
 
-    // Defer state changes to avoid setState during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setAuthState(AuthState.checking);
-    });
+    // Set checking state immediately - we're starting the auth check now
+    _setAuthState(AuthState.checking);
 
     try {
       // Initialize secure key storage
