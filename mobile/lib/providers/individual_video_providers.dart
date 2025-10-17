@@ -2,7 +2,8 @@
 // ABOUTME: Each video gets its own controller with automatic lifecycle management via autoDispose
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -122,20 +123,11 @@ VideoPlayerController individualVideoController(
   Log.info('🎬 Creating VideoPlayerController for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...',
       name: 'IndividualVideoController', category: LogCategory.system);
 
-  final videoCache = openVineVideoCache;
-
-  // Synchronous cache check - use getCachedVideoSync() which checks file existence without async
-  final cachedFile = videoCache.getCachedVideoSync(params.videoId);
-
   final VideoPlayerController controller;
-  if (cachedFile != null && cachedFile.existsSync()) {
-    // Use cached file!
-    Log.info('✅ Using CACHED FILE for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...: ${cachedFile.path}',
-        name: 'IndividualVideoController', category: LogCategory.video);
-    controller = VideoPlayerController.file(cachedFile);
-  } else {
-    // Use network URL and start caching
-    Log.debug('📡 Using NETWORK URL for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...',
+
+  // On web, skip file caching entirely and always use network URL
+  if (kIsWeb) {
+    Log.debug('🌐 Web platform - using NETWORK URL for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...',
         name: 'IndividualVideoController', category: LogCategory.video);
 
     // Compute auth headers synchronously if possible
@@ -145,15 +137,40 @@ VideoPlayerController individualVideoController(
       Uri.parse(params.videoUrl),
       httpHeaders: authHeaders ?? {},
     );
+  } else {
+    // On native platforms, use file caching
+    final videoCache = openVineVideoCache;
 
-    // Start caching in background for future use
-    unawaited(
-      _cacheVideoWithAuth(ref, videoCache, params).catchError((error) {
-        Log.warning('⚠️ Background video caching failed: $error',
-            name: 'IndividualVideoController', category: LogCategory.video);
-        return null;
-      }),
-    );
+    // Synchronous cache check - use getCachedVideoSync() which checks file existence without async
+    final cachedFile = videoCache.getCachedVideoSync(params.videoId);
+
+    if (cachedFile != null && cachedFile.existsSync()) {
+      // Use cached file!
+      Log.info('✅ Using CACHED FILE for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...: ${cachedFile.path}',
+          name: 'IndividualVideoController', category: LogCategory.video);
+      controller = VideoPlayerController.file(cachedFile);
+    } else {
+      // Use network URL and start caching
+      Log.debug('📡 Using NETWORK URL for video ${params.videoId.length > 8 ? params.videoId.substring(0, 8) : params.videoId}...',
+          name: 'IndividualVideoController', category: LogCategory.video);
+
+      // Compute auth headers synchronously if possible
+      final authHeaders = _computeAuthHeadersSync(ref, params);
+
+      controller = VideoPlayerController.networkUrl(
+        Uri.parse(params.videoUrl),
+        httpHeaders: authHeaders ?? {},
+      );
+
+      // Start caching in background for future use
+      unawaited(
+        _cacheVideoWithAuth(ref, videoCache, params).catchError((error) {
+          Log.warning('⚠️ Background video caching failed: $error',
+              name: 'IndividualVideoController', category: LogCategory.video);
+          return null;
+        }),
+      );
+    }
   }
 
   // Initialize the controller (async in background)
@@ -223,12 +240,12 @@ VideoPlayerController individualVideoController(
     }
 
     // Check for corrupted cache file (OSStatus error -12848 or "media may be damaged")
-    if (_isCacheCorruption(errorMessage)) {
+    if (_isCacheCorruption(errorMessage) && !kIsWeb) {
       Log.warning('🗑️ Detected corrupted cache for video $videoIdDisplay... - removing and will retry',
           name: 'IndividualVideoController', category: LogCategory.video);
 
       // Remove corrupted cache file and invalidate provider to trigger retry
-      videoCache.removeCorruptedVideo(params.videoId).then((_) {
+      openVineVideoCache.removeCorruptedVideo(params.videoId).then((_) {
         if (ref.mounted) {
           Log.info('🔄 Invalidating provider to retry download for video $videoIdDisplay...',
               name: 'IndividualVideoController', category: LogCategory.video);
@@ -355,7 +372,7 @@ Future<void> _generateAuthHeadersAsync(Ref ref, VideoControllerParams params) as
 }
 
 /// Cache video with authentication if needed for NSFW content
-Future<File?> _cacheVideoWithAuth(
+Future<dynamic> _cacheVideoWithAuth(
   Ref ref,
   VideoCacheManager videoCache,
   VideoControllerParams params,
