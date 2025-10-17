@@ -118,22 +118,10 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
           final currentUserNpub = NostrEncoding.encodePublicKey(authService.currentPublicKeyHex!);
           final videoIndex = ctx.videoIndex ?? 0;
 
-          Log.info(
-            'ProfileScreenRouter: Redirecting /profile/me/$videoIndex to /profile/$currentUserNpub/$videoIndex',
-            name: 'ProfileScreenRouter',
-            category: LogCategory.ui,
-          );
-
           // Redirect to actual user profile using GoRouter explicitly
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              final router = GoRouter.of(context);
-              Log.info(
-                'ProfileScreenRouter: Executing redirect now...',
-                name: 'ProfileScreenRouter',
-                category: LogCategory.ui,
-              );
-              router.go('/profile/$currentUserNpub/$videoIndex');
+              GoRouter.of(context).go('/profile/$currentUserNpub/$videoIndex');
             }
           });
 

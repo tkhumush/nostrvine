@@ -45,13 +45,23 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
     _tabController = TabController(length: 3, vsync: this);
     _searchController.addListener(_onSearchChanged);
 
-    // Request focus after a short delay
+    // Initialize search term from URL if present
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          _searchFocusNode.requestFocus();
-        }
-      });
+      if (mounted) {
+        final pageContext = ref.read(pageContextProvider);
+        pageContext.whenData((ctx) {
+          if (ctx.type == RouteType.search && ctx.searchTerm != null && ctx.searchTerm!.isNotEmpty) {
+            // Set search controller text and trigger search
+            // Pass updateUrl: false to avoid infinite loop during initialization
+            _searchController.text = ctx.searchTerm!;
+            _performSearch(ctx.searchTerm!, updateUrl: false);
+            Log.info('🔍 SearchScreenPure: Initialized with search term: ${ctx.searchTerm}', category: LogCategory.video);
+          } else {
+            // Request focus for empty search
+            _searchFocusNode.requestFocus();
+          }
+        });
+      }
     });
 
     Log.info('🔍 SearchScreenPure: Initialized', category: LogCategory.video);
@@ -82,7 +92,7 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
     });
   }
 
-  void _performSearch(String query) async {
+  void _performSearch(String query, {bool updateUrl = true}) async {
     if (query.isEmpty) {
       setState(() {
         _videoResults = [];
@@ -91,6 +101,10 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
         _isSearching = false;
         _currentQuery = '';
       });
+      // Update URL to /search (no search term)
+      if (mounted && updateUrl) {
+        context.goSearch(null, null);
+      }
       return;
     }
 
@@ -98,6 +112,12 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
       _isSearching = true;
       _currentQuery = query;
     });
+
+    // Update URL to /search/term (grid mode with search term)
+    // Skip URL update during initialization to avoid infinite loops
+    if (mounted && updateUrl) {
+      context.goSearch(query, null);
+    }
 
     Log.info('🔍 SearchScreenPure: Hybrid search for: $query', category: LogCategory.video);
 

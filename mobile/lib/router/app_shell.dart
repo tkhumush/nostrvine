@@ -87,10 +87,20 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final title = _titleFor(ref);
+    final ctx = ref.watch(pageContextProvider).asData?.value;
+
+    // Show back button for hashtag and search routes (non-main-tab routes)
+    final showBackButton = ctx?.type == RouteType.hashtag || ctx?.type == RouteType.search;
 
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
+        leading: showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: Text(
           title,
           // Pacifico font, with sane fallbacks if font isn't available yet.

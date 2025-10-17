@@ -17,14 +17,13 @@ import 'package:openvine/screens/settings_screen.dart';
 import 'package:openvine/screens/video_editor_screen.dart';
 
 // Navigator keys for per-tab state preservation
+// One key per logical screen (not per route variant)
 final _rootKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _homeKey = GlobalKey<NavigatorState>(debugLabel: 'home');
-final _exploreGridKey = GlobalKey<NavigatorState>(debugLabel: 'explore-grid');
-final _exploreFeedKey = GlobalKey<NavigatorState>(debugLabel: 'explore-feed');
+final _exploreKey = GlobalKey<NavigatorState>(debugLabel: 'explore');
 final _notificationsKey = GlobalKey<NavigatorState>(debugLabel: 'notifications');
 final _profileKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
-final _searchGridKey = GlobalKey<NavigatorState>(debugLabel: 'search-grid');
-final _searchFeedKey = GlobalKey<NavigatorState>(debugLabel: 'search-feed');
+final _searchKey = GlobalKey<NavigatorState>(debugLabel: 'search');
 final _hashtagKey = GlobalKey<NavigatorState>(debugLabel: 'hashtag');
 
 /// Maps URL location to bottom nav tab index
@@ -82,30 +81,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
-          // EXPLORE tab subtree - grid mode (no index)
+          // EXPLORE tab subtree - single route with optional index
+          // /explore = grid mode, /explore/:index = feed mode
           GoRoute(
-            path: '/explore',
-            name: 'explore-grid',
+            path: '/explore/:index?',
+            name: 'explore',
             pageBuilder: (ctx, st) => NoTransitionPage(
               key: st.pageKey,
               child: Navigator(
-                key: _exploreGridKey,
-                onGenerateRoute: (r) => MaterialPageRoute(
-                  builder: (_) => const ExploreScreen(),
-                  settings: const RouteSettings(name: 'explore-root'),
-                ),
-              ),
-            ),
-          ),
-
-          // EXPLORE tab subtree - feed mode (with index)
-          GoRoute(
-            path: '/explore/:index',
-            name: 'explore-feed',
-            pageBuilder: (ctx, st) => NoTransitionPage(
-              key: st.pageKey,
-              child: Navigator(
-                key: _exploreFeedKey,
+                key: _exploreKey,
                 onGenerateRoute: (r) => MaterialPageRoute(
                   builder: (_) => const ExploreScreen(),
                   settings: const RouteSettings(name: 'explore-root'),
@@ -150,28 +134,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
 
-          // SEARCH routes (inside shell for AppBar, but hides bottom nav)
+          // SEARCH route (inside shell for AppBar, but hides bottom nav)
+          // Single route with optional searchTerm and index
+          // /search = empty, /search/:term = grid with term, /search/:term/:index = feed
           GoRoute(
-            path: '/search',
-            name: 'search-grid',
+            path: '/search/:searchTerm?/:index?',
+            name: 'search',
             pageBuilder: (ctx, st) => NoTransitionPage(
               key: st.pageKey,
               child: Navigator(
-                key: _searchGridKey,
-                onGenerateRoute: (r) => MaterialPageRoute(
-                  builder: (_) => const SearchScreenPure(embedded: true),
-                  settings: const RouteSettings(name: 'search-root'),
-                ),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: '/search/:index',
-            name: 'search-feed',
-            pageBuilder: (ctx, st) => NoTransitionPage(
-              key: st.pageKey,
-              child: Navigator(
-                key: _searchFeedKey,
+                key: _searchKey,
                 onGenerateRoute: (r) => MaterialPageRoute(
                   builder: (_) => const SearchScreenPure(embedded: true),
                   settings: const RouteSettings(name: 'search-root'),
@@ -180,24 +152,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
-          // HASHTAG routes (inside shell to preserve explore tab and bottom nav)
+          // HASHTAG route (inside shell to preserve explore tab and bottom nav)
+          // Single route with optional index
+          // /hashtag/:tag = grid mode, /hashtag/:tag/:index = feed mode
           GoRoute(
-            path: '/hashtag/:tag',
-            name: 'hashtag-grid',
-            pageBuilder: (ctx, st) => NoTransitionPage(
-              key: st.pageKey,
-              child: Navigator(
-                key: _hashtagKey,
-                onGenerateRoute: (r) => MaterialPageRoute(
-                  builder: (_) => const HashtagScreenRouter(),
-                  settings: const RouteSettings(name: 'hashtag-root'),
-                ),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: '/hashtag/:tag/:index',
-            name: 'hashtag-feed',
+            path: '/hashtag/:tag/:index?',
+            name: 'hashtag',
             pageBuilder: (ctx, st) => NoTransitionPage(
               key: st.pageKey,
               child: Navigator(

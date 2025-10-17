@@ -45,70 +45,41 @@ class HashtagScreenRouter extends ConsumerWidget {
     final feedStateAsync = ref.watch(hashtagFeedProvider);
 
     return feedStateAsync.when(
-      loading: () => Scaffold(
-        backgroundColor: VineTheme.backgroundColor,
-        appBar: AppBar(
-          backgroundColor: VineTheme.vineGreen,
-          title: Text('#$hashtag', style: const TextStyle(color: VineTheme.whiteText)),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: VineTheme.vineGreen),
       ),
-      error: (err, stack) => Scaffold(
-        backgroundColor: VineTheme.backgroundColor,
-        appBar: AppBar(
-          backgroundColor: VineTheme.vineGreen,
-          title: Text('#$hashtag', style: const TextStyle(color: VineTheme.whiteText)),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+      error: (err, stack) => Center(
+        child: Text(
+          'Error loading hashtag videos: $err',
+          style: const TextStyle(color: VineTheme.whiteText),
         ),
-        body: Center(child: Text('Error loading hashtag videos: $err')),
       ),
       data: (feedState) {
         final videos = feedState.videos;
 
         if (videos.isEmpty) {
-          return Scaffold(
-            backgroundColor: VineTheme.backgroundColor,
-            appBar: AppBar(
-              backgroundColor: VineTheme.vineGreen,
-              title: Text('#$hashtag', style: const TextStyle(color: VineTheme.whiteText)),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+          // Empty state - show centered message
+          // AppShell already provides AppBar with back button
+          return Center(
+            child: Text(
+              'No videos found for #$hashtag',
+              style: const TextStyle(color: VineTheme.whiteText),
             ),
-            body: Center(child: Text('No videos found for #$hashtag',
-              style: const TextStyle(color: VineTheme.whiteText))),
           );
         }
 
         // Clamp index to valid range
         final safeIndex = videoIndex.clamp(0, videos.length - 1);
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: VineTheme.vineGreen,
-            title: Text('#$hashtag', style: const TextStyle(color: VineTheme.whiteText)),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          body: ExploreVideoScreenPure(
-            startingVideo: videos[safeIndex],
-            videoList: videos,
-            contextTitle: '#$hashtag',
-            startingIndex: safeIndex,
-            // Add pagination callback
-            onLoadMore: () => ref.read(hashtagFeedProvider.notifier).loadMore(),
-          ),
+        // Feed mode - show fullscreen video player
+        // AppShell already provides AppBar with back button, so no need for Scaffold here
+        return ExploreVideoScreenPure(
+          startingVideo: videos[safeIndex],
+          videoList: videos,
+          contextTitle: '#$hashtag',
+          startingIndex: safeIndex,
+          // Add pagination callback
+          onLoadMore: () => ref.read(hashtagFeedProvider.notifier).loadMore(),
         );
       },
     );
