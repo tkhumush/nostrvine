@@ -1,4 +1,4 @@
-// ABOUTME: Simple integration test to verify we get real kind 32222 events from relay
+// ABOUTME: Simple integration test to verify we get real kind 34236 events from relay
 // ABOUTME: Tests the actual pagination fix against the real OpenVine relay
 
 import 'dart:async';
@@ -11,8 +11,8 @@ void main() {
   // Initialize Flutter binding for tests
   TestWidgetsFlutterBinding.ensureInitialized();
   
-  group('Real Relay Kind 32222 Events Test', () {
-    test('should get real kind 32222 video events from relay3.openvine.co',
+  group('Real Relay Kind 34236 Events Test', () {
+    test('should get real kind 34236 video events from relay3.openvine.co',
         () async {
       Log.info('🚀 Starting real relay test...', name: 'Test');
 
@@ -39,13 +39,13 @@ void main() {
         await Future.delayed(Duration(milliseconds: 100));
       }
 
-      // Subscribe to kind 32222 events (NIP-32222 addressable video events)
-      Log.info('📹 Subscribing to kind 32222 events...',
+      // Subscribe to kind 34236 events (NIP-71 kind 34236 addressable video events)
+      Log.info('📹 Subscribing to kind 34236 events...',
           name: 'Test');
 
       // First batch - get most recent videos
       final filter1 = embedded.Filter(
-        kinds: [32222],
+        kinds: [34236],
         limit: 10,
       );
 
@@ -82,7 +82,7 @@ void main() {
 
       Log.info('✅ First batch results:', name: 'Test');
       Log.info('  Total events: ${events1.length}', name: 'Test');
-      expect(events1, isNotEmpty, reason: 'Should get some kind 32222 events');
+      expect(events1, isNotEmpty, reason: 'Should get some kind 34236 events');
 
       // Get the oldest timestamp from first batch
       if (events1.isNotEmpty) {
@@ -97,7 +97,7 @@ void main() {
             name: 'Test');
 
         final filter2 = embedded.Filter(
-          kinds: [32222],
+          kinds: [34236],
           until: oldestTimestamp -
               1, // Get events older than the oldest from first batch
           limit: 10,

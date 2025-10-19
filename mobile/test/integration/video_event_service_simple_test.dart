@@ -79,10 +79,10 @@ void main() {
       expect(videoEventService.getEventCount(SubscriptionType.discovery), 0);
       expect(videoEventService.hasEvents(SubscriptionType.discovery), false);
 
-      // Create a test kind 32222 video event (correct kind for video)
+      // Create a test kind 34236 video event (correct kind for video)
       final testEvent = Event(
         '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        32222, // Kind 32222 for addressable video events
+        34236, // Kind 34236 - NIP-71 addressable short video
         [
           ['d', 'test-video-id'], // Required 'd' tag for addressable events
           ['url', 'https://example.com/test-video.mp4'],
@@ -204,7 +204,7 @@ void main() {
       // Now send a real video event
       final videoEvent = Event(
         '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        32222, // Kind 32222 for addressable video events
+        34236, // Kind 34236 - NIP-71 addressable short video
         [
           [
             'd',

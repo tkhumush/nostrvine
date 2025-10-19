@@ -1,4 +1,4 @@
-// ABOUTME: Test to verify VideoEvent parsing of real kind 32222 events from relay3.openvine.co
+// ABOUTME: Test to verify VideoEvent parsing of real kind 34236 events from relay3.openvine.co
 // ABOUTME: This tests the actual parsing logic with real relay data
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,7 +8,7 @@ import 'package:openvine/utils/unified_logger.dart';
 
 void main() {
   group('VideoEvent Parsing - Real Relay Data', () {
-    test('should parse kind 32222 event with url tag correctly', () {
+    test('should parse kind 34236 event with url tag correctly', () {
       Log.debug(
           '🔍 Testing VideoEvent parsing with real relay3.openvine.co data...',
           name: 'VideoEventRealParsingTest',
@@ -17,7 +17,7 @@ void main() {
       // Real event from relay3.openvine.co relay with url tag
       final event = Event(
         'd95aa8fc0eff8e488952495b8064991d27fb96ed8652f12cdedc5a4e8b5ae540',
-        32222,
+               34236,
         [
           ["d", "test-video-1751355501029"], // Required for addressable events
           ["url", "https://api.openvine.co/media/1751355501029-7553157a"],
@@ -49,14 +49,14 @@ void main() {
       expect(videoEvent.group, 'vine');
     });
 
-    test('should parse kind 32222 event with r tag correctly', () {
+    test('should parse kind 34236 event with r tag correctly', () {
       Log.debug('🔍 Testing VideoEvent parsing with r tag...',
           name: 'VideoEventRealParsingTest', category: LogCategory.system);
 
       // Real event from relay3.openvine.co relay with r tag
       final event = Event(
         '033877f4080835f162880482590762c0a7508851e88fe164dd89028743914da5',
-        32222,
+               34236,
         [
           ["d", "itjpUUgL6tE"], // Required for addressable events
           ["h", "vine"],
@@ -107,7 +107,7 @@ void main() {
       // We need to access the private method - let's create an event and check if it's accepted
       final event = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ["d", "test-video-validation"], // Required for addressable events
           ["url", "https://api.openvine.co/media/test-video-id"]

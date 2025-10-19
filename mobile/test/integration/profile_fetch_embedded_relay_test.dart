@@ -45,7 +45,7 @@ void main() {
       Log.info('📹 Getting video events...', name: 'Test');
       
       final videoFilter = embedded.Filter(
-        kinds: [32222], // NIP-32222 addressable video events
+        kinds: [34236], // NIP-71 kind 34236 addressable video events
         limit: 5,
       );
 

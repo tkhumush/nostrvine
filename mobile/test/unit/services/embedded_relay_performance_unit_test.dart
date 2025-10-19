@@ -89,7 +89,7 @@ void main() {
 
       final filters = [
         nostr.Filter(
-          kinds: [32222], // Video events
+          kinds: [34236], // Video events
           limit: 50,
         ),
       ];
@@ -206,7 +206,7 @@ void main() {
 
       // 3. Prepare subscription (embedded: instant, external: websocket setup ~50-300ms)
       final filters = [
-        nostr.Filter(kinds: [32222], limit: 50)
+        nostr.Filter(kinds: [34236], limit: 50)
       ];
       try {
         embeddedRelayService.subscribeToEvents(filters: filters);

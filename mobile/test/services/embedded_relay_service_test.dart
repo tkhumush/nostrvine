@@ -59,7 +59,7 @@ void main() {
         // Verify configuration is set for video optimization
         expect(service.isInitialized, true);
 
-        // Should be ready to handle video events (kind 32222)
+        // Should be ready to handle video events (kind 34236)
         final stats = await service.getRelayStats();
         expect(stats, isNotNull);
       });
@@ -70,14 +70,14 @@ void main() {
         await service.initialize();
       });
 
-      test('should subscribe to video events (kind 32222)', () async {
+      test('should subscribe to video events (kind 34236)', () async {
         bool receivedEvent = false;
         Event? capturedEvent;
 
         // Subscribe to video events
         final stream = service.subscribeToEvents(
           filters: [
-            Filter(kinds: [32222])
+            Filter(kinds: [34236])
           ],
         );
 
@@ -91,7 +91,7 @@ void main() {
           'id': 'test_event_id',
           'pubkey': 'test_pubkey',
           'created_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          'kind': 32222,
+          'kind':        34236,
           'tags': [
             ['url', 'https://example.com/video.mp4'],
             ['title', 'Test Video'],
@@ -109,7 +109,7 @@ void main() {
         await Future.delayed(Duration(milliseconds: 100));
 
         expect(receivedEvent, true);
-        expect(capturedEvent?.kind, 32222);
+        expect(capturedEvent?.kind, 34236);
         expect(capturedEvent?.content, 'Test video description');
       });
 
@@ -119,7 +119,7 @@ void main() {
         // Subscribe to events from followed users
         final stream = service.subscribeToEvents(
           filters: [
-            Filter(kinds: [32222], authors: [followedPubkey])
+            Filter(kinds: [34236], authors: [followedPubkey])
           ],
         );
 
@@ -133,7 +133,7 @@ void main() {
           'id': 'followed_event_id',
           'pubkey': followedPubkey,
           'created_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          'kind': 32222,
+          'kind':        34236,
           'tags': [],
           'content': 'Video from followed user',
           'sig': 'test_signature',
@@ -156,7 +156,7 @@ void main() {
           'id': 'broadcast_test_id',
           'pubkey': 'test_pubkey',
           'created_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          'kind': 32222,
+          'kind':        34236,
           'tags': [
             ['url', 'https://example.com/test-video.mp4'],
             ['blurhash', 'test-blurhash'],
@@ -210,7 +210,7 @@ void main() {
             'id': 'perf_test_$i',
             'pubkey': 'test_pubkey',
             'created_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-            'kind': 32222,
+            'kind':        34236,
             'tags': [],
             'content': 'Performance test video $i',
             'sig': 'test_signature',
@@ -224,7 +224,7 @@ void main() {
 
         final stream = service.subscribeToEvents(
           filters: [
-            Filter(kinds: [32222], limit: 10)
+            Filter(kinds: [34236], limit: 10)
           ],
         );
 

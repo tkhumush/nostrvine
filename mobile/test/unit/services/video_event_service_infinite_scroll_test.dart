@@ -96,7 +96,7 @@ void main() {
       expect(capturedFilter, isNotNull);
       expect(capturedFilter!.until, equals(1704060000));
       expect(capturedFilter!.limit, equals(50));
-      expect(capturedFilter!.kinds, contains(32222));
+      expect(capturedFilter!.kinds, contains(34236));
 
       // Cleanup
       await streamController.close();
@@ -136,7 +136,7 @@ void main() {
       expect(capturedFilter!.until,
           isNull); // No until filter when no existing events
       expect(capturedFilter!.limit, equals(50));
-      expect(capturedFilter!.kinds, contains(32222));
+      expect(capturedFilter!.kinds, contains(34236));
 
       // Cleanup
       await streamController.close();
@@ -366,11 +366,11 @@ Event _createMockNostrEvent(String id, int createdAt) {
 
   return Event(
     validPubkey,
-    32222, // kind
+    34236, // kind - NIP-71 addressable short video
     [
       ['url', 'https://example.com/video.mp4'],
       ['title', 'Mock Video'],
-      ['d', id], // Required d tag for kind 32222 events
+      ['d', id], // Required d tag for kind 34236 events
     ], // tags
     'Mock video content', // content
     createdAt: createdAt,

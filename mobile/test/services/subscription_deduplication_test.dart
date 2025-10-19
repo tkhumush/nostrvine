@@ -43,13 +43,13 @@ void main() {
 
     test('identical filters should generate same subscription ID', () {
       final filter1 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1', 'pubkey2'],
         limit: 100,
       );
 
       final filter2 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1', 'pubkey2'],
         limit: 100,
       );
@@ -63,13 +63,13 @@ void main() {
 
     test('different filters should generate different subscription IDs', () {
       final filter1 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1'],
         limit: 100,
       );
 
       final filter2 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey2'], // Different author
         limit: 100,
       );
@@ -83,13 +83,13 @@ void main() {
 
     test('filter order should not affect hash', () {
       final filter1 = Filter(
-        kinds: [32222, 6], // Order 1
+        kinds: [34236, 6], // Order 1
         authors: ['pubkey1', 'pubkey2', 'pubkey3'],
         t: ['hashtag1', 'hashtag2'],
       );
 
       final filter2 = Filter(
-        kinds: [6, 32222], // Order 2 (reversed)
+        kinds: [6, 34236], // Order 2 (reversed)
         authors: ['pubkey3', 'pubkey1', 'pubkey2'], // Different order
         t: ['hashtag2', 'hashtag1'], // Different order
       );
@@ -104,7 +104,7 @@ void main() {
     test('multiple discovery subscriptions should use same ID', () {
       // Simulate what happens when multiple UI components request discovery feed
       final discoveryFilter = Filter(
-        kinds: [32222],
+        kinds: [34236],
         limit: 100,
       );
 
@@ -129,13 +129,13 @@ void main() {
       final followingList = ['user1', 'user2', 'user3', 'user4', 'user5'];
 
       final homeFeedFilter1 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: followingList,
         limit: 100,
       );
 
       final homeFeedFilter2 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: List.from(followingList), // Copy of same list
         limit: 100,
       );
@@ -150,13 +150,13 @@ void main() {
 
     test('changing limit should create different subscription', () {
       final filter1 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1'],
         limit: 50,
       );
 
       final filter2 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1'],
         limit: 100, // Different limit
       );
@@ -171,13 +171,13 @@ void main() {
 
     test('adding time constraints should create different subscription', () {
       final filter1 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1'],
         limit: 100,
       );
 
       final filter2 = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: ['pubkey1'],
         limit: 100,
         since: 1234567890, // Added time constraint

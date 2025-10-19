@@ -109,13 +109,13 @@ void main() {
       final hashtags = ['comedy', 'funny', 'viral'];
 
       final filter = {
-        'kinds': [32222], // NIP-32222 video events
+        'kinds': [34236], // NIP-71 kind 34236 video events
         '#t': hashtags, // Hashtag filter
         'limit': 100,
       };
 
       // Verify filter structure
-      expect(filter['kinds'], equals([32222]));
+      expect(filter['kinds'], equals([34236]));
       expect(filter['#t'], equals(['comedy', 'funny', 'viral']));
       expect(filter['limit'], equals(100));
     });

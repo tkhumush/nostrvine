@@ -86,19 +86,19 @@ void main() {
 
       // This simulates what VideoEventService creates
       final filter = {
-        'kinds': [32222], // NIP-32222 video events
+        'kinds': [34236], // NIP-71 kind 34236 video events
         '#t': hashtags, // Hashtag filter
         'limit': 100,
       };
 
       // Verify filter structure
-      expect(filter['kinds'], equals([32222]));
+      expect(filter['kinds'], equals([34236]));
       expect(filter['#t'], equals(hashtags));
       expect(filter['limit'], equals(100));
 
       // Verify the filter would match events with these hashtags
       final testEvent = {
-        'kind': 32222,
+        'kind':        34236,
         'tags': [
           ['t', 'dankmemes'],
           ['t', 'othertag'],

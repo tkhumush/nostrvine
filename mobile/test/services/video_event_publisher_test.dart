@@ -1,5 +1,5 @@
 // ABOUTME: Tests for VideoEventPublisher service ensuring complete imeta tag generation
-// ABOUTME: Verifies file metadata (size, SHA256), thumbnails, and NIP-32222 compliance
+// ABOUTME: Verifies file metadata (size, SHA256), thumbnails, and NIP-71 kind 34236 compliance
 
 import 'dart:io';
 import 'package:crypto/crypto.dart';

@@ -51,7 +51,7 @@ void main() {
       ];
 
       final filter = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: knownVideoAuthors,
         limit: 10,
       );
@@ -103,7 +103,7 @@ void main() {
       Log.info('\n5. Testing subscription with no author filter...');
 
       final openFilter = Filter(
-        kinds: [32222],
+        kinds: [34236],
         limit: 10,
       );
 
@@ -155,7 +155,7 @@ void main() {
       ];
 
       final filter = Filter(
-        kinds: [32222],
+        kinds: [34236],
         authors: followedUsers,
         limit: 50,
       );
@@ -177,7 +177,7 @@ void main() {
         Log.info('❌ No videos found from followed users');
         Log.info('Possible reasons:');
         Log.info(
-            '1. These users have never posted kind 32222 video events');
+            '1. These users have never posted kind 34236 video events');
         Log.info('2. The relay doesn\'t have their video events');
         Log.info('3. There\'s a bug in author filtering');
       } else {

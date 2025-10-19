@@ -64,7 +64,7 @@ void main() {
       // Create a test event
       final event = Event(
         keyManager.publicKey!,
-        32222, // Video event
+               34236, // Video event
         [
           ['url', 'https://example.com/test.mp4'],
           ['title', 'Test Video'],
@@ -90,7 +90,7 @@ void main() {
           'Embedded relay test ${DateTime.now().millisecondsSinceEpoch}';
       final event = Event(
         keyManager.publicKey!,
-        32222,
+               34236,
         [
           ['t', 'embedded-test']
         ],
@@ -106,7 +106,7 @@ void main() {
       final subscription = nostrService.subscribeToEvents(
         filters: [
           Filter(
-            kinds: [32222],
+            kinds: [34236],
             authors: [keyManager.publicKey!],
           ),
         ],
@@ -195,7 +195,7 @@ void main() {
       // Create a video event with searchable content
       final event = Event(
         keyManager.publicKey!,
-        32222,
+               34236,
         [
           ['url', 'https://example.com/search-test.mp4'],
           ['title', 'Searchable Video'],

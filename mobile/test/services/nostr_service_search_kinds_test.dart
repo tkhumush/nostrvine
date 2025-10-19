@@ -1,5 +1,5 @@
 // ABOUTME: Tests that searchVideos() only requests valid video event kinds
-// ABOUTME: Verifies filter uses kinds [34236, 34235, 22, 21] and not kind 32222
+// ABOUTME: Verifies filter uses kinds [34236, 34235, 22, 21] and not kind 34236
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
@@ -54,11 +54,11 @@ void main() {
               'Expected only video kinds and reposts: $validVideoKinds',
         );
 
-        // Specifically verify we never get kind 32222 (text notes)
+        // Specifically verify we never get kind 34236 (text notes)
         expect(
           event.kind,
           isNot(equals(32222)),
-          reason: 'Search should never return kind 32222 (text notes)',
+          reason: 'Search should never return kind 34236 (text notes)',
         );
       }
 
@@ -79,7 +79,7 @@ void main() {
         1,      // Text note (NIP-01)
         3,      // Contact list
         7,      // Reaction
-        32222,  // Article (not a video)
+               34236,  // Article (not a video)
       ];
 
       for (final event in events) {

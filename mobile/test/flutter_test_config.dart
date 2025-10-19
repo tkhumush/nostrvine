@@ -5,8 +5,12 @@ import 'dart:async';
 
 import 'package:alchemist/alchemist.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'test_setup.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
+  // Set up test environment with plugin mocks (secure_storage, path_provider, etc.)
+  setupTestEnvironment();
+
   // Load app fonts for golden tests
   await loadAppFonts();
 

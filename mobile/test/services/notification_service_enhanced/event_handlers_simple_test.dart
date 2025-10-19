@@ -151,7 +151,7 @@ void main() {
       // Add video (use factory method)
       final videoNostrEvent = Event(
         'user123',
-        32222,
+               34236,
         [
           ['url', 'https://example.com/video.mp4'],
         ],
@@ -245,7 +245,7 @@ void main() {
       // Add video
       final videoNostrEvent = Event(
         'user123',
-        32222,
+               34236,
         [
           ['url', 'https://example.com/video.mp4'],
         ],

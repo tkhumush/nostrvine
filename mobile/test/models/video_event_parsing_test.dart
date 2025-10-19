@@ -11,7 +11,7 @@ void main() {
       // Arrange - create a Nostr event with streaming tag
       final nostrEvent = Event(
         '0f1e20e4f53b27b62a3eb4fe7eb454c6a4d1040abfa279e7bb4a5222723541c9',
-        32222,
+               34236,
         [
           ['d', '5gITeYOlL7g'],
           ['title', 'A low quality edit with high quality content. ✨'],
@@ -56,7 +56,7 @@ void main() {
       // Arrange
       final nostrEvent = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['thumb', 'https://example.com/static-thumbnail.jpg'],
           ['preview', 'https://example.com/animated-preview.gif'],
@@ -86,7 +86,7 @@ void main() {
       for (final url in domains) {
         final nostrEvent = Event(
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-          32222,
+                 34236,
           [
             ['url', url],
           ],
@@ -107,7 +107,7 @@ void main() {
       // Test with 'd' tag
       final eventWithDTag = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['d', 'vine-id-from-d-tag'],
           ['url', 'https://example.com/video.mp4'],
@@ -122,7 +122,7 @@ void main() {
       // Test with 'vine_id' tag
       final eventWithVineIdTag = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['vine_id', 'vine-id-from-vine-id-tag'],
           ['url', 'https://example.com/video.mp4'],
@@ -139,7 +139,7 @@ void main() {
       // Arrange
       final nostrEvent = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['url', 'https://cdn.divine.video/test/video.m3u8'],
           [
@@ -172,7 +172,7 @@ void main() {
       // Arrange - URL without typical video extension
       final nostrEvent = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['url', 'https://api.example.com/stream/12345'], // No file extension
         ],
@@ -192,7 +192,7 @@ void main() {
       // Arrange
       final nostrEvent = Event(
         '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-        32222,
+               34236,
         [
           ['url', 'ftp://example.com/video.mp4'], // FTP protocol
         ],

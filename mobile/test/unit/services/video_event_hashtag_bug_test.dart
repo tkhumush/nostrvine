@@ -15,7 +15,7 @@ void main() {
       // Create a test video event
       final nostrEvent = Event(
         'd0aa74d68e414f0305db9f7dc96ec32e616502e6ccf5bbf5739de19a96b67f3e',
-        32222,
+               34236,
         [
           ['url', 'https://example.com/test.mp4'],
           ['m', 'video/mp4'],
@@ -80,7 +80,7 @@ void main() {
 
       final nostrEvent = Event(
         'd0aa74d68e414f0305db9f7dc96ec32e616502e6ccf5bbf5739de19a96b67f3e',
-        32222,
+               34236,
         [
           ['url', 'https://example.com/test.mp4'],
           ['m', 'video/mp4'],

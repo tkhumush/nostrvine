@@ -87,7 +87,7 @@ void main() {
       expect(capturedFilters.isNotEmpty, true);
       final filters = capturedFilters.first as List<Filter>;
       expect(filters.isNotEmpty, true);
-      expect(filters.first.kinds, contains(32222)); // NIP-32222 video events
+      expect(filters.first.kinds, contains(34236)); // NIP-71 kind 34236 video events
       expect(filters.first.limit, greaterThan(0));
     });
 
@@ -230,7 +230,7 @@ Event _createTestVideoEvent(String id, int timestamp) {
   // Event constructor: Event(pubkey, kind, tags, content, {createdAt})
   return Event(
     '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', // 64-char hex pubkey
-    32222, // kind
+           34236, // kind
     [
       ['d', 'video_$id'],
       ['url', 'https://example.com/video_$id.mp4'],

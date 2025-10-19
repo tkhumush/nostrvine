@@ -100,7 +100,7 @@ void main() {
         // Verify filter has correct authors
         expect(filter.authors, contains('pubkey1'));
         expect(filter.authors, contains('pubkey2'));
-        expect(filter.kinds, contains(32222)); // Addressable video events
+        expect(filter.kinds, contains(34236)); // Addressable video events
 
         return streamController.stream;
       });
@@ -143,7 +143,7 @@ void main() {
 
       // Create mock event
       final mockEvent = MockEvent();
-      when(() => mockEvent.kind).thenReturn(32222);
+      when(() => mockEvent.kind).thenReturn(34236);
       when(() => mockEvent.id).thenReturn('event123');
       when(() => mockEvent.pubkey).thenReturn('pubkey123');
       when(() => mockEvent.createdAt).thenReturn(1234567890);
@@ -243,7 +243,7 @@ void main() {
       // Create multiple mock events with comprehensive tags for VideoEvent parsing
       final events = List.generate(3, (i) {
         final event = MockEvent();
-        when(() => event.kind).thenReturn(32222);
+        when(() => event.kind).thenReturn(34236);
         when(() => event.id).thenReturn('event$i');
         when(() => event.pubkey).thenReturn('pubkey$i');
         when(() => event.createdAt).thenReturn(1234567890 + i);

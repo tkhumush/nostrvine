@@ -1,5 +1,5 @@
 // ABOUTME: Integration test that verifies pagination works with real relay server
-// ABOUTME: Tests that we actually get new kind 32222 video events when scrolling
+// ABOUTME: Tests that we actually get new kind 34236 video events when scrolling
 
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,7 +79,7 @@ void main() {
       await nostrService.dispose();
     });
 
-    test('should get real kind 32222 video events from relay3.openvine.co',
+    test('should get real kind 34236 video events from relay3.openvine.co',
         () async {
       // Subscribe to discovery feed
       await videoEventService.subscribeToVideoFeed(
@@ -219,7 +219,7 @@ void main() {
       Log.info(
           '  Videos after reset and pagination: ${videosAfterReset.length}',
           name: 'Test');
-      // All videos in OpenVine are kind 32222 by definition
+      // All videos in OpenVine are kind 34236 by definition
     }, timeout: Timeout(Duration(seconds: 30)));
 
     test('should handle rapid pagination requests correctly', () async {

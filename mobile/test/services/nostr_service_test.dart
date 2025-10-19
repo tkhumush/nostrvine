@@ -149,14 +149,14 @@ void main() {
       test('should convert hashtag filters correctly', () {
         // Create a filter with hashtags
         final filter = Filter(
-          kinds: [32222],
+          kinds: [34236],
           t: ['bitcoin', 'nostr'], // hashtags
           authors: ['pubkey1', 'pubkey2'],
           limit: 50,
         );
 
         // Test that the filter has the expected properties
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.t, equals(['bitcoin', 'nostr']));
         expect(filter.authors, equals(['pubkey1', 'pubkey2']));
         expect(filter.limit, equals(50));
@@ -183,13 +183,13 @@ void main() {
       test('should convert d-tags for parameterized replaceable events', () {
         // Create a filter with d-tags
         final filter = Filter(
-          kinds: [32222],
+          kinds: [34236],
           d: ['identifier1', 'identifier2'], // d-tag identifiers
           authors: ['pubkey1'],
         );
 
         // Test that the filter has the expected properties
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.d, equals(['identifier1', 'identifier2']));
         expect(filter.authors, equals(['pubkey1']));
       });
@@ -197,14 +197,14 @@ void main() {
       test('should handle filters without tags correctly', () {
         // Create a filter without any tags
         final filter = Filter(
-          kinds: [32222],
+          kinds: [34236],
           authors: ['pubkey1', 'pubkey2'],
           limit: 100,
           since: 1000,
         );
 
         // Test that the filter has the expected properties
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.authors, equals(['pubkey1', 'pubkey2']));
         expect(filter.t, isNull);
         expect(filter.e, isNull);
@@ -223,13 +223,13 @@ void main() {
         ];
 
         final filter = Filter(
-          kinds: [32222], // Video events
+          kinds: [34236], // Video events
           authors: followingPubkeys,
           limit: 100,
         );
 
         // Test that the filter properly includes authors for home feed
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.authors, equals(followingPubkeys));
         expect(filter.authors?.length, equals(3));
         expect(filter.limit, equals(100));
@@ -242,7 +242,7 @@ void main() {
 
         // Create a complex filter with multiple tag types
         final filter = Filter(
-          kinds: [32222],
+          kinds: [34236],
           authors: ['author1', 'author2'],
           t: ['bitcoin', 'lightning'], // hashtags -> #t
           e: ['event1', 'event2'], // event refs -> #e
@@ -262,7 +262,7 @@ void main() {
         //   '#d': ['id1', 'id2']
         // }
 
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.authors, equals(['author1', 'author2']));
         expect(filter.t, equals(['bitcoin', 'lightning']));
         expect(filter.e, equals(['event1', 'event2']));
@@ -276,7 +276,7 @@ void main() {
       test('should handle empty tag lists correctly', () {
         // Test filters with empty tag arrays
         final filter = Filter(
-          kinds: [32222],
+          kinds: [34236],
           authors: ['author1'],
           t: [], // empty hashtag list
           e: [], // empty event list
@@ -285,7 +285,7 @@ void main() {
         );
 
         // Empty tag arrays should be treated as null/not set
-        expect(filter.kinds, equals([32222]));
+        expect(filter.kinds, equals([34236]));
         expect(filter.authors, equals(['author1']));
         expect(filter.t, isEmpty);
         expect(filter.e, isEmpty);

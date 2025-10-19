@@ -35,7 +35,7 @@ void main() {
 
         // Create subscription for video events
         final filter = Filter(
-          kinds: [32222], // Addressable video events (kind 32222)
+          kinds: [34236], // Addressable video events (kind 34236)
           limit: 5,
         );
 

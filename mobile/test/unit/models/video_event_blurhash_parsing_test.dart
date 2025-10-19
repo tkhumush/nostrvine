@@ -1,4 +1,4 @@
-// ABOUTME: Unit tests for VideoEvent blurhash parsing from kind 32222 Nostr events
+// ABOUTME: Unit tests for VideoEvent blurhash parsing from kind 34236 Nostr events
 // ABOUTME: Validates imeta tag parsing and blurhash extraction functionality
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +7,7 @@ import 'package:openvine/models/video_event.dart';
 
 void main() {
   group('VideoEvent blurhash parsing', () {
-    test('should extract blurhash from imeta tag in kind 32222 event', () {
+    test('should extract blurhash from imeta tag in kind 34236 event', () {
       // Arrange - Real event data with blurhash
       final eventTags = [
         ["d", "5vwdwxAM9r9"],
@@ -33,7 +33,7 @@ void main() {
 
       final event = Event(
           "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", // pubkey
-          32222, // kind
+                 34236, // kind
           eventTags, // tags
           "Gon & Killua", // content
           createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000);
@@ -84,7 +84,7 @@ void main() {
 
       final event = Event(
           "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", // pubkey
-          32222, // kind
+                 34236, // kind
           eventTags, // tags
           "(ㅍ_ㅍ) まいど！どうもお久しぶりです！ (号泣) #平野紫耀 #ジャニーズJr #まいジャニ #MrKING", // content
           createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000);
@@ -117,7 +117,7 @@ void main() {
 
       final event = Event(
           "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321", // pubkey
-          32222, // kind
+                 34236, // kind
           eventTags, // tags
           "Video without blurhash", // content
           createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000);
@@ -146,7 +146,7 @@ void main() {
 
       final event = Event(
           "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", // pubkey
-          32222, // kind
+                 34236, // kind
           eventTags, // tags
           "Malformed imeta", // content
           createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000);
