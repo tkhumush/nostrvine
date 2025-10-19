@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Universal Deep Link System (2025-10-20)
+
+#### Features
+- **Comprehensive deep linking for divine.video URLs** - Share any app content via universal links
+  - Video links: `https://divine.video/video/{eventId}` - Opens specific video in player
+  - Profile links: `https://divine.video/profile/{npub}[/{index}]` - Opens user profile (grid or feed view)
+  - Hashtag links: `https://divine.video/hashtag/{tag}[/{index}]` - Opens hashtag feed (grid or feed view)
+  - Search links: `https://divine.video/search/{term}[/{index}]` - Opens search results (grid or feed view)
+  - Feed pagination support: Optional index parameter for all feed views (0-based)
+  - iOS Universal Links and Android App Links fully configured
+
+#### Mobile Behavior
+- Links open app automatically (no "open with" dialog)
+- Grid view (2-segment URLs): Shows thumbnail grid of videos
+- Feed view (3-segment URLs): Opens full-screen video player at specified index
+- Seamless navigation to correct screen with proper context
+
+#### Technical Implementation
+- Created `lib/services/deep_link_service.dart`:
+  - URL parsing for all 7 deep link patterns
+  - Stream-based link event handling
+  - Timing-safe initialization (listener setup before service init)
+- Created `lib/providers/deep_link_provider.dart`:
+  - Riverpod integration for deep link service
+  - Reactive stream provider for incoming links
+- Created `lib/screens/video_detail_screen.dart`:
+  - Fetches video by Nostr event ID
+  - Displays in full-screen player
+  - Handles video not found gracefully
+- Modified `lib/main.dart`:
+  - Deep link listener with comprehensive logging
+  - GoRouter integration for navigation
+  - Fixed race condition: listener setup → then service initialization
+- Modified `lib/router/app_router.dart`:
+  - Added `/video/:id` route for direct video access
+  - Existing routes support optional index parameter
+- Modified `lib/services/video_event_service.dart`:
+  - Added `getVideoById()` for cache lookup
+- Modified `lib/services/nostr_service_interface.dart`, `nostr_service.dart`, `nostr_service_web.dart`:
+  - Added `fetchEventById()` method to all implementations
+  - Fetches single event by ID from Nostr relays
+
+#### Platform Configuration
+- **iOS (Universal Links)**:
+  - Modified `ios/Runner/Runner.entitlements`: Added `applinks:divine.video`
+  - Created `docs/apple-app-site-association`: Server verification file with Team ID GZCZBKH7MY
+  - Paths: `/video/*`, `/profile/*`, `/hashtag/*`, `/search/*`
+- **Android (App Links)**:
+  - Modified `android/app/src/main/AndroidManifest.xml`: Added autoVerify intent filters
+  - Created `docs/assetlinks.json`: Server verification file with debug SHA-256 fingerprint
+  - All paths configured for automatic app opening
+
+#### Server Deployment
+- Created `docs/SERVER_DEPLOYMENT_CHECKLIST.md`:
+  - Complete deployment guide for divine.video server
+  - Web server configuration (nginx/apache)
+  - Verification commands and troubleshooting
+- Created `docs/DEEP_LINK_TESTING_GUIDE.md`:
+  - Step-by-step testing procedures for iOS/Android
+  - Console log debugging with emoji markers
+  - Common issues and fixes
+  - Production readiness checklist
+- Created `docs/DEEP_LINK_URL_REFERENCE.md`:
+  - Comprehensive specification of all 7 URL patterns
+  - Mobile behavior descriptions for each pattern
+  - Web app implementation guidelines
+  - URL encoding and special character handling
+  - Implementation checklist for web parity
+
+#### Test Coverage
+- Created `test/services/deep_link_service_test.dart`:
+  - 19 unit tests for URL parsing
+  - Tests all URL patterns (video, profile, hashtag, search)
+  - Tests grid vs feed view detection
+  - Tests index parameter parsing
+  - Tests invalid URLs and unknown paths
+- Created `test/services/nostr_service_fetch_event_test.dart`:
+  - 11 unit tests for `fetchEventById()` functionality
+  - Tests event fetching by ID
+  - Tests cache behavior
+  - Tests error handling
+- All 30 tests passing
+
+#### Documentation
+- Complete URL reference for web app parity
+- Deployment checklist with verification steps
+- Testing guide with device testing procedures
+- Server configuration examples
+
+#### Bug Fixes
+- **Fixed deep link timing race condition** - Initial link now correctly triggers navigation
+  - Service initialization moved AFTER listener setup
+  - Prevents broadcast stream event loss
+  - Ensures app navigates correctly when opened via URL
+
 ### Added - Comprehensive Log Export and Persistent Logging (2025-10-20)
 
 #### Features

@@ -29,29 +29,22 @@ class BlurhashService {
         return null;
       }
 
-      // Convert image to RGBA format for blurhash encoding
-      final rgbaImage = image.convert(numChannels: 4);
-      final width = rgbaImage.width;
-      final height = rgbaImage.height;
-
-      // Get pixel data in the format blurhash_dart expects
-      final pixels = rgbaImage.getBytes(order: img.ChannelOrder.rgba);
-
       // Encode blurhash using blurhash_dart library
+      // The library's encode method takes an Image object and returns a BlurHash
       final blurhash = blurhash_dart.BlurHash.encode(
-        pixels,
-        width,
-        height,
-        componentX: componentX,
-        componentY: componentY,
+        image,
+        numCompX: componentX,
+        numCompY: componentY,
       );
 
+      final hashString = blurhash.hash;
+
       Log.verbose(
-          'Generated blurhash: $blurhash (${width}x$height, ${componentX}x$componentY components)',
+          'Generated blurhash: $hashString (${image.width}x${image.height}, ${componentX}x$componentY components)',
           name: 'BlurhashService',
           category: LogCategory.system);
 
-      return blurhash.hash;
+      return hashString;
     } catch (e, stackTrace) {
       Log.error('Failed to generate blurhash: $e',
           name: 'BlurhashService', category: LogCategory.system);

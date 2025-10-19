@@ -10,7 +10,9 @@ import 'package:nostr_sdk/event.dart';
 import 'package:openvine/models/pending_upload.dart';
 import 'package:openvine/models/video_event.dart';
 import 'package:openvine/services/auth_service.dart';
+import 'package:openvine/services/blurhash_service.dart';
 import 'package:openvine/services/nostr_service_interface.dart';
+import 'package:openvine/services/video_thumbnail_service.dart';
 import 'package:openvine/services/personal_event_cache_service.dart';
 import 'package:openvine/services/upload_manager.dart';
 import 'package:openvine/services/video_event_service.dart';
@@ -228,6 +230,58 @@ class VideoEventPublisher {
         } catch (e) {
           Log.warning('Failed to calculate file metadata: $e',
               name: 'VideoEventPublisher', category: LogCategory.video);
+        }
+      }
+
+      // Generate blurhash for progressive image loading
+      if (upload.localVideoPath.isNotEmpty) {
+        try {
+          Log.debug('🎨 Generating blurhash from video thumbnail',
+              name: 'VideoEventPublisher', category: LogCategory.video);
+
+          // Extract thumbnail bytes with 10-second timeout
+          final thumbnailBytes = await VideoThumbnailService.extractThumbnailBytes(
+            videoPath: upload.localVideoPath,
+            timeMs: 500,
+            quality: 75,
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              Log.warning('⏱️ Thumbnail extraction timed out after 10 seconds',
+                  name: 'VideoEventPublisher', category: LogCategory.video);
+              return null;
+            },
+          );
+
+          if (thumbnailBytes != null) {
+            // Generate blurhash with 3-second timeout
+            final blurhash = await BlurhashService.generateBlurhash(
+              thumbnailBytes,
+            ).timeout(
+              const Duration(seconds: 3),
+              onTimeout: () {
+                Log.warning('⏱️ Blurhash generation timed out after 3 seconds',
+                    name: 'VideoEventPublisher', category: LogCategory.video);
+                return null;
+              },
+            );
+
+            if (blurhash != null && blurhash.isNotEmpty) {
+              imetaComponents.add('blurhash $blurhash');
+              Log.info('✅ Generated blurhash: $blurhash',
+                  name: 'VideoEventPublisher', category: LogCategory.video);
+            } else {
+              Log.warning('Blurhash generation returned null or empty',
+                  name: 'VideoEventPublisher', category: LogCategory.video);
+            }
+          } else {
+            Log.warning('Thumbnail extraction returned null',
+                name: 'VideoEventPublisher', category: LogCategory.video);
+          }
+        } catch (e) {
+          Log.warning('Failed to generate blurhash: $e',
+              name: 'VideoEventPublisher', category: LogCategory.video);
+          // Continue publishing without blurhash - it's optional metadata
         }
       }
 

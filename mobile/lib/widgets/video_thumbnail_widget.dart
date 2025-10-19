@@ -242,9 +242,27 @@ class _VideoThumbnailWidgetState extends State<VideoThumbnailWidget> {
       );
     }
 
-    // All thumbnails should be square (1:1 aspect ratio) to match 480x480 video dimensions
+    // Calculate aspect ratio from video dimensions if available, fallback to 1:1 square
+    final double aspectRatio;
+    if (widget.video.width != null && widget.video.height != null && widget.video.height! > 0) {
+      aspectRatio = widget.video.width! / widget.video.height!;
+      Log.debug(
+        '📐 Using video dimensions for thumbnail: ${widget.video.width}x${widget.video.height} = ${aspectRatio.toStringAsFixed(3)}',
+        name: 'VideoThumbnailWidget',
+        category: LogCategory.ui,
+      );
+    } else {
+      // Fallback to square for videos without dimension metadata
+      aspectRatio = 1.0;
+      Log.debug(
+        '📐 No dimensions metadata, using square (1:1) aspect ratio for thumbnail',
+        name: 'VideoThumbnailWidget',
+        category: LogCategory.ui,
+      );
+    }
+
     return AspectRatio(
-      aspectRatio: 1.0,
+      aspectRatio: aspectRatio,
       child: content,
     );
   }
