@@ -17,6 +17,7 @@ import 'package:openvine/services/user_profile_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:openvine/utils/log_batcher.dart';
 import 'package:openvine/constants/nip71_migration.dart';
+import 'package:openvine/services/event_router.dart';
 
 /// Pagination state for tracking cursor position and loading status per subscription
 class PaginationState {
@@ -93,12 +94,15 @@ class VideoEventService extends ChangeNotifier {
     this._nostrService, {
     required SubscriptionManager subscriptionManager,
     UserProfileService? userProfileService,
+    EventRouter? eventRouter,
   })  : _subscriptionManager = subscriptionManager,
-        _userProfileService = userProfileService {
+        _userProfileService = userProfileService,
+        _eventRouter = eventRouter {
     _initializePaginationStates();
   }
   final INostrService _nostrService;
   final UserProfileService? _userProfileService;
+  final EventRouter? _eventRouter;
   final ConnectionStatusService _connectionService = ConnectionStatusService();
 
   // REFACTORED: Separate event lists per subscription type
@@ -685,6 +689,9 @@ class VideoEventService extends ChangeNotifier {
         final streamSubscription = eventStream.listen(
           (event) {
             eventCount++;
+
+            // Route ALL events to database immediately (Phase 3.2: Drift integration)
+            _eventRouter?.handleEvent(event);
 
             // Track first event arrival time
             if (firstEventTime == null) {
