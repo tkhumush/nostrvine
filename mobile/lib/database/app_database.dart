@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'tables.dart';
 import 'daos/user_profiles_dao.dart';
+import 'daos/nostr_events_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -19,7 +20,7 @@ part 'app_database.g.dart';
 /// Schema versioning:
 /// - nostr_sdk: schema version 1-2 (event table)
 /// - AppDatabase: schema version 3+ (adds user_profiles, etc.)
-@DriftDatabase(tables: [NostrEvents, UserProfiles], daos: [UserProfilesDao])
+@DriftDatabase(tables: [NostrEvents, UserProfiles], daos: [UserProfilesDao, NostrEventsDao])
 class AppDatabase extends _$AppDatabase {
   /// Default constructor - uses shared database path with nostr_sdk
   AppDatabase() : super(_openConnection());
@@ -54,14 +55,15 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
-          // DON'T create event table - it already exists from nostr_sdk!
-          // Only create our NEW tables (user_profiles)
+          // In production, event table already exists from nostr_sdk
+          // In tests, we need to create it ourselves
+          await m.createTable(nostrEvents);
           await m.createTable(userProfiles);
         },
         onUpgrade: (m, from, to) async {
           // Migration from nostr_sdk schema v2 to AppDatabase schema v3
           if (from < 3) {
-            // Add user_profiles table
+            // Add user_profiles table (event table already exists from nostr_sdk)
             await m.createTable(userProfiles);
           }
         },

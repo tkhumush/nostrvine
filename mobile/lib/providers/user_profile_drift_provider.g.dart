@@ -107,7 +107,7 @@ final class UserProfileProvider
   }
 }
 
-String _$userProfileHash() => r'f5a46082c37bf968dc32dae6e2284a77346d64e9';
+String _$userProfileHash() => r'ca51be8292095a34cb67a86482ee98e73d93bbad';
 
 /// Stream provider for a single user profile from Drift database
 ///
