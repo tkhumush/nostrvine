@@ -125,7 +125,12 @@ class _HomeScreenRouterState extends ConsumerState<HomeScreenRouter>
             bool urlUpdatePending = false;
             if (_currentVideoId != null && videos.isNotEmpty && !_urlUpdateScheduled) {
               final currentVideoIndex = videos.indexWhere((v) => v.id == _currentVideoId);
-              if (currentVideoIndex != -1 && currentVideoIndex != urlIndex) {
+              // Only update URL if:
+              // 1. Video moved to a different index AND
+              // 2. URL doesn't already point to this video ID (prevents redundant updates)
+              if (currentVideoIndex != -1 &&
+                  currentVideoIndex != urlIndex &&
+                  ctx.eventId != _currentVideoId) {
                 // Video we're viewing is now at a different index - update URL silently
                 Log.debug(
                   '📍 Video $_currentVideoId moved from index $urlIndex → $currentVideoIndex, updating URL',
