@@ -44,6 +44,8 @@ void main() {
     tearDown(() {
       // Clean up service state between tests
       // Note: CuratedListService doesn't have a dispose method
+      reset(mockNostrService);
+      reset(mockAuthService);
     });
 
     test('should handle unauthenticated state gracefully in relay sync',

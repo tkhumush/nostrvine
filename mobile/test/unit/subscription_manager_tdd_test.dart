@@ -33,10 +33,11 @@ void main() {
       subscriptionManager = SubscriptionManager(mockNostrService);
     });
 
-    tearDown(() {
+    tearDown() {
       testEventController.close();
       subscriptionManager.dispose();
-    });
+      reset(mockNostrService);
+    };
 
     test(
         'TDD: SubscriptionManager should forward events from NostrService to callback - WILL FAIL FIRST',

@@ -36,6 +36,7 @@ void main() {
 
     tearDown(() {
       container.dispose();
+      reset(mockVideoEventService);
     });
 
     group('Search State Provider', () {

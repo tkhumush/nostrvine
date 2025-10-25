@@ -81,6 +81,8 @@ void main() {
 
     tearDown(() {
       container.dispose();
+      reset(mockVideoEventService);
+      reset(mockNostrService);
     });
 
     test('should attach listener when gates are satisfied on initial build', () async {
@@ -404,6 +406,8 @@ void main() {
     tearDown(() {
       serviceNotifier.close();
       container.dispose();
+      reset(mockVideoEventService);
+      reset(mockNostrService);
     });
 
     test('should react to service notifyListeners calls', () async {

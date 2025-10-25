@@ -64,6 +64,9 @@ void main() {
 
     tearDown(() {
       container.dispose();
+      reset(mockVideoEventService);
+      reset(mockNostrService);
+      reset(mockSubscriptionManager);
     });
 
     test('should return empty state when user is not following anyone',
@@ -83,7 +86,6 @@ void main() {
           }),
         ],
       );
-      addTearDown(testContainer.dispose);
 
       // Act
       final result = await testContainer.read(homeFeedProvider.future);
@@ -99,6 +101,8 @@ void main() {
         any,
         limit: anyNamed('limit'),
       ));
+
+      testContainer.dispose();
     });
 
     test('should preserve video list when socialProvider updates with same following list', () async {
@@ -445,6 +449,12 @@ void main() {
         any,
         limit: anyNamed('limit'),
       )).thenAnswer((_) async {});
+    });
+
+    tearDown(() {
+      reset(mockVideoEventService);
+      reset(mockNostrService);
+      reset(mockSubscriptionManager);
     });
 
     test('homeFeedLoading should reflect loading state', () async {

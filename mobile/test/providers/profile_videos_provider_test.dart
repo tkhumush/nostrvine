@@ -62,6 +62,8 @@ void main() {
     tearDown(() {
       container.dispose();
       clearAllProfileVideosCache();
+      reset(mockNostrService);
+      reset(mockVideoEventService);
     });
 
     group('Initial State', () {
