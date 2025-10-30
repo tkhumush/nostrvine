@@ -17,7 +17,7 @@ void main() {
     late VideoFilterBuilder builder;
     late MockRelayCapabilityService mockCapabilityService;
 
-    const testRelayUrl = 'wss://relay.divine.video';
+    const testRelayUrl = 'wss://staging-relay.divine.video';
 
     setUp(() {
       mockCapabilityService = MockRelayCapabilityService();
