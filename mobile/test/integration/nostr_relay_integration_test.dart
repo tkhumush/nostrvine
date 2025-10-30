@@ -37,7 +37,7 @@ void main() {
         try {
           // Initialize service with real relay
           Log.debug('🔌 Initializing NostrService with real relay...');
-          await service.initialize(customRelays: ['wss://relay3.openvine.co']);
+          await service.initialize(customRelays: ['wss://staging-relay.divine.video']);
 
           expect(service.isInitialized, true);
           expect(service.connectedRelays.isNotEmpty, true);

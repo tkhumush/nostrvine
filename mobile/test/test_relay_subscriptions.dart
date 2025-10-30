@@ -14,7 +14,7 @@ void main() async {
   final ourSubscriptions = <String>{};
 
   try {
-    final wsUrl = Uri.parse('wss://relay3.openvine.co');
+    final wsUrl = Uri.parse('wss://staging-relay.divine.video');
     final channel = IOWebSocketChannel.connect(wsUrl);
 
     Log.debug('1. Connecting to $wsUrl...');

@@ -1,4 +1,4 @@
-// ABOUTME: Integration tests for AUTH and Kind 22 event retrieval against real relay3.openvine.co relay
+// ABOUTME: Integration tests for AUTH and Kind 22 event retrieval against real staging-relay.divine.video relay
 // ABOUTME: Tests the complete AUTH flow and verifies Kind 22 events can be retrieved after AUTH completion
 
 import 'dart:async';
@@ -12,7 +12,7 @@ import 'package:openvine/services/video_event_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
 
 void main() {
-  group('AUTH and Kind 22 Event Retrieval - Real relay3.openvine.co Relay', () {
+  group('AUTH and Kind 22 Event Retrieval - Real staging-relay.divine.video Relay', () {
     late NostrKeyManager keyManager;
     late NostrService nostrService;
     late VideoEventService videoEventService;
@@ -60,9 +60,9 @@ void main() {
       });
 
       try {
-        // Initialize NostrService with relay3.openvine.co
+        // Initialize NostrService with staging-relay.divine.video
         await nostrService
-            .initialize(customRelays: ['wss://relay3.openvine.co']);
+            .initialize(customRelays: ['wss://staging-relay.divine.video']);
 
         // Verify service is initialized
         expect(nostrService.isInitialized, isTrue);
@@ -71,19 +71,19 @@ void main() {
         // Wait a bit for AUTH completion
         await Future.delayed(const Duration(seconds: 5));
 
-        // Check relay3.openvine.co AUTH state
+        // Check staging-relay.divine.video AUTH state
         final vineAuthed = nostrService.isVineRelayAuthenticated;
-        Log.info('relay3.openvine.co authenticated: $vineAuthed',
+        Log.info('staging-relay.divine.video authenticated: $vineAuthed',
             name: 'AuthTest', category: LogCategory.system);
 
         // We should have at least one AUTH state change
         expect(authStateChanges, isNotEmpty);
 
-        // If relay3.openvine.co is connected, it should be in the auth states
+        // If staging-relay.divine.video is connected, it should be in the auth states
         final authStates = nostrService.relayAuthStates;
-        if (authStates.containsKey('wss://relay3.openvine.co')) {
+        if (authStates.containsKey('wss://staging-relay.divine.video')) {
           Log.info(
-              'relay3.openvine.co AUTH state: ${authStates['wss://relay3.openvine.co']}',
+              'staging-relay.divine.video AUTH state: ${authStates['wss://staging-relay.divine.video']}',
               name: 'AuthTest',
               category: LogCategory.system);
         }
@@ -99,13 +99,13 @@ void main() {
       }
     }, timeout: const Timeout(Duration(minutes: 2)));
 
-    test('Kind 22 events can be retrieved from relay3.openvine.co after AUTH',
+    test('Kind 22 events can be retrieved from staging-relay.divine.video after AUTH',
         () async {
       // Set a longer timeout for real relay testing
       nostrService.setAuthTimeout(const Duration(seconds: 30));
 
       // Initialize NostrService
-      await nostrService.initialize(customRelays: ['wss://relay3.openvine.co']);
+      await nostrService.initialize(customRelays: ['wss://staging-relay.divine.video']);
       expect(nostrService.isInitialized, isTrue);
 
       // Wait for AUTH completion
@@ -166,22 +166,22 @@ void main() {
 
       // Log AUTH status
       Log.info(
-          'relay3.openvine.co authenticated: ${nostrService.isVineRelayAuthenticated}',
+          'staging-relay.divine.video authenticated: ${nostrService.isVineRelayAuthenticated}',
           name: 'AuthTest',
           category: LogCategory.system);
       Log.debug('Relay auth states: ${nostrService.relayAuthStates}',
           name: 'AuthTest', category: LogCategory.system);
 
-      // We should have received some events (relay3.openvine.co should have Kind 22 events)
-      // Note: This might fail if relay3.openvine.co is empty or not responding, but that's valuable info too
+      // We should have received some events (staging-relay.divine.video should have Kind 22 events)
+      // Note: This might fail if staging-relay.divine.video is empty or not responding, but that's valuable info too
       if (receivedEvents.isEmpty) {
-        Log.warning('No Kind 22 events received from relay3.openvine.co',
+        Log.warning('No Kind 22 events received from staging-relay.divine.video',
             name: 'AuthTest', category: LogCategory.system);
         Log.warning('This could indicate:',
             name: 'AuthTest', category: LogCategory.system);
         Log.warning('1. AUTH not completed properly',
             name: 'AuthTest', category: LogCategory.system);
-        Log.warning('2. No Kind 22 events stored on relay3.openvine.co',
+        Log.warning('2. No Kind 22 events stored on staging-relay.divine.video',
             name: 'AuthTest', category: LogCategory.system);
         Log.warning('3. Relay not responding to subscriptions',
             name: 'AuthTest', category: LogCategory.system);
@@ -191,13 +191,13 @@ void main() {
           Log.warning('AUTH completed but no events - relay may be empty',
               name: 'AuthTest', category: LogCategory.system);
         } else {
-          fail('AUTH did not complete for relay3.openvine.co');
+          fail('AUTH did not complete for staging-relay.divine.video');
         }
       } else {
         // Success case - we got events
         expect(receivedEvents, isNotEmpty);
         Log.info(
-            '✅ Successfully retrieved ${receivedEvents.length} Kind 22 events from relay3.openvine.co',
+            '✅ Successfully retrieved ${receivedEvents.length} Kind 22 events from staging-relay.divine.video',
             name: 'AuthTest',
             category: LogCategory.system);
 
@@ -220,7 +220,7 @@ void main() {
           const Duration(seconds: 5)); // Shorter timeout to force timeout
 
       // Initialize NostrService
-      await nostrService.initialize(customRelays: ['wss://relay3.openvine.co']);
+      await nostrService.initialize(customRelays: ['wss://staging-relay.divine.video']);
       expect(nostrService.isInitialized, isTrue);
 
       // Try to subscribe immediately (might happen before AUTH)
@@ -273,7 +273,7 @@ void main() {
       Log.info('- Events received: ${receivedEvents.length}',
           name: 'AuthTest', category: LogCategory.system);
       Log.info(
-          '- relay3.openvine.co authenticated: ${nostrService.isVineRelayAuthenticated}',
+          '- staging-relay.divine.video authenticated: ${nostrService.isVineRelayAuthenticated}',
           name: 'AuthTest',
           category: LogCategory.system);
       Log.info('- Video service subscribed: ${videoEventService.isSubscribed}',
@@ -301,14 +301,14 @@ void main() {
         firstService.setAuthTimeout(const Duration(seconds: 30));
 
         await firstService
-            .initialize(customRelays: ['wss://relay3.openvine.co']);
+            .initialize(customRelays: ['wss://staging-relay.divine.video']);
         expect(firstService.isInitialized, isTrue);
 
         // Wait for AUTH completion
         await Future.delayed(const Duration(seconds: 10));
 
         final firstAuthState = firstService.isVineRelayAuthenticated;
-        Log.info('First service relay3.openvine.co AUTH: $firstAuthState',
+        Log.info('First service staging-relay.divine.video AUTH: $firstAuthState',
             name: 'AuthTest', category: LogCategory.system);
 
         // Dispose first service
@@ -318,12 +318,12 @@ void main() {
         // Create second service (should load persisted AUTH state)
         secondService = NostrService(keyManager);
         await secondService
-            .initialize(customRelays: ['wss://relay3.openvine.co']);
+            .initialize(customRelays: ['wss://staging-relay.divine.video']);
         expect(secondService.isInitialized, isTrue);
 
         // Check if AUTH state was restored
         final secondAuthState = secondService.isVineRelayAuthenticated;
-        Log.info('Second service relay3.openvine.co AUTH: $secondAuthState',
+        Log.info('Second service staging-relay.divine.video AUTH: $secondAuthState',
             name: 'AuthTest', category: LogCategory.system);
 
         // If first service was authenticated, check if state persisted
@@ -362,13 +362,13 @@ void main() {
 
         try {
           await testService
-              .initialize(customRelays: ['wss://relay3.openvine.co']);
+              .initialize(customRelays: ['wss://staging-relay.divine.video']);
           stopwatch.stop();
 
           Log.info('Service initialized in ${stopwatch.elapsedMilliseconds}ms',
               name: 'AuthTest', category: LogCategory.system);
           Log.info(
-              'relay3.openvine.co authenticated: ${testService.isVineRelayAuthenticated}',
+              'staging-relay.divine.video authenticated: ${testService.isVineRelayAuthenticated}',
               name: 'AuthTest',
               category: LogCategory.system);
 
@@ -410,9 +410,9 @@ void main() {
         expect(authStates.containsKey(relay), isTrue);
       }
 
-      // relay3.openvine.co should require auth
+      // staging-relay.divine.video should require auth
       Log.info(
-          'relay3.openvine.co specifically: ${nostrService.isVineRelayAuthenticated}',
+          'staging-relay.divine.video specifically: ${nostrService.isVineRelayAuthenticated}',
           name: 'AuthTest',
           category: LogCategory.system);
 

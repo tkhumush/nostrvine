@@ -12,7 +12,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
   group('Real Relay Kind 34236 Events Test', () {
-    test('should get real kind 34236 video events from relay3.openvine.co',
+    test('should get real kind 34236 video events from staging-relay.divine.video',
         () async {
       Log.info('🚀 Starting real relay test...', name: 'Test');
 
@@ -24,9 +24,9 @@ void main() {
       await embeddedRelay.initialize();
 
       // Add external relay
-      Log.info('🔗 Connecting to wss://relay3.openvine.co...',
+      Log.info('🔗 Connecting to wss://staging-relay.divine.video...',
           name: 'Test');
-      await embeddedRelay.addExternalRelay('wss://relay3.openvine.co');
+      await embeddedRelay.addExternalRelay('wss://staging-relay.divine.video');
 
       // Wait for connection to establish
       for (int i = 0; i < 20; i++) {

@@ -207,6 +207,20 @@ class MockBlossomUploadService extends _i1.Mock
             ),
           )
           as _i7.Future<_i5.BlossomUploadResult>);
+
+  @override
+  _i7.Future<String?> uploadBugReport({
+    required _i8.File? bugReportFile,
+    void Function(double)? onProgress,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#uploadBugReport, [], {
+              #bugReportFile: bugReportFile,
+              #onProgress: onProgress,
+            }),
+            returnValue: _i7.Future<String?>.value(),
+          )
+          as _i7.Future<String?>);
 }
 
 /// A class which mocks [AuthService].

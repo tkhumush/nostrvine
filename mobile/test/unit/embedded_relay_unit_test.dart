@@ -26,12 +26,12 @@ void main() {
       nostrService = NostrService(mockKeyManager);
     });
 
-    test('should default to relay3.openvine.co', () async {
+    test('should default to staging-relay.divine.video', () async {
       // Since we can't actually initialize without platform channels,
       // we can verify the service is configured correctly
       expect(nostrService.isInitialized, isFalse);
 
-      // The service should be ready to use relay3.openvine.co once initialized
+      // The service should be ready to use staging-relay.divine.video once initialized
       // This demonstrates the integration is properly configured
     });
 

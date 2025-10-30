@@ -1,5 +1,5 @@
 // ABOUTME: Real relay test for SubscriptionManager - NO MOCKING to prove it's broken
-// ABOUTME: This test hits relay3.openvine.co relay directly to show SubscriptionManager doesn't work
+// ABOUTME: This test hits staging-relay.divine.video relay directly to show SubscriptionManager doesn't work
 
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -81,8 +81,8 @@ void main() {
       nostrService = NostrService(keyManager);
       await nostrService.initialize();
 
-      // Add relay3.openvine.co relay
-      await nostrService.addRelay('wss://relay3.openvine.co');
+      // Add staging-relay.divine.video relay
+      await nostrService.addRelay('wss://staging-relay.divine.video');
 
       // Wait for connection using proper async pattern
       final connectionCompleter = Completer<void>();
@@ -108,7 +108,7 @@ void main() {
     });
 
     test(
-        'SubscriptionManager should receive kind 22 events from relay3.openvine.co - REAL RELAY',
+        'SubscriptionManager should receive kind 22 events from staging-relay.divine.video - REAL RELAY',
         () async {
       Log.debug('🔍 TEST: Starting SubscriptionManager real relay test...',
           name: 'SubscriptionManagerRealRelayTest',
@@ -255,14 +255,14 @@ void main() {
       // The test assertion
       expect(receivedEvents.length, greaterThan(0),
           reason:
-              'SubscriptionManager should receive events from relay3.openvine.co relay like direct subscription does');
+              'SubscriptionManager should receive events from staging-relay.divine.video relay like direct subscription does');
 
       // Clean up
       await subscriptionManager.cancelSubscription(subscriptionId);
     });
 
     test(
-        'Direct comparison: Both should get same events from relay3.openvine.co',
+        'Direct comparison: Both should get same events from staging-relay.divine.video',
         () async {
       Log.debug('🔍 TEST: Direct comparison test...',
           name: 'SubscriptionManagerRealRelayTest',

@@ -1,4 +1,4 @@
-// ABOUTME: Test real pagination requests against relay3.openvine.co
+// ABOUTME: Test real pagination requests against staging-relay.divine.video
 import 'package:openvine/utils/unified_logger.dart';
 // ABOUTME: Debug exactly what happens with 'until' parameter for historical events
 
@@ -7,15 +7,15 @@ import 'dart:convert';
 import 'dart:io';
 
 void main() async {
-  Log.info('🔍 Testing pagination against relay3.openvine.co...\n');
+  Log.info('🔍 Testing pagination against staging-relay.divine.video...\n');
 
   WebSocket? socket;
   final List<Map<String, dynamic>> receivedEvents = [];
 
   try {
-    // Connect to relay3.openvine.co
-    Log.info('1. Connecting to wss://relay3.openvine.co...');
-    socket = await WebSocket.connect('wss://relay3.openvine.co');
+    // Connect to staging-relay.divine.video
+    Log.info('1. Connecting to wss://staging-relay.divine.video...');
+    socket = await WebSocket.connect('wss://staging-relay.divine.video');
     Log.info('✅ Connected!\n');
 
     // Listen for messages

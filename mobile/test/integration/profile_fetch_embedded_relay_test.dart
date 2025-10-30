@@ -29,9 +29,9 @@ void main() {
       Log.info('🚀 Starting profile fetch test...', name: 'Test');
 
       // Connect to OpenVine relay
-      Log.info('🔗 Connecting to wss://relay3.openvine.co...',
+      Log.info('🔗 Connecting to wss://staging-relay.divine.video...',
           name: 'Test');
-      await embeddedRelay.addExternalRelay('wss://relay3.openvine.co');
+      await embeddedRelay.addExternalRelay('wss://staging-relay.divine.video');
 
       // Wait for connection
       await Future.delayed(const Duration(seconds: 2));

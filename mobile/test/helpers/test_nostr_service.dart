@@ -276,7 +276,7 @@ class TestNostrService implements INostrService {
 
   @override
   bool get isVineRelayAuthenticated =>
-      isRelayAuthenticated('wss://relay3.openvine.co');
+      isRelayAuthenticated('wss://staging-relay.divine.video');
 
   @override
   void setAuthTimeout(Duration timeout) {

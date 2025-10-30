@@ -1,4 +1,4 @@
-// ABOUTME: Real world test to verify VideoEventService works with actual relay3.openvine.co relay
+// ABOUTME: Real world test to verify VideoEventService works with actual staging-relay.divine.video relay
 // ABOUTME: This test connects to the real relay to debug why videos aren't showing in app
 
 import 'dart:async';
@@ -66,7 +66,7 @@ void main() {
       await keyManager.initialize();
 
       nostrService = NostrService(keyManager);
-      await nostrService.initialize(customRelays: ['wss://relay3.openvine.co']);
+      await nostrService.initialize(customRelays: ['wss://staging-relay.divine.video']);
 
       // Wait for connection to stabilize using proper async pattern
       Log.info('⏳ Waiting for relay connection...',
@@ -105,10 +105,10 @@ void main() {
     });
 
     test(
-        'VideoEventService should receive videos from relay3.openvine.co relay',
+        'VideoEventService should receive videos from staging-relay.divine.video relay',
         () async {
       Log.debug(
-          '🔍 Testing VideoEventService with real relay3.openvine.co relay...',
+          '🔍 Testing VideoEventService with real staging-relay.divine.video relay...',
           name: 'RealVideoSubscriptionTest',
           category: LogCategory.system);
 
@@ -186,7 +186,7 @@ void main() {
 
         // Verify we got videos
         expect(receivedVideos.length, greaterThan(0),
-            reason: 'Should receive videos from relay3.openvine.co relay');
+            reason: 'Should receive videos from staging-relay.divine.video relay');
 
         // Verify the videos have proper URLs
         final videosWithUrls = receivedVideos.where((v) => v.hasVideo).toList();

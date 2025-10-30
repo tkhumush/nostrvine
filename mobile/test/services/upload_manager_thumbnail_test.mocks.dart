@@ -185,6 +185,20 @@ class MockBlossomUploadService extends _i1.Mock
             ),
           )
           as _i6.Future<_i5.BlossomUploadResult>);
+
+  @override
+  _i6.Future<String?> uploadBugReport({
+    required _i7.File? bugReportFile,
+    void Function(double)? onProgress,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#uploadBugReport, [], {
+              #bugReportFile: bugReportFile,
+              #onProgress: onProgress,
+            }),
+            returnValue: _i6.Future<String?>.value(),
+          )
+          as _i6.Future<String?>);
 }
 
 /// A class which mocks [VideoCircuitBreaker].

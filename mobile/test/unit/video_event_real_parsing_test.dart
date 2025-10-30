@@ -1,4 +1,4 @@
-// ABOUTME: Test to verify VideoEvent parsing of real kind 34236 events from relay3.openvine.co
+// ABOUTME: Test to verify VideoEvent parsing of real kind 34236 events from staging-relay.divine.video
 // ABOUTME: This tests the actual parsing logic with real relay data
 
 import 'package:flutter_test/flutter_test.dart';
@@ -10,11 +10,11 @@ void main() {
   group('VideoEvent Parsing - Real Relay Data', () {
     test('should parse kind 34236 event with url tag correctly', () {
       Log.debug(
-          '🔍 Testing VideoEvent parsing with real relay3.openvine.co data...',
+          '🔍 Testing VideoEvent parsing with real staging-relay.divine.video data...',
           name: 'VideoEventRealParsingTest',
           category: LogCategory.system);
 
-      // Real event from relay3.openvine.co relay with url tag
+      // Real event from staging-relay.divine.video relay with url tag
       final event = Event(
         'd95aa8fc0eff8e488952495b8064991d27fb96ed8652f12cdedc5a4e8b5ae540',
                34236,
@@ -54,7 +54,7 @@ void main() {
       Log.debug('🔍 Testing VideoEvent parsing with r tag...',
           name: 'VideoEventRealParsingTest', category: LogCategory.system);
 
-      // Real event from relay3.openvine.co relay with r tag
+      // Real event from staging-relay.divine.video relay with r tag
       final event = Event(
         '033877f4080835f162880482590762c0a7508851e88fe164dd89028743914da5',
                34236,

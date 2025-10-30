@@ -59,7 +59,7 @@ void main() {
     });
 
     test(
-      'VideoEventService receives events from wss://relay3.openvine.co',
+      'VideoEventService receives events from wss://staging-relay.divine.video',
       () async {
         Log.info('🧪 Starting VideoEventService relay test');
 
@@ -124,7 +124,7 @@ void main() {
           videoEventService.hasEvents(SubscriptionType.discovery),
           true,
           reason:
-              'VideoEventService should receive at least one kind 22 video event from wss://relay3.openvine.co relay within 15 seconds. '
+              'VideoEventService should receive at least one kind 22 video event from wss://staging-relay.divine.video relay within 15 seconds. '
               'This test confirms the relay connection and event subscription pipeline is working correctly. '
               'Events received: ${videoEventService.getEventCount(SubscriptionType.discovery)}',
         );

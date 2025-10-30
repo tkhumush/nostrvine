@@ -36,6 +36,27 @@ void main() {
       mockNostrService = MockNostrService();
       mockSubscriptionManager = MockSubscriptionManager();
 
+      // Mock SubscriptionManager.createSubscription to call onComplete immediately
+      when(() => mockSubscriptionManager.createSubscription(
+            name: any(named: 'name'),
+            filters: any(named: 'filters'),
+            onEvent: any(named: 'onEvent'),
+            onError: any(named: 'onError'),
+            onComplete: any(named: 'onComplete'),
+            priority: any(named: 'priority'),
+          )).thenAnswer((invocation) async {
+        // Get the onComplete callback and call it after a short delay
+        final onComplete = invocation.namedArguments[const Symbol('onComplete')] as void Function()?;
+        if (onComplete != null) {
+          Future.delayed(const Duration(milliseconds: 50), onComplete);
+        }
+        return 'test-subscription-id';
+      });
+
+      // Mock SubscriptionManager.cancelSubscription
+      when(() => mockSubscriptionManager.cancelSubscription(any()))
+          .thenReturn(null);
+
       container = ProviderContainer(
         overrides: [
           nostrServiceProvider.overrideWithValue(mockNostrService),
@@ -90,10 +111,27 @@ void main() {
           '{"name":"Test User","picture":"https://example.com/avatar.jpg","about":"Test bio"}');
       when(() => mockEvent.tags).thenReturn([]);
 
-      // Mock Nostr service subscription
-      when(() => mockNostrService.subscribeToEvents(
-              filters: any(named: 'filters')))
-          .thenAnswer((_) => Stream.value(mockEvent));
+      // Mock SubscriptionManager to call onEvent with mock event
+      when(() => mockSubscriptionManager.createSubscription(
+            name: any(named: 'name'),
+            filters: any(named: 'filters'),
+            onEvent: any(named: 'onEvent'),
+            onError: any(named: 'onError'),
+            onComplete: any(named: 'onComplete'),
+            priority: any(named: 'priority'),
+          )).thenAnswer((invocation) async {
+        // Get callbacks
+        final onEvent = invocation.namedArguments[const Symbol('onEvent')] as void Function(Event);
+        final onComplete = invocation.namedArguments[const Symbol('onComplete')] as void Function()?;
+
+        // Call onEvent with the mock event
+        Future.microtask(() => onEvent(mockEvent));
+
+        // Call onComplete after event
+        Future.delayed(const Duration(milliseconds: 50), onComplete);
+
+        return 'test-subscription-id';
+      });
 
       // Test the async provider directly
       final profileAsyncValue =
@@ -110,9 +148,15 @@ void main() {
           await container.read(fetchUserProfileProvider(pubkey).future);
       expect(cachedProfile, equals(profileAsyncValue));
 
-      // Verify only one network call was made
-      verify(() => mockNostrService.subscribeToEvents(
-          filters: any(named: 'filters'))).called(1);
+      // Verify subscription was created
+      verify(() => mockSubscriptionManager.createSubscription(
+            name: any(named: 'name'),
+            filters: any(named: 'filters'),
+            onEvent: any(named: 'onEvent'),
+            onError: any(named: 'onError'),
+            onComplete: any(named: 'onComplete'),
+            priority: any(named: 'priority'),
+          )).called(1);
     });
 
     test('should use notifier for basic profile management', () async {

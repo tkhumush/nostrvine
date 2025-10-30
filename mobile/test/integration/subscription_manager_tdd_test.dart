@@ -65,7 +65,7 @@ void main() {
       await keyManager.initialize();
 
       nostrService = NostrService(keyManager);
-      await nostrService.initialize(customRelays: ['wss://relay3.openvine.co']);
+      await nostrService.initialize(customRelays: ['wss://staging-relay.divine.video']);
 
       // Wait for connection to stabilize
       await Future.delayed(Duration(seconds: 3));

@@ -56,8 +56,8 @@ void main() {
       expect(
           nostrService.connectedRelays.contains('ws://localhost:7447'), isTrue);
       // Verify OpenVine's relay is the default
-      expect(nostrService.relays.contains('wss://relay3.openvine.co'), isTrue);
-      expect(nostrService.primaryRelay, equals('wss://relay3.openvine.co'));
+      expect(nostrService.relays.contains('wss://staging-relay.divine.video'), isTrue);
+      expect(nostrService.primaryRelay, equals('wss://staging-relay.divine.video'));
     });
 
     test('should persist events to SQLite database', () async {
@@ -128,9 +128,9 @@ void main() {
 
     test('should support external relay synchronization', () async {
       // Verify default OpenVine relay is configured
-      expect(nostrService.relays.contains('wss://relay3.openvine.co'), isTrue);
+      expect(nostrService.relays.contains('wss://staging-relay.divine.video'), isTrue);
       expect(nostrService.relays.length,
-          equals(2)); // embedded + relay3.openvine.co
+          equals(2)); // embedded + staging-relay.divine.video
 
       // Add a new relay
       final added = await nostrService.addRelay('wss://nos.lol');
@@ -268,7 +268,7 @@ void main() {
 
       // Should still have at least the default relays
       expect(relays.contains('ws://localhost:7447'), isTrue);
-      expect(relays.contains('wss://relay3.openvine.co'), isTrue);
+      expect(relays.contains('wss://staging-relay.divine.video'), isTrue);
     });
 
     test('should discover relays from event hints', () async {
@@ -294,7 +294,7 @@ void main() {
       expect(nostrService.isInitialized, isTrue);
 
       // Should still have default relays
-      expect(nostrService.relays.contains('wss://relay3.openvine.co'), isTrue);
+      expect(nostrService.relays.contains('wss://staging-relay.divine.video'), isTrue);
     });
   });
 }

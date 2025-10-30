@@ -49,7 +49,7 @@ void main() {
 
       nostrService = NostrService(keyManager);
       await nostrService.initialize(customRelays: [
-        'wss://relay3.openvine.co',
+        'wss://staging-relay.divine.video',
         'wss://relay.damus.io',
         'wss://nos.lol'
       ]);

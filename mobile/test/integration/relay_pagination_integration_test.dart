@@ -61,7 +61,7 @@ void main() {
       await nostrService.initialize();
 
       // Add relay instead of connectToRelay (method doesn't exist)
-      await nostrService.addRelay('wss://relay3.openvine.co');
+      await nostrService.addRelay('wss://staging-relay.divine.video');
 
       // Wait for relay connection to establish
       // Poll for connection status instead of arbitrary delay
@@ -79,7 +79,7 @@ void main() {
       await nostrService.dispose();
     });
 
-    test('should get real kind 34236 video events from relay3.openvine.co',
+    test('should get real kind 34236 video events from staging-relay.divine.video',
         () async {
       // Subscribe to discovery feed
       await videoEventService.subscribeToVideoFeed(

@@ -44,7 +44,7 @@ void main() {
       // Mock basic properties
       when(mockNostrService.isInitialized).thenReturn(true);
       when(mockNostrService.connectedRelays)
-          .thenReturn(['wss://relay3.openvine.co']);
+          .thenReturn(['wss://staging-relay.divine.video']);
       when(mockNostrService.hasKeys).thenReturn(true);
       when(mockNostrService.publicKey).thenReturn('test_pubkey');
       when(mockNostrService.connectedRelayCount).thenReturn(1);
