@@ -214,11 +214,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
       children: [
         // Tabs always visible
         Container(
-          color: VineTheme.vineGreen,
+          color: VineTheme.cardBackground,
           child: TabBar(
             controller: _tabController,
             indicatorColor: VineTheme.whiteText,
             indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
             labelColor: VineTheme.whiteText,
             unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
             labelStyle: const TextStyle(
@@ -571,7 +573,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 40,
+                height: 28,
                 child: Builder(
                   builder: (context) {
                     final hashtags = TopHashtagsService.instance.getTopHashtags(limit: 20);
@@ -603,17 +605,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
                           context.goHashtag(hashtag);
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12.8),
                           decoration: BoxDecoration(
-                            color: VineTheme.vineGreen,
+                            color: VineTheme.cardBackground,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
-                            '#$hashtag',
-                            style: const TextStyle(
-                              color: VineTheme.whiteText,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                          child: Center(
+                            child: Text(
+                              '#$hashtag',
+                              style: const TextStyle(
+                                color: VineTheme.vineGreen,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                height: 1.0,
+                              ),
                             ),
                           ),
                         ),

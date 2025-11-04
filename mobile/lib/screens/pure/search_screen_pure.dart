@@ -285,6 +285,8 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
     final tabBar = TabBar(
       controller: _tabController,
       indicatorColor: VineTheme.whiteText,
+      indicatorSize: TabBarIndicatorSize.tab,
+      dividerColor: Colors.transparent,
       labelColor: VineTheme.whiteText,
       unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
       tabs: [
@@ -308,12 +310,12 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
       return Column(
         children: [
           Container(
-            color: VineTheme.vineGreen,
+            color: VineTheme.cardBackground,
             padding: const EdgeInsets.all(8),
             child: searchBar,
           ),
           Container(
-            color: VineTheme.vineGreen,
+            color: VineTheme.cardBackground,
             child: tabBar,
           ),
           Expanded(child: tabContent),
@@ -325,7 +327,7 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
     return Scaffold(
       backgroundColor: VineTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: VineTheme.vineGreen,
+        backgroundColor: VineTheme.cardBackground,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: VineTheme.whiteText),
           onPressed: () => Navigator.of(context).pop(),

@@ -15,6 +15,7 @@ import 'package:openvine/utils/async_utils.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
+import 'package:openvine/theme/vine_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -117,7 +118,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
-          title: Text(widget.isNewUser ? 'Set Up Profile' : 'Update Profile'),
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading:
@@ -183,7 +183,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                                color: Colors.purple, width: 2),
+                                color: VineTheme.vineGreen, width: 2),
                           ),
                           prefixIcon:
                               const Icon(Icons.person, color: Colors.grey),
@@ -223,7 +223,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                                color: Colors.purple, width: 2),
+                                color: VineTheme.vineGreen, width: 2),
                           ),
                           prefixIcon: const Icon(Icons.info_outline,
                               color: Colors.grey),
@@ -260,7 +260,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                                color: Colors.purple, width: 2),
+                                color: VineTheme.vineGreen, width: 2),
                           ),
                           prefixIcon: const Icon(Icons.verified_user,
                               color: Colors.grey),
@@ -322,12 +322,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           child: Row(
                             children: [
                               const Icon(Icons.check_circle,
-                                  color: Colors.green, size: 16),
+                                  color: VineTheme.vineGreen, size: 16),
                               const SizedBox(width: 8),
                               Text(
                                 'Username available!',
                                 style: TextStyle(
-                                    color: Colors.green[400], fontSize: 12),
+                                    color: VineTheme.vineGreen, fontSize: 12),
                               ),
                             ],
                           ),
@@ -361,7 +361,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                       color: _selectedImage != null ||
                                               _uploadedImageUrl != null ||
                                               _pictureController.text.isNotEmpty
-                                          ? Colors.purple
+                                          ? VineTheme.vineGreen
                                           : Colors.grey[700]!,
                                       width: 2,
                                     ),
@@ -381,7 +381,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                       ),
                                       child: const Center(
                                         child: CircularProgressIndicator(
-                                          color: Colors.purple,
+                                          color: VineTheme.vineGreen,
                                           strokeWidth: 3,
                                         ),
                                       ),
@@ -482,7 +482,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                        color: Colors.purple, width: 2),
+                                        color: VineTheme.vineGreen, width: 2),
                                   ),
                                   prefixIcon: const Icon(Icons.link,
                                       color: Colors.grey),
@@ -547,7 +547,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                             child: ElevatedButton(
                               onPressed: _isPublishing ? null : _publishProfile,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple,
+                                backgroundColor: VineTheme.vineGreen,
                                 foregroundColor: Colors.white,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 16),
@@ -611,14 +611,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                             color: Colors.grey[900],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: Colors.purple.withValues(alpha: 0.3)),
+                                color: VineTheme.vineGreen.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Row(
                                 children: [
-                                  Icon(Icons.public, color: Colors.purple),
+                                  Icon(Icons.public, color: VineTheme.vineGreen),
                                   SizedBox(width: 8),
                                   Text(
                                     'Built on Nostr',
@@ -643,13 +643,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.purple.withValues(alpha: 0.1),
+                                  color: VineTheme.vineGreen.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   children: [
                                     const Icon(Icons.key,
-                                        color: Colors.purple, size: 20),
+                                        color: VineTheme.vineGreen, size: 20),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(

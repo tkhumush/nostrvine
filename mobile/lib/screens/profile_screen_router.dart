@@ -277,6 +277,8 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                             controller: _tabController,
                             indicatorColor: Colors.white,
                             indicatorWeight: 2,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            dividerColor: Colors.transparent,
                             labelColor: Colors.white,
                             unselectedLabelColor: Colors.grey,
                             tabs: const [
@@ -301,13 +303,61 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
               ],
             );
           },
-          onLoading: () => const Center(child: CircularProgressIndicator()),
+          onLoading: () => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                CircularProgressIndicator(color: VineTheme.vineGreen),
+                SizedBox(height: 24),
+                Text(
+                  'Loading profile...',
+                  style: TextStyle(
+                    color: VineTheme.primaryText,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'This may take a few moments',
+                  style: TextStyle(
+                    color: VineTheme.secondaryText,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
           onError: (error, stack) => Center(
             child: Text('Error: $error'),
           ),
         );
       },
-      onLoading: () => const Center(child: CircularProgressIndicator()),
+      onLoading: () => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            CircularProgressIndicator(color: VineTheme.vineGreen),
+            SizedBox(height: 24),
+            Text(
+              'Loading profile...',
+              style: TextStyle(
+                color: VineTheme.primaryText,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'This may take a few moments',
+              style: TextStyle(
+                color: VineTheme.secondaryText,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
       onError: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
@@ -724,7 +774,7 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                           : () => _followUser(userIdHex),
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            isFollowing ? Colors.grey[700] : Colors.purple,
+                            isFollowing ? Colors.grey[700] : VineTheme.vineGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(

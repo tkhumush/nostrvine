@@ -18,6 +18,7 @@ import 'package:openvine/router/page_context_provider.dart';
 import 'package:openvine/router/route_utils.dart';
 import 'package:openvine/screens/comments_screen.dart';
 import 'package:openvine/services/visibility_tracker.dart';
+import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/ui/overlay_policy.dart';
 import 'package:openvine/widgets/video_thumbnail_widget.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -398,7 +399,29 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem> {
                               child: SizedBox(
                                 width: value.size.width == 0 ? 1 : value.size.width,
                                 height: value.size.height == 0 ? 1 : value.size.height,
-                                child: VideoPlayer(controller),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    VideoPlayer(controller),
+                                    // Centered play button when paused
+                                    if (!value.isPlaying)
+                                      Center(
+                                        child: Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.6),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.play_arrow,
+                                            size: 56,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -428,6 +451,7 @@ class _VideoFeedItemState extends ConsumerState<VideoFeedItem> {
               VideoOverlayActions(
                 video: video,
                 isVisible: overlayVisible,
+                isActive: isActive,
                 hasBottomNavigation: widget.hasBottomNavigation,
                 contextTitle: widget.contextTitle,
               ),
@@ -465,12 +489,14 @@ class VideoOverlayActions extends ConsumerWidget {
     super.key,
     required this.video,
     required this.isVisible,
+    required this.isActive,
     this.hasBottomNavigation = true,
     this.contextTitle,
   });
 
   final VideoEvent video;
   final bool isVisible;
+  final bool isActive;
   final bool hasBottomNavigation;
   final String? contextTitle;
 
@@ -550,26 +576,45 @@ class VideoOverlayActions extends ConsumerWidget {
             ),
           ),
         ),
-        // Video title overlay at bottom left
+        // Gradient background for bottom section (metadata + action buttons)
         Positioned(
           bottom: 0,
-          left: 16,
-          right: 80, // Leave space for action buttons
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.9),
-                  Colors.black.withValues(alpha: 0.6),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.5, 1.0],
+          left: 0,
+          right: 0,
+          child: AnimatedOpacity(
+            opacity: isActive ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: hasBottomNavigation ? 80 : 16,
+                top: 100,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.9),
+                    Colors.black.withValues(alpha: 0.6),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
               ),
             ),
-            child: Column(
+          ),
+        ),
+        // Video title overlay at bottom left
+        Positioned(
+          bottom: hasBottomNavigation ? 80 : 16,
+          left: 16,
+          right: 80, // Leave space for action buttons
+          child: AnimatedOpacity(
+            opacity: isActive ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -580,6 +625,7 @@ class VideoOverlayActions extends ConsumerWidget {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    height: 1.3,
                     shadows: [
                       Shadow(
                         offset: Offset(0, 0),
@@ -594,10 +640,10 @@ class VideoOverlayActions extends ConsumerWidget {
                     ],
                   ),
                   hashtagStyle: TextStyle(
-                    color: Colors.blue[300],
+                    color: VineTheme.vineGreen,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
+                    height: 1.3,
                     shadows: const [
                       Shadow(
                         offset: Offset(0, 0),
@@ -611,7 +657,7 @@ class VideoOverlayActions extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
@@ -642,12 +688,16 @@ class VideoOverlayActions extends ConsumerWidget {
               ],
             ),
           ),
+          ),
         ),
         // Action buttons at bottom right
         Positioned(
-          bottom: 0,
+          bottom: hasBottomNavigation ? 80 : 16,
           right: 16,
-          child: IgnorePointer(
+          child: AnimatedOpacity(
+            opacity: isActive ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: IgnorePointer(
             ignoring: false, // Action buttons SHOULD receive taps
             child: Column(
               children: [
@@ -681,7 +731,7 @@ class VideoOverlayActions extends ConsumerWidget {
               ),
               // Show total like count: new likes + original Vine likes
               if (likeCount > 0 || (video.originalLikes != null && video.originalLikes! > 0)) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 0),
                 Text(
                   StringUtils.formatCompactNumber(likeCount + (video.originalLikes ?? 0)),
                   style: const TextStyle(
@@ -732,7 +782,7 @@ class VideoOverlayActions extends ConsumerWidget {
               ),
               // Show original comment count if available
               if (video.originalComments != null && video.originalComments! > 0) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 0),
                 Text(
                   StringUtils.formatCompactNumber(video.originalComments!),
                   style: const TextStyle(
@@ -759,27 +809,53 @@ class VideoOverlayActions extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
-          // Share button
-          IconButton(
-            onPressed: () {
-              Log.info(
-                '📤 Share button tapped for ${video.id}',
-                name: 'VideoFeedItem',
-                category: LogCategory.ui,
-              );
-              _showShareMenu(context, video);
-            },
-            icon: const Icon(
-              Icons.share_outlined,
-              color: Colors.white,
-              size: 32,
-            ),
+          // Share button with label
+          Column(
+            children: [
+              IconButton(
+                onPressed: () {
+                  Log.info(
+                    '📤 Share button tapped for ${video.id}',
+                    name: 'VideoFeedItem',
+                    category: LogCategory.ui,
+                  );
+                  _showShareMenu(context, video);
+                },
+                icon: const Icon(
+                  Icons.share_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 0),
+              const Text(
+                'Share',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(0, 0),
+                      blurRadius: 6,
+                      color: Colors.black,
+                    ),
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 3,
+                      color: Colors.black,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
 
           // Edit button (only show for owned videos when feature is enabled)
           _buildEditButton(context, ref, video),
               ],
             ),
+          ),
           ),
         ),
       ],

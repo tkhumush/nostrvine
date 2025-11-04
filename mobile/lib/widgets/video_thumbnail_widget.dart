@@ -185,7 +185,7 @@ class _VideoThumbnailWidgetState extends State<VideoThumbnailWidget> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
