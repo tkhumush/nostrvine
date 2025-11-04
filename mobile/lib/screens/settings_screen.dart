@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/screens/blossom_settings_screen.dart';
+import 'package:openvine/screens/key_management_screen.dart';
 import 'package:openvine/screens/notification_settings_screen.dart';
 import 'package:openvine/screens/profile_setup_screen.dart';
 import 'package:openvine/screens/relay_settings_screen.dart';
@@ -50,6 +51,18 @@ class SettingsScreen extends ConsumerWidget {
                 MaterialPageRoute(
                   builder: (context) =>
                       const ProfileSetupScreen(isNewUser: false),
+                ),
+              ),
+            ),
+            _buildSettingsTile(
+              context,
+              icon: Icons.key,
+              title: 'Key Management',
+              subtitle: 'Export, backup, and restore your Nostr keys',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const KeyManagementScreen(),
                 ),
               ),
             ),

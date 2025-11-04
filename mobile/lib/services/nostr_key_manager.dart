@@ -5,7 +5,9 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:nostr_sdk/client_utils/keys.dart';
+import 'package:openvine/services/nostr_service_interface.dart';
 import 'package:openvine/services/secure_key_storage_service.dart';
+import 'package:openvine/services/user_profile_service.dart';
 import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/unified_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +37,7 @@ class NostrKeyManager {
   Keychain? _keyPair;
   bool _isInitialized = false;
   String? _backupHash;
+  bool _hasBackupCached = false;
 
   NostrKeyManager() : _secureStorage = SecureKeyStorageService();
 
@@ -44,7 +47,7 @@ class NostrKeyManager {
   String? get publicKey => _keyPair?.public;
   String? get privateKey => _keyPair?.private;
   Keychain? get keyPair => _keyPair;
-  bool get hasBackup => _backupHash != null;
+  bool get hasBackup => _hasBackupCached;
 
   /// Initialize key manager and load existing keys
   Future<void> initialize() async {
@@ -80,6 +83,9 @@ class NostrKeyManager {
       // Load backup hash (still using SharedPreferences for non-sensitive metadata)
       final prefs = await SharedPreferences.getInstance();
       _backupHash = prefs.getString(_backupHashKey);
+
+      // Check if backup key exists in secure storage
+      _hasBackupCached = await _secureStorage.hasBackupKey();
 
       _isInitialized = true;
 
@@ -174,6 +180,130 @@ class NostrKeyManager {
     }
   }
 
+  /// Import key pair from private key with automatic profile fetching
+  /// This is a convenience method that imports the key and fetches the user's profile
+  Future<Keychain> importPrivateKeyWithServices(
+    String privateKey, {
+    INostrService? nostrService,
+    UserProfileService? profileService,
+  }) async {
+    // Import the key first
+    final keyPair = await importPrivateKey(privateKey);
+
+    // Attempt to fetch profile if services are available
+    await _fetchProfileAfterImport(
+      nostrService: nostrService,
+      profileService: profileService,
+    );
+
+    return keyPair;
+  }
+
+  /// Import nsec (bech32-encoded private key) with automatic profile fetching
+  Future<Keychain> importFromNsec(
+    String nsec, {
+    INostrService? nostrService,
+    UserProfileService? profileService,
+  }) async {
+    if (!_isInitialized) {
+      throw const NostrKeyException('Key manager not initialized');
+    }
+
+    try {
+      Log.debug('📱 Importing Nostr nsec key to secure storage...',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+
+      // Validate nsec format
+      if (!nsec.startsWith('nsec1')) {
+        throw const NostrKeyException('Invalid nsec format - must start with nsec1');
+      }
+
+      // Decode nsec to hex private key for validation
+      final privateKeyHex = NostrEncoding.decodePrivateKey(nsec);
+      if (!_isValidPrivateKey(privateKeyHex)) {
+        throw const NostrKeyException('Invalid private key derived from nsec');
+      }
+
+      // Import and store in secure storage
+      final secureContainer = await _secureStorage.importFromNsec(nsec);
+
+      // Keep a copy in memory for immediate use
+      _keyPair = Keychain(privateKeyHex);
+
+      // Clean up secure container
+      secureContainer.dispose();
+
+      Log.info('Nsec key imported successfully',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      Log.verbose('Public key: ${_keyPair!.public}',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+
+      // Attempt to fetch profile if services are available
+      await _fetchProfileAfterImport(
+        nostrService: nostrService,
+        profileService: profileService,
+      );
+
+      return _keyPair!;
+    } catch (e) {
+      Log.error('Failed to import nsec: $e',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      throw NostrKeyException('Failed to import nsec: $e');
+    }
+  }
+
+  /// Helper method to fetch user profile after successful key import
+  /// This is called automatically after importFromNsec() and importPrivateKeyWithServices()
+  Future<void> _fetchProfileAfterImport({
+    INostrService? nostrService,
+    UserProfileService? profileService,
+  }) async {
+    // Skip if no services provided
+    if (nostrService == null || profileService == null) {
+      Log.debug('Skipping profile fetch - services not provided',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      return;
+    }
+
+    // Skip if NostrService is not initialized
+    if (!nostrService.isInitialized) {
+      Log.debug('Skipping profile fetch - NostrService not initialized',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      return;
+    }
+
+    // Skip if we don't have keys (shouldn't happen, but be safe)
+    if (!hasKeys || publicKey == null) {
+      Log.warning('Skipping profile fetch - no public key available',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      return;
+    }
+
+    try {
+      Log.info('🔍 Fetching user profile for imported key: ${publicKey}...',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+
+      // Fetch profile (non-blocking - fire and forget)
+      // Use forceRefresh=false to use cached profile if available
+      final profile = await profileService.fetchProfile(
+        publicKey!,
+        forceRefresh: false,
+      );
+
+      if (profile != null) {
+        Log.info('✅ Profile fetched successfully: ${profile.bestDisplayName}',
+            name: 'NostrKeyManager', category: LogCategory.relay);
+      } else {
+        Log.info('ℹ️  No profile found for imported key (user may not have published one yet)',
+            name: 'NostrKeyManager', category: LogCategory.relay);
+      }
+    } catch (e) {
+      // Don't fail import if profile fetch fails
+      Log.warning('⚠️  Profile fetch failed (non-fatal): $e',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+    }
+  }
+
   /// Export private key for backup
   String exportPrivateKey() {
     if (!hasKeys) {
@@ -183,6 +313,130 @@ class NostrKeyManager {
     Log.debug('📱 Exporting private key for backup',
         name: 'NostrKeyManager', category: LogCategory.relay);
     return _keyPair!.private;
+  }
+
+  /// Export private key as nsec (bech32 format)
+  String exportAsNsec() {
+    if (!hasKeys) {
+      throw const NostrKeyException('No keys available for export');
+    }
+
+    Log.debug('📱 Exporting private key as nsec',
+        name: 'NostrKeyManager', category: LogCategory.relay);
+    return NostrEncoding.encodePrivateKey(_keyPair!.private);
+  }
+
+  /// Replace current key with new one, backing up the old key
+  Future<Map<String, dynamic>> replaceKeyWithBackup() async {
+    if (!hasKeys) {
+      throw const NostrKeyException('No keys available to backup');
+    }
+
+    Log.debug('📱 Replacing key with backup...',
+        name: 'NostrKeyManager', category: LogCategory.relay);
+
+    try {
+      // Save current keys info for return
+      final oldPrivateKey = _keyPair!.private;
+      final oldPublicKey = _keyPair!.public;
+      final backedUpAt = DateTime.now();
+
+      // Save old key as backup
+      await _secureStorage.saveBackupKey(oldPrivateKey);
+
+      // Update backup cache
+      _hasBackupCached = true;
+
+      // Generate new keypair
+      await generateKeys();
+
+      Log.info('Key replaced successfully, old key backed up',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+
+      return {
+        'oldPrivateKey': oldPrivateKey,
+        'oldPublicKey': oldPublicKey,
+        'backedUpAt': backedUpAt,
+      };
+    } catch (e) {
+      Log.error('Failed to replace key: $e',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      throw NostrKeyException('Failed to replace key: $e');
+    }
+  }
+
+  /// Restore backup key as active key
+  Future<void> restoreFromBackup() async {
+    if (!hasBackup) {
+      throw const NostrKeyException('No backup available to restore');
+    }
+
+    Log.debug('📱 Restoring backup key as active key...',
+        name: 'NostrKeyManager', category: LogCategory.relay);
+
+    try {
+      // Save current key as new backup (swap operation)
+      String? currentPrivateKey;
+      if (hasKeys) {
+        currentPrivateKey = _keyPair!.private;
+      }
+
+      // Get backup key
+      final backupContainer = await _secureStorage.getBackupKeyContainer();
+      if (backupContainer == null) {
+        throw const NostrKeyException('Backup key not found in storage');
+      }
+
+      // Extract private key from backup container and store/set as active
+      String? backupPrivateKey;
+      backupContainer.withPrivateKey((privateKeyHex) {
+        backupPrivateKey = privateKeyHex;
+        _keyPair = Keychain(privateKeyHex);
+      });
+
+      // Store the restored key as primary key
+      await _secureStorage.importFromHex(backupPrivateKey!);
+
+      // If there was a current key, save it as the new backup
+      if (currentPrivateKey != null) {
+        await _secureStorage.saveBackupKey(currentPrivateKey);
+        _hasBackupCached = true;
+      } else {
+        // No current key, so clear backup
+        _hasBackupCached = false;
+      }
+
+      backupContainer.dispose();
+
+      Log.info('Backup key restored as active key',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+    } catch (e) {
+      Log.error('Failed to restore backup: $e',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      throw NostrKeyException('Failed to restore backup: $e');
+    }
+  }
+
+  /// Clear backup key without affecting active key
+  Future<void> clearBackup() async {
+    Log.debug('📱 Clearing backup key...',
+        name: 'NostrKeyManager', category: LogCategory.relay);
+
+    try {
+      await _secureStorage.deleteBackupKey();
+      _hasBackupCached = false;
+
+      // Clear backup timestamp from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('backup_created_at');
+
+      Log.info('Backup key cleared',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+    } catch (e) {
+      Log.error('Failed to clear backup: $e',
+          name: 'NostrKeyManager', category: LogCategory.relay);
+      throw NostrKeyException('Failed to clear backup: $e');
+    }
   }
 
   /// Create mnemonic backup phrase (using private key as entropy)
@@ -286,6 +540,9 @@ class NostrKeyManager {
       // Clear from secure storage
       await _secureStorage.deleteKeys();
 
+      // Clear backup key as well
+      await _secureStorage.deleteBackupKey();
+
       // Clear legacy keys from SharedPreferences if they exist
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keyPairKey);
@@ -294,6 +551,7 @@ class NostrKeyManager {
 
       _keyPair = null;
       _backupHash = null;
+      _hasBackupCached = false;
 
       Log.info('Nostr keys cleared successfully',
           name: 'NostrKeyManager', category: LogCategory.relay);

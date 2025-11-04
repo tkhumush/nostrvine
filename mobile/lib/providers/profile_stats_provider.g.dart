@@ -68,7 +68,7 @@ final class FetchProfileStatsProvider
   }
 }
 
-String _$fetchProfileStatsHash() => r'e615cc21b01708e70ac70f2a10a77de3a883b856';
+String _$fetchProfileStatsHash() => r'6c648442190804746214a64f1d619f39c4a065cb';
 
 /// Async provider for loading profile statistics
 

@@ -1373,6 +1373,62 @@ class MockNostrKeyManager extends _i1.Mock implements _i2.NostrKeyManager {
           as _i5.Future<_i2.Keychain>);
 
   @override
+  _i5.Future<_i2.Keychain> importPrivateKeyWithServices(
+    String? privateKey, {
+    _i3.INostrService? nostrService,
+    _i16.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importPrivateKeyWithServices,
+              [privateKey],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i5.Future<_i2.Keychain>.value(
+              _FakeKeychain_2(
+                this,
+                Invocation.method(
+                  #importPrivateKeyWithServices,
+                  [privateKey],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i5.Future<_i2.Keychain>);
+
+  @override
+  _i5.Future<_i2.Keychain> importFromNsec(
+    String? nsec, {
+    _i3.INostrService? nostrService,
+    _i16.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importFromNsec,
+              [nsec],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i5.Future<_i2.Keychain>.value(
+              _FakeKeychain_2(
+                this,
+                Invocation.method(
+                  #importFromNsec,
+                  [nsec],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i5.Future<_i2.Keychain>);
+
+  @override
   String exportPrivateKey() =>
       (super.noSuchMethod(
             Invocation.method(#exportPrivateKey, []),
@@ -1382,6 +1438,45 @@ class MockNostrKeyManager extends _i1.Mock implements _i2.NostrKeyManager {
             ),
           )
           as String);
+
+  @override
+  String exportAsNsec() =>
+      (super.noSuchMethod(
+            Invocation.method(#exportAsNsec, []),
+            returnValue: _i6.dummyValue<String>(
+              this,
+              Invocation.method(#exportAsNsec, []),
+            ),
+          )
+          as String);
+
+  @override
+  _i5.Future<Map<String, dynamic>> replaceKeyWithBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#replaceKeyWithBackup, []),
+            returnValue: _i5.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i5.Future<Map<String, dynamic>>);
+
+  @override
+  _i5.Future<void> restoreFromBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreFromBackup, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearBackup, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 
   @override
   _i5.Future<List<String>> createMnemonicBackup() =>

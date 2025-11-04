@@ -4,7 +4,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/services/nostr_key_manager.dart';
 import 'package:openvine/services/nostr_service.dart';
-import 'package:openvine/services/fake_shared_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -12,11 +11,9 @@ void main() {
 
   group('NostrService Relay Persistence', () {
     late NostrKeyManager keyManager;
-    late FakeSharedPreferences fakePrefs;
 
     setUp(() async {
       keyManager = NostrKeyManager();
-      fakePrefs = FakeSharedPreferences();
       SharedPreferences.setMockInitialValues({});
     });
 

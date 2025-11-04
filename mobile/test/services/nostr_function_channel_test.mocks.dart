@@ -6,21 +6,23 @@
 import 'dart:async' as _i6;
 
 import 'package:flutter_embedded_nostr_relay/src/core/embedded_nostr_relay.dart'
-    as _i8;
+    as _i10;
 import 'package:flutter_embedded_nostr_relay/src/core/function_channel_relay.dart'
     as _i5;
-import 'package:flutter_embedded_nostr_relay/src/models/filter.dart' as _i12;
+import 'package:flutter_embedded_nostr_relay/src/models/filter.dart' as _i14;
 import 'package:flutter_embedded_nostr_relay/src/models/nostr_event.dart'
-    as _i9;
+    as _i11;
 import 'package:flutter_embedded_nostr_relay/src/models/relay_info.dart' as _i4;
 import 'package:flutter_embedded_nostr_relay/src/models/relay_message.dart'
-    as _i11;
+    as _i13;
 import 'package:flutter_embedded_nostr_relay/src/models/subscription.dart'
     as _i3;
-import 'package:logging/logging.dart' as _i10;
+import 'package:logging/logging.dart' as _i12;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:openvine/services/nostr_key_manager.dart' as _i2;
+import 'package:openvine/services/nostr_service_interface.dart' as _i7;
+import 'package:openvine/services/user_profile_service.dart' as _i8;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -113,15 +115,110 @@ class MockNostrKeyManager extends _i1.Mock implements _i2.NostrKeyManager {
           as _i6.Future<_i2.Keychain>);
 
   @override
+  _i6.Future<_i2.Keychain> importPrivateKeyWithServices(
+    String? privateKey, {
+    _i7.INostrService? nostrService,
+    _i8.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importPrivateKeyWithServices,
+              [privateKey],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i6.Future<_i2.Keychain>.value(
+              _FakeKeychain_0(
+                this,
+                Invocation.method(
+                  #importPrivateKeyWithServices,
+                  [privateKey],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i6.Future<_i2.Keychain>);
+
+  @override
+  _i6.Future<_i2.Keychain> importFromNsec(
+    String? nsec, {
+    _i7.INostrService? nostrService,
+    _i8.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importFromNsec,
+              [nsec],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i6.Future<_i2.Keychain>.value(
+              _FakeKeychain_0(
+                this,
+                Invocation.method(
+                  #importFromNsec,
+                  [nsec],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i6.Future<_i2.Keychain>);
+
+  @override
   String exportPrivateKey() =>
       (super.noSuchMethod(
             Invocation.method(#exportPrivateKey, []),
-            returnValue: _i7.dummyValue<String>(
+            returnValue: _i9.dummyValue<String>(
               this,
               Invocation.method(#exportPrivateKey, []),
             ),
           )
           as String);
+
+  @override
+  String exportAsNsec() =>
+      (super.noSuchMethod(
+            Invocation.method(#exportAsNsec, []),
+            returnValue: _i9.dummyValue<String>(
+              this,
+              Invocation.method(#exportAsNsec, []),
+            ),
+          )
+          as String);
+
+  @override
+  _i6.Future<Map<String, dynamic>> replaceKeyWithBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#replaceKeyWithBackup, []),
+            returnValue: _i6.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i6.Future<Map<String, dynamic>>);
+
+  @override
+  _i6.Future<void> restoreFromBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreFromBackup, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> clearBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearBackup, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
 
   @override
   _i6.Future<List<String>> createMnemonicBackup() =>
@@ -174,7 +271,7 @@ class MockNostrKeyManager extends _i1.Mock implements _i2.NostrKeyManager {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockEmbeddedNostrRelay extends _i1.Mock
-    implements _i8.EmbeddedNostrRelay {
+    implements _i10.EmbeddedNostrRelay {
   MockEmbeddedNostrRelay() {
     _i1.throwOnMissingStub(this);
   }
@@ -185,12 +282,12 @@ class MockEmbeddedNostrRelay extends _i1.Mock
           as bool);
 
   @override
-  _i6.Stream<_i9.NostrEvent> get eventStream =>
+  _i6.Stream<_i11.NostrEvent> get eventStream =>
       (super.noSuchMethod(
             Invocation.getter(#eventStream),
-            returnValue: _i6.Stream<_i9.NostrEvent>.empty(),
+            returnValue: _i6.Stream<_i11.NostrEvent>.empty(),
           )
-          as _i6.Stream<_i9.NostrEvent>);
+          as _i6.Stream<_i11.NostrEvent>);
 
   @override
   List<String> get connectedRelays =>
@@ -202,7 +299,7 @@ class MockEmbeddedNostrRelay extends _i1.Mock
 
   @override
   _i6.Future<void> initialize({
-    _i10.Level? logLevel = _i10.Level.INFO,
+    _i12.Level? logLevel = _i12.Level.INFO,
     bool? enableGarbageCollection = true,
     bool? useFunctionChannel = true,
   }) =>
@@ -220,7 +317,7 @@ class MockEmbeddedNostrRelay extends _i1.Mock
   @override
   _i6.Future<_i3.Subscription> handleReq(
     String? clientId,
-    _i11.ReqMessage? reqMessage,
+    _i13.ReqMessage? reqMessage,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#handleReq, [clientId, reqMessage]),
@@ -236,7 +333,7 @@ class MockEmbeddedNostrRelay extends _i1.Mock
   @override
   _i6.Future<bool> handleClose(
     String? clientId,
-    _i11.CloseMessage? closeMessage,
+    _i13.CloseMessage? closeMessage,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#handleClose, [clientId, closeMessage]),
@@ -255,8 +352,8 @@ class MockEmbeddedNostrRelay extends _i1.Mock
 
   @override
   _i3.Subscription subscribe({
-    required List<_i12.Filter>? filters,
-    dynamic Function(_i9.NostrEvent)? onEvent,
+    required List<_i14.Filter>? filters,
+    dynamic Function(_i11.NostrEvent)? onEvent,
     dynamic Function()? onEose,
     dynamic Function(String)? onError,
     String? subscriptionId,
@@ -292,7 +389,7 @@ class MockEmbeddedNostrRelay extends _i1.Mock
           as _i6.Future<void>);
 
   @override
-  _i6.Future<bool> publish(_i9.NostrEvent? event) =>
+  _i6.Future<bool> publish(_i11.NostrEvent? event) =>
       (super.noSuchMethod(
             Invocation.method(#publish, [event]),
             returnValue: _i6.Future<bool>.value(false),
@@ -300,22 +397,22 @@ class MockEmbeddedNostrRelay extends _i1.Mock
           as _i6.Future<bool>);
 
   @override
-  _i6.Future<List<_i9.NostrEvent>> queryEvents(List<_i12.Filter>? filters) =>
+  _i6.Future<List<_i11.NostrEvent>> queryEvents(List<_i14.Filter>? filters) =>
       (super.noSuchMethod(
             Invocation.method(#queryEvents, [filters]),
-            returnValue: _i6.Future<List<_i9.NostrEvent>>.value(
-              <_i9.NostrEvent>[],
+            returnValue: _i6.Future<List<_i11.NostrEvent>>.value(
+              <_i11.NostrEvent>[],
             ),
           )
-          as _i6.Future<List<_i9.NostrEvent>>);
+          as _i6.Future<List<_i11.NostrEvent>>);
 
   @override
-  _i6.Future<_i9.NostrEvent?> getEvent(String? id) =>
+  _i6.Future<_i11.NostrEvent?> getEvent(String? id) =>
       (super.noSuchMethod(
             Invocation.method(#getEvent, [id]),
-            returnValue: _i6.Future<_i9.NostrEvent?>.value(),
+            returnValue: _i6.Future<_i11.NostrEvent?>.value(),
           )
-          as _i6.Future<_i9.NostrEvent?>);
+          as _i6.Future<_i11.NostrEvent?>);
 
   @override
   _i6.Future<void> deleteEvents(List<String>? eventIds) =>
@@ -366,9 +463,9 @@ class MockEmbeddedNostrRelay extends _i1.Mock
 
   @override
   _i6.Future<void> enableP2PSync({
-    required List<_i8.TransportType>? transports,
-    dynamic Function(_i8.Peer)? onPeerDiscovered,
-    dynamic Function(_i8.Peer)? onPeerLost,
+    required List<_i10.TransportType>? transports,
+    dynamic Function(_i10.Peer)? onPeerDiscovered,
+    dynamic Function(_i10.Peer)? onPeerLost,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#enableP2PSync, [], {

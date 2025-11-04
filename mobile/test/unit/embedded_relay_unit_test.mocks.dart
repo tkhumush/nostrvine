@@ -6,8 +6,10 @@
 import 'dart:async' as _i3;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i4;
+import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:openvine/services/nostr_key_manager.dart' as _i2;
+import 'package:openvine/services/nostr_service_interface.dart' as _i4;
+import 'package:openvine/services/user_profile_service.dart' as _i5;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -84,15 +86,110 @@ class MockNostrKeyManager extends _i1.Mock implements _i2.NostrKeyManager {
           as _i3.Future<_i2.Keychain>);
 
   @override
+  _i3.Future<_i2.Keychain> importPrivateKeyWithServices(
+    String? privateKey, {
+    _i4.INostrService? nostrService,
+    _i5.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importPrivateKeyWithServices,
+              [privateKey],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i3.Future<_i2.Keychain>.value(
+              _FakeKeychain_0(
+                this,
+                Invocation.method(
+                  #importPrivateKeyWithServices,
+                  [privateKey],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i3.Future<_i2.Keychain>);
+
+  @override
+  _i3.Future<_i2.Keychain> importFromNsec(
+    String? nsec, {
+    _i4.INostrService? nostrService,
+    _i5.UserProfileService? profileService,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #importFromNsec,
+              [nsec],
+              {#nostrService: nostrService, #profileService: profileService},
+            ),
+            returnValue: _i3.Future<_i2.Keychain>.value(
+              _FakeKeychain_0(
+                this,
+                Invocation.method(
+                  #importFromNsec,
+                  [nsec],
+                  {
+                    #nostrService: nostrService,
+                    #profileService: profileService,
+                  },
+                ),
+              ),
+            ),
+          )
+          as _i3.Future<_i2.Keychain>);
+
+  @override
   String exportPrivateKey() =>
       (super.noSuchMethod(
             Invocation.method(#exportPrivateKey, []),
-            returnValue: _i4.dummyValue<String>(
+            returnValue: _i6.dummyValue<String>(
               this,
               Invocation.method(#exportPrivateKey, []),
             ),
           )
           as String);
+
+  @override
+  String exportAsNsec() =>
+      (super.noSuchMethod(
+            Invocation.method(#exportAsNsec, []),
+            returnValue: _i6.dummyValue<String>(
+              this,
+              Invocation.method(#exportAsNsec, []),
+            ),
+          )
+          as String);
+
+  @override
+  _i3.Future<Map<String, dynamic>> replaceKeyWithBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#replaceKeyWithBackup, []),
+            returnValue: _i3.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i3.Future<Map<String, dynamic>>);
+
+  @override
+  _i3.Future<void> restoreFromBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreFromBackup, []),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> clearBackup() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearBackup, []),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
 
   @override
   _i3.Future<List<String>> createMnemonicBackup() =>

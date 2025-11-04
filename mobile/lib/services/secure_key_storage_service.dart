@@ -10,6 +10,7 @@ import 'package:openvine/services/platform_secure_storage.dart';
 import 'package:openvine/utils/nostr_encoding.dart';
 import 'package:openvine/utils/secure_key_container.dart';
 import 'package:openvine/utils/unified_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Exception thrown by secure key storage operations
 /// REFACTORED: Removed ChangeNotifier - now uses pure state management via Riverpod
@@ -470,6 +471,108 @@ class SecureKeyStorageService {
           name: 'SecureKeyStorageService', category: LogCategory.auth);
     } catch (e) {
       throw SecureKeyStorageException('Failed to delete keys: $e');
+    }
+  }
+
+  // =============================================================================
+  // Backup Key Management
+  // =============================================================================
+
+  static const String _backupKeyId = 'nostr_backup_key';
+  static const String _backupTimestampKey = 'backup_created_at';
+
+  /// Check if backup key exists
+  Future<bool> hasBackupKey() async {
+    await _ensureInitialized();
+    try {
+      return await _platformStorage.hasKey(_backupKeyId);
+    } catch (e) {
+      Log.error('Failed to check backup key: $e',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return false;
+    }
+  }
+
+  /// Store backup key
+  Future<void> saveBackupKey(String privateKeyHex) async {
+    await _ensureInitialized();
+
+    Log.debug('📱 Saving backup key to secure storage',
+        name: 'SecureKeyStorageService', category: LogCategory.auth);
+
+    try {
+      // Create secure container for backup key
+      final backupContainer = SecureKeyContainer.fromPrivateKeyHex(privateKeyHex);
+
+      // Store backup key
+      final result = await _platformStorage.storeKey(
+        keyId: _backupKeyId,
+        keyContainer: backupContainer,
+        requireBiometrics: _securityConfig.requireBiometrics,
+        requireHardwareBacked: _securityConfig.requireHardwareBacked,
+      );
+
+      if (!result.success) {
+        backupContainer.dispose();
+        throw SecureKeyStorageException('Failed to store backup key: ${result.error}');
+      }
+
+      // Store backup timestamp in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_backupTimestampKey, DateTime.now().toIso8601String());
+
+      backupContainer.dispose();
+
+      Log.info('Backup key stored successfully',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+    } catch (e) {
+      throw SecureKeyStorageException('Failed to save backup key: $e');
+    }
+  }
+
+  /// Get backup key container
+  Future<SecureKeyContainer?> getBackupKeyContainer() async {
+    await _ensureInitialized();
+
+    try {
+      final keyContainer = await _platformStorage.retrieveKey(
+        keyId: _backupKeyId,
+      );
+
+      if (keyContainer == null) {
+        Log.debug('No backup key found in storage',
+            name: 'SecureKeyStorageService', category: LogCategory.auth);
+        return null;
+      }
+
+      Log.debug('Retrieved backup key from secure storage',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return keyContainer;
+    } catch (e) {
+      Log.error('Failed to retrieve backup key: $e',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+      return null;
+    }
+  }
+
+  /// Delete backup key
+  Future<void> deleteBackupKey() async {
+    await _ensureInitialized();
+
+    Log.debug('📱 Deleting backup key',
+        name: 'SecureKeyStorageService', category: LogCategory.auth);
+
+    try {
+      await _platformStorage.deleteKey(keyId: _backupKeyId);
+
+      // Clear backup timestamp
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_backupTimestampKey);
+
+      Log.info('Backup key deleted',
+          name: 'SecureKeyStorageService', category: LogCategory.auth);
+    } catch (e) {
+      throw SecureKeyStorageException('Failed to delete backup key: $e');
     }
   }
 
