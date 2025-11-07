@@ -1723,7 +1723,8 @@ class VideoEventService extends ChangeNotifier {
         subscriptionType: SubscriptionType.hashtag,
         hashtags: hashtags,
         limit: limit,
-        sortBy: VideoSortField.loopCount, // Sort by most looped videos
+        // REMOVED sortBy - client-side sorting is sufficient for hashtags
+        // Server-side sorting may not work reliably with hashtag filters
       );
 
   /// Subscribe to home feed videos (from people you follow)
