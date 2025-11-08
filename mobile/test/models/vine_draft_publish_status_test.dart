@@ -4,6 +4,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:openvine/models/vine_draft.dart';
+import 'package:openvine/models/aspect_ratio.dart';
 
 void main() {
   group('VineDraft PublishStatus', () {
@@ -22,6 +23,7 @@ void main() {
         publishStatus: PublishStatus.draft,
         publishError: null,
         publishAttempts: 0,
+        aspectRatio: AspectRatio.square,
       );
 
       final json = draft.toJson();
@@ -49,6 +51,7 @@ void main() {
           publishStatus: status,
           publishError: null,
           publishAttempts: 0,
+          aspectRatio: AspectRatio.square,
         );
 
         final json = draft.toJson();
@@ -94,6 +97,7 @@ void main() {
         publishStatus: PublishStatus.failed,
         publishError: 'Network error',
         publishAttempts: 2,
+        aspectRatio: AspectRatio.square,
       );
 
       final json = draft.toJson();
@@ -122,6 +126,7 @@ void main() {
         publishStatus: PublishStatus.draft,
         publishError: null,
         publishAttempts: 0,
+        aspectRatio: AspectRatio.square,
       );
 
       final publishing = draft.copyWith(publishStatus: PublishStatus.publishing);
@@ -144,6 +149,7 @@ void main() {
         publishStatus: PublishStatus.draft,
         publishError: null,
         publishAttempts: 0,
+        aspectRatio: AspectRatio.square,
       );
 
       final failed = draft.copyWith(
@@ -172,6 +178,7 @@ void main() {
         publishStatus: PublishStatus.failed,
         publishError: 'Previous error',
         publishAttempts: 1,
+        aspectRatio: AspectRatio.square,
       );
 
       // Explicitly set publishError to null
