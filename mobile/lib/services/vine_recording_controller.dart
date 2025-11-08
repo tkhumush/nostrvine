@@ -1416,8 +1416,16 @@ class VineRecordingController {
     return digest.toString();
   }
 
-  /// Get the recorded video path from macOS single recording mode
-  /// Tries multiple sources in priority order
+  /// Get the recorded video path from macOS single recording mode.
+  ///
+  /// Refactored helper method that consolidates path discovery logic.
+  /// Tries multiple sources in priority order:
+  /// 1. Active recording completion (if still recording)
+  /// 2. Current recording path (if already completed)
+  /// 3. Virtual segments fallback (legacy path)
+  ///
+  /// Returns null if no valid recording is found.
+  /// Throws exception if path discovery fails unexpectedly.
   Future<String?> _getMacOSRecordingPath(MacOSCameraInterface macOSInterface) async {
     // Try 1: If recording is still active, complete it first
     if (macOSInterface.isRecording) {
@@ -1456,7 +1464,15 @@ class VineRecordingController {
     return null;
   }
 
-  /// Apply aspect ratio crop filter to a video file using FFmpeg
+  /// Apply aspect ratio crop filter to a video file using FFmpeg.
+  ///
+  /// Refactored helper method that consolidates FFmpeg cropping logic.
+  /// Uses the current aspect ratio setting (_aspectRatio) to:
+  /// - Square (1:1): Crop to minimum dimension, centered
+  /// - Vertical (9:16): Crop to 9:16 ratio, centered
+  ///
+  /// Returns a new cropped File in the temporary directory.
+  /// Throws Exception if FFmpeg processing fails or output file doesn't exist.
   Future<File> _applyAspectRatioCrop(String inputPath) async {
     Log.info('📹 Applying aspect ratio crop to video',
         name: 'VineRecordingController', category: LogCategory.system);
