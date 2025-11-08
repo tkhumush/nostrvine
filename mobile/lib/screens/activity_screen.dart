@@ -466,7 +466,7 @@ class _FollowingItem extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  profile?.displayName ?? 'Unknown User',
+                  profile?.bestDisplayName ?? 'Unknown User',
                   style: const TextStyle(
                     color: VineTheme.whiteText,
                     fontWeight: FontWeight.bold,

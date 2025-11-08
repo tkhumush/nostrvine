@@ -265,7 +265,7 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                     index: index,  // Use list index for active video detection
                     hasBottomNavigation: false, // Fullscreen mode, no bottom nav
                     forceShowOverlay: isOwnProfile, // Show overlay controls on own profile
-                    contextTitle: ref.read(fetchUserProfileProvider(userIdHex)).value?.displayName ?? 'Profile',
+                    contextTitle: ref.read(fetchUserProfileProvider(userIdHex)).value?.bestDisplayName ?? 'Profile',
                   );
                 },
               );
@@ -407,10 +407,9 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
     final profile = profileAsync.value;
 
     final profilePictureUrl = profile?.picture;
-    final displayName = profile?.displayName;
-    final hasCustomName = displayName != null &&
-        !displayName.startsWith('npub1') &&
-        displayName != 'Loading user information';
+    final displayName = profile?.bestDisplayName ?? 'Loading user information';
+    final hasCustomName = profile?.name?.isNotEmpty == true ||
+        profile?.displayName?.isNotEmpty == true;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -551,7 +550,7 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                 Row(
                   children: [
                     SelectableText(
-                      displayName ?? 'Loading user information',
+                      displayName,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -1148,7 +1147,7 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
     try {
       // Get profile info for better share text
       final profile = await ref.read(userProfileServiceProvider).fetchProfile(userIdHex);
-      final displayName = profile?.displayName ?? 'User';
+      final displayName = profile?.bestDisplayName ?? 'User';
 
       // Convert hex pubkey to npub format for sharing
       final npub = NostrEncoding.encodePublicKey(userIdHex);

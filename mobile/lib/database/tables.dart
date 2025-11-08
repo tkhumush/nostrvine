@@ -52,3 +52,32 @@ class UserProfiles extends Table {
   @override
   Set<Column> get primaryKey => {pubkey};
 }
+
+/// Denormalized cache of video engagement metrics extracted from video event tags
+///
+/// Metrics are parsed from video events (kind 34236, etc.) and stored here for fast sorted queries.
+/// This avoids having to parse JSON tags for every sort/filter operation.
+@DataClassName('VideoMetricRow')
+class VideoMetrics extends Table {
+  @override
+  String get tableName => 'video_metrics';
+
+  TextColumn get eventId => text().named('event_id')();
+  IntColumn get loopCount => integer().nullable().named('loop_count')();
+  IntColumn get likes => integer().nullable()();
+  IntColumn get views => integer().nullable()();
+  IntColumn get comments => integer().nullable()();
+  RealColumn get avgCompletion => real().nullable().named('avg_completion')();
+  IntColumn get hasProofmode => integer().nullable().named('has_proofmode')();
+  IntColumn get hasDeviceAttestation => integer().nullable().named('has_device_attestation')();
+  IntColumn get hasPgpSignature => integer().nullable().named('has_pgp_signature')();
+  DateTimeColumn get updatedAt => dateTime().named('updated_at')();
+
+  @override
+  Set<Column> get primaryKey => {eventId};
+
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE'
+  ];
+}

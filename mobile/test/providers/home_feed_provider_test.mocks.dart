@@ -255,6 +255,7 @@ class MockVideoEventService extends _i1.Mock implements _i4.VideoEventService {
     bool? replace = true,
     bool? includeReposts = false,
     _i9.VideoSortField? sortBy,
+    bool? force = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#subscribeToVideoFeed, [], {
@@ -268,6 +269,7 @@ class MockVideoEventService extends _i1.Mock implements _i4.VideoEventService {
               #replace: replace,
               #includeReposts: includeReposts,
               #sortBy: sortBy,
+              #force: force,
             }),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
@@ -308,12 +310,13 @@ class MockVideoEventService extends _i1.Mock implements _i4.VideoEventService {
   _i8.Future<void> subscribeToHashtagVideos(
     List<String>? hashtags, {
     int? limit = 100,
+    bool? force = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #subscribeToHashtagVideos,
               [hashtags],
-              {#limit: limit},
+              {#limit: limit, #force: force},
             ),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
@@ -325,12 +328,13 @@ class MockVideoEventService extends _i1.Mock implements _i4.VideoEventService {
     List<String>? followingPubkeys, {
     int? limit = 100,
     _i9.VideoSortField? sortBy,
+    bool? force = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #subscribeToHomeFeed,
               [followingPubkeys],
-              {#limit: limit, #sortBy: sortBy},
+              {#limit: limit, #sortBy: sortBy, #force: force},
             ),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
@@ -341,11 +345,13 @@ class MockVideoEventService extends _i1.Mock implements _i4.VideoEventService {
   _i8.Future<void> subscribeToDiscovery({
     int? limit = 100,
     _i9.VideoSortField? sortBy,
+    bool? force = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#subscribeToDiscovery, [], {
               #limit: limit,
               #sortBy: sortBy,
+              #force: force,
             }),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),

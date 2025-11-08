@@ -62,21 +62,14 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.video_library,
-                    color: Colors.white,
-                    size: 40,
+                  // diVine wordmark logo
+                  Image.asset(
+                    'assets/icon/White on black.png',
+                    height: 50,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.centerLeft,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'OpenVine',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   Text(
                     'Version $_appVersion',
                     style: const TextStyle(

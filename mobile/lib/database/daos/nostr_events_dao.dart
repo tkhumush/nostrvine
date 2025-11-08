@@ -9,7 +9,7 @@ import 'package:openvine/database/tables.dart';
 
 part 'nostr_events_dao.g.dart';
 
-@DriftAccessor(tables: [NostrEvents])
+@DriftAccessor(tables: [NostrEvents, VideoMetrics])
 class NostrEventsDao extends DatabaseAccessor<AppDatabase>
     with _$NostrEventsDaoMixin {
   NostrEventsDao(AppDatabase db) : super(db);
@@ -18,6 +18,9 @@ class NostrEventsDao extends DatabaseAccessor<AppDatabase>
   ///
   /// Uses INSERT OR REPLACE for upsert behavior - if event with same ID exists,
   /// it will be replaced with the new data.
+  ///
+  /// For video events (kind 34236 or 6), also upserts video metrics to the
+  /// video_metrics table for fast sorted queries.
   Future<void> upsertEvent(Event event) async {
     await customInsert(
       'INSERT OR REPLACE INTO event (id, pubkey, created_at, kind, tags, content, sig, sources) '
@@ -33,6 +36,11 @@ class NostrEventsDao extends DatabaseAccessor<AppDatabase>
         const Variable(null), // sources - not used yet
       ],
     );
+
+    // Also upsert video metrics for video events
+    if (event.kind == 34236 || event.kind == 6) {
+      await db.videoMetricsDao.upsertVideoMetrics(event);
+    }
   }
 
   /// Get event by ID (one-time fetch)
@@ -130,6 +138,7 @@ class NostrEventsDao extends DatabaseAccessor<AppDatabase>
   /// - since: Minimum created_at timestamp (Unix seconds)
   /// - until: Maximum created_at timestamp (Unix seconds)
   /// - limit: Maximum number of events to return
+  /// - sortBy: Field to sort by (loop_count, likes, views, created_at). Defaults to created_at DESC.
   ///
   /// Used by cache-first query strategy to return instant results before relay query.
   Future<List<Event>> getVideoEventsByFilter({
@@ -139,6 +148,7 @@ class NostrEventsDao extends DatabaseAccessor<AppDatabase>
     int? since,
     int? until,
     int limit = 100,
+    String? sortBy,
   }) async {
     // Build dynamic SQL query based on provided filters
     final conditions = <String>[];
@@ -186,16 +196,59 @@ class NostrEventsDao extends DatabaseAccessor<AppDatabase>
       variables.add(Variable.withInt(until));
     }
 
-    // Build final query
+    // Build final query with optional video_metrics join for sorting
     final whereClause = conditions.join(' AND ');
-    final sql =
-        'SELECT * FROM event WHERE $whereClause ORDER BY created_at DESC LIMIT ?';
+
+    // Determine ORDER BY clause and whether we need to join video_metrics
+    String orderByClause;
+    bool needsMetricsJoin = false;
+
+    if (sortBy != null && sortBy != 'created_at') {
+      // Server-side sorting by engagement metrics requires join with video_metrics
+      needsMetricsJoin = true;
+
+      // Map sort field names to column names
+      final sortColumn = {
+        'loop_count': 'loop_count',
+        'likes': 'likes',
+        'views': 'views',
+        'comments': 'comments',
+        'avg_completion': 'avg_completion',
+      }[sortBy] ?? 'loop_count';
+
+      // COALESCE to handle null metrics (treat as 0) and sort DESC
+      orderByClause = 'COALESCE(m.$sortColumn, 0) DESC, e.created_at DESC';
+    } else {
+      // Default: sort by created_at DESC
+      orderByClause = 'e.created_at DESC';
+    }
+
+    final String sql;
+    if (needsMetricsJoin) {
+      // Join with video_metrics for sorted queries
+      sql = '''
+        SELECT e.* FROM event e
+        LEFT JOIN video_metrics m ON e.id = m.event_id
+        WHERE $whereClause
+        ORDER BY $orderByClause
+        LIMIT ?
+      ''';
+    } else {
+      // Simple query without join
+      sql = '''
+        SELECT * FROM event e
+        WHERE $whereClause
+        ORDER BY $orderByClause
+        LIMIT ?
+      ''';
+    }
+
     variables.add(Variable.withInt(limit));
 
     final rows = await customSelect(
       sql,
       variables: variables,
-      readsFrom: {nostrEvents},
+      readsFrom: needsMetricsJoin ? {nostrEvents, videoMetrics} : {nostrEvents},
     ).get();
 
     return rows.map(_rowToEvent).toList();

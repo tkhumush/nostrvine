@@ -423,6 +423,7 @@ class VideoEventService extends ChangeNotifier {
     int? since,
     int? until,
     int limit = 100,
+    VideoSortField? sortBy,
   }) async {
     // Skip if EventRouter not available (backward compatibility)
     if (_eventRouter == null) {
@@ -437,6 +438,7 @@ class VideoEventService extends ChangeNotifier {
         since: since,
         until: until,
         limit: limit,
+        sortBy: sortBy?.fieldName,
       );
 
       if (cachedEvents.isNotEmpty) {
@@ -615,10 +617,25 @@ class VideoEventService extends ChangeNotifier {
             relayUrl: AppConstants.defaultRelayUrl,
             sortBy: sortBy,
           );
-          Log.debug(
-              'Requested server-side sorting by ${sortBy.fieldName}',
+          Log.info(
+              '🎯 SORT DEBUG: Requested server-side sorting by ${sortBy.fieldName}',
               name: 'VideoEventService',
               category: LogCategory.video);
+          Log.info(
+              '🎯 SORT DEBUG: Filter type is ${videoFilter.runtimeType}',
+              name: 'VideoEventService',
+              category: LogCategory.video);
+          final filterJson = videoFilter.toJson();
+          Log.info(
+              '🎯 SORT DEBUG: Filter JSON contains "sort" key: ${filterJson.containsKey("sort")}',
+              name: 'VideoEventService',
+              category: LogCategory.video);
+          if (filterJson.containsKey("sort")) {
+            Log.info(
+                '🎯 SORT DEBUG: Sort config: ${filterJson["sort"]}',
+                name: 'VideoEventService',
+                category: LogCategory.video);
+          }
         } catch (e) {
           Log.warning(
               'Failed to build sorted filter: $e. Using standard filter.',
@@ -827,6 +844,7 @@ class VideoEventService extends ChangeNotifier {
           since: effectiveSince,
           until: effectiveUntil,
           limit: limit,
+          sortBy: sortBy,
         );
 
         // Process cached events immediately (same flow as relay events)
@@ -1183,6 +1201,15 @@ class VideoEventService extends ChangeNotifier {
             name: 'VideoEventService', category: LogCategory.video);
         try {
           final videoEvent = VideoEvent.fromNostrEvent(event);
+
+          // 🎯 SORT DEBUG: Log loop count for discovery subscriptions
+          if (subscriptionType == SubscriptionType.discovery) {
+            Log.info(
+                '🎯 SORT DEBUG: Received discovery video with ${videoEvent.originalLoops ?? 0} loops (id: ${event.id})',
+                name: 'VideoEventService',
+                category: LogCategory.video);
+          }
+
           Log.verbose(
               'Parsed direct video: hasVideo=${videoEvent.hasVideo}, videoUrl=${videoEvent.videoUrl}',
               name: 'VideoEventService',

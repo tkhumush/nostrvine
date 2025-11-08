@@ -1309,15 +1309,664 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfileRow> {
   }
 }
 
+class $VideoMetricsTable extends VideoMetrics
+    with TableInfo<$VideoMetricsTable, VideoMetricRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VideoMetricsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _eventIdMeta = const VerificationMeta(
+    'eventId',
+  );
+  @override
+  late final GeneratedColumn<String> eventId = GeneratedColumn<String>(
+    'event_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _loopCountMeta = const VerificationMeta(
+    'loopCount',
+  );
+  @override
+  late final GeneratedColumn<int> loopCount = GeneratedColumn<int>(
+    'loop_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _likesMeta = const VerificationMeta('likes');
+  @override
+  late final GeneratedColumn<int> likes = GeneratedColumn<int>(
+    'likes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _viewsMeta = const VerificationMeta('views');
+  @override
+  late final GeneratedColumn<int> views = GeneratedColumn<int>(
+    'views',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _commentsMeta = const VerificationMeta(
+    'comments',
+  );
+  @override
+  late final GeneratedColumn<int> comments = GeneratedColumn<int>(
+    'comments',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avgCompletionMeta = const VerificationMeta(
+    'avgCompletion',
+  );
+  @override
+  late final GeneratedColumn<double> avgCompletion = GeneratedColumn<double>(
+    'avg_completion',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasProofmodeMeta = const VerificationMeta(
+    'hasProofmode',
+  );
+  @override
+  late final GeneratedColumn<int> hasProofmode = GeneratedColumn<int>(
+    'has_proofmode',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasDeviceAttestationMeta =
+      const VerificationMeta('hasDeviceAttestation');
+  @override
+  late final GeneratedColumn<int> hasDeviceAttestation = GeneratedColumn<int>(
+    'has_device_attestation',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasPgpSignatureMeta = const VerificationMeta(
+    'hasPgpSignature',
+  );
+  @override
+  late final GeneratedColumn<int> hasPgpSignature = GeneratedColumn<int>(
+    'has_pgp_signature',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    eventId,
+    loopCount,
+    likes,
+    views,
+    comments,
+    avgCompletion,
+    hasProofmode,
+    hasDeviceAttestation,
+    hasPgpSignature,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'video_metrics';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VideoMetricRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('event_id')) {
+      context.handle(
+        _eventIdMeta,
+        eventId.isAcceptableOrUnknown(data['event_id']!, _eventIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventIdMeta);
+    }
+    if (data.containsKey('loop_count')) {
+      context.handle(
+        _loopCountMeta,
+        loopCount.isAcceptableOrUnknown(data['loop_count']!, _loopCountMeta),
+      );
+    }
+    if (data.containsKey('likes')) {
+      context.handle(
+        _likesMeta,
+        likes.isAcceptableOrUnknown(data['likes']!, _likesMeta),
+      );
+    }
+    if (data.containsKey('views')) {
+      context.handle(
+        _viewsMeta,
+        views.isAcceptableOrUnknown(data['views']!, _viewsMeta),
+      );
+    }
+    if (data.containsKey('comments')) {
+      context.handle(
+        _commentsMeta,
+        comments.isAcceptableOrUnknown(data['comments']!, _commentsMeta),
+      );
+    }
+    if (data.containsKey('avg_completion')) {
+      context.handle(
+        _avgCompletionMeta,
+        avgCompletion.isAcceptableOrUnknown(
+          data['avg_completion']!,
+          _avgCompletionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('has_proofmode')) {
+      context.handle(
+        _hasProofmodeMeta,
+        hasProofmode.isAcceptableOrUnknown(
+          data['has_proofmode']!,
+          _hasProofmodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('has_device_attestation')) {
+      context.handle(
+        _hasDeviceAttestationMeta,
+        hasDeviceAttestation.isAcceptableOrUnknown(
+          data['has_device_attestation']!,
+          _hasDeviceAttestationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('has_pgp_signature')) {
+      context.handle(
+        _hasPgpSignatureMeta,
+        hasPgpSignature.isAcceptableOrUnknown(
+          data['has_pgp_signature']!,
+          _hasPgpSignatureMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {eventId};
+  @override
+  VideoMetricRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VideoMetricRow(
+      eventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_id'],
+      )!,
+      loopCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}loop_count'],
+      ),
+      likes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}likes'],
+      ),
+      views: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}views'],
+      ),
+      comments: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}comments'],
+      ),
+      avgCompletion: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}avg_completion'],
+      ),
+      hasProofmode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}has_proofmode'],
+      ),
+      hasDeviceAttestation: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}has_device_attestation'],
+      ),
+      hasPgpSignature: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}has_pgp_signature'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $VideoMetricsTable createAlias(String alias) {
+    return $VideoMetricsTable(attachedDatabase, alias);
+  }
+}
+
+class VideoMetricRow extends DataClass implements Insertable<VideoMetricRow> {
+  final String eventId;
+  final int? loopCount;
+  final int? likes;
+  final int? views;
+  final int? comments;
+  final double? avgCompletion;
+  final int? hasProofmode;
+  final int? hasDeviceAttestation;
+  final int? hasPgpSignature;
+  final DateTime updatedAt;
+  const VideoMetricRow({
+    required this.eventId,
+    this.loopCount,
+    this.likes,
+    this.views,
+    this.comments,
+    this.avgCompletion,
+    this.hasProofmode,
+    this.hasDeviceAttestation,
+    this.hasPgpSignature,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['event_id'] = Variable<String>(eventId);
+    if (!nullToAbsent || loopCount != null) {
+      map['loop_count'] = Variable<int>(loopCount);
+    }
+    if (!nullToAbsent || likes != null) {
+      map['likes'] = Variable<int>(likes);
+    }
+    if (!nullToAbsent || views != null) {
+      map['views'] = Variable<int>(views);
+    }
+    if (!nullToAbsent || comments != null) {
+      map['comments'] = Variable<int>(comments);
+    }
+    if (!nullToAbsent || avgCompletion != null) {
+      map['avg_completion'] = Variable<double>(avgCompletion);
+    }
+    if (!nullToAbsent || hasProofmode != null) {
+      map['has_proofmode'] = Variable<int>(hasProofmode);
+    }
+    if (!nullToAbsent || hasDeviceAttestation != null) {
+      map['has_device_attestation'] = Variable<int>(hasDeviceAttestation);
+    }
+    if (!nullToAbsent || hasPgpSignature != null) {
+      map['has_pgp_signature'] = Variable<int>(hasPgpSignature);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  VideoMetricsCompanion toCompanion(bool nullToAbsent) {
+    return VideoMetricsCompanion(
+      eventId: Value(eventId),
+      loopCount: loopCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(loopCount),
+      likes: likes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(likes),
+      views: views == null && nullToAbsent
+          ? const Value.absent()
+          : Value(views),
+      comments: comments == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comments),
+      avgCompletion: avgCompletion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avgCompletion),
+      hasProofmode: hasProofmode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hasProofmode),
+      hasDeviceAttestation: hasDeviceAttestation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hasDeviceAttestation),
+      hasPgpSignature: hasPgpSignature == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hasPgpSignature),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory VideoMetricRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VideoMetricRow(
+      eventId: serializer.fromJson<String>(json['eventId']),
+      loopCount: serializer.fromJson<int?>(json['loopCount']),
+      likes: serializer.fromJson<int?>(json['likes']),
+      views: serializer.fromJson<int?>(json['views']),
+      comments: serializer.fromJson<int?>(json['comments']),
+      avgCompletion: serializer.fromJson<double?>(json['avgCompletion']),
+      hasProofmode: serializer.fromJson<int?>(json['hasProofmode']),
+      hasDeviceAttestation: serializer.fromJson<int?>(
+        json['hasDeviceAttestation'],
+      ),
+      hasPgpSignature: serializer.fromJson<int?>(json['hasPgpSignature']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'eventId': serializer.toJson<String>(eventId),
+      'loopCount': serializer.toJson<int?>(loopCount),
+      'likes': serializer.toJson<int?>(likes),
+      'views': serializer.toJson<int?>(views),
+      'comments': serializer.toJson<int?>(comments),
+      'avgCompletion': serializer.toJson<double?>(avgCompletion),
+      'hasProofmode': serializer.toJson<int?>(hasProofmode),
+      'hasDeviceAttestation': serializer.toJson<int?>(hasDeviceAttestation),
+      'hasPgpSignature': serializer.toJson<int?>(hasPgpSignature),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  VideoMetricRow copyWith({
+    String? eventId,
+    Value<int?> loopCount = const Value.absent(),
+    Value<int?> likes = const Value.absent(),
+    Value<int?> views = const Value.absent(),
+    Value<int?> comments = const Value.absent(),
+    Value<double?> avgCompletion = const Value.absent(),
+    Value<int?> hasProofmode = const Value.absent(),
+    Value<int?> hasDeviceAttestation = const Value.absent(),
+    Value<int?> hasPgpSignature = const Value.absent(),
+    DateTime? updatedAt,
+  }) => VideoMetricRow(
+    eventId: eventId ?? this.eventId,
+    loopCount: loopCount.present ? loopCount.value : this.loopCount,
+    likes: likes.present ? likes.value : this.likes,
+    views: views.present ? views.value : this.views,
+    comments: comments.present ? comments.value : this.comments,
+    avgCompletion: avgCompletion.present
+        ? avgCompletion.value
+        : this.avgCompletion,
+    hasProofmode: hasProofmode.present ? hasProofmode.value : this.hasProofmode,
+    hasDeviceAttestation: hasDeviceAttestation.present
+        ? hasDeviceAttestation.value
+        : this.hasDeviceAttestation,
+    hasPgpSignature: hasPgpSignature.present
+        ? hasPgpSignature.value
+        : this.hasPgpSignature,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  VideoMetricRow copyWithCompanion(VideoMetricsCompanion data) {
+    return VideoMetricRow(
+      eventId: data.eventId.present ? data.eventId.value : this.eventId,
+      loopCount: data.loopCount.present ? data.loopCount.value : this.loopCount,
+      likes: data.likes.present ? data.likes.value : this.likes,
+      views: data.views.present ? data.views.value : this.views,
+      comments: data.comments.present ? data.comments.value : this.comments,
+      avgCompletion: data.avgCompletion.present
+          ? data.avgCompletion.value
+          : this.avgCompletion,
+      hasProofmode: data.hasProofmode.present
+          ? data.hasProofmode.value
+          : this.hasProofmode,
+      hasDeviceAttestation: data.hasDeviceAttestation.present
+          ? data.hasDeviceAttestation.value
+          : this.hasDeviceAttestation,
+      hasPgpSignature: data.hasPgpSignature.present
+          ? data.hasPgpSignature.value
+          : this.hasPgpSignature,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VideoMetricRow(')
+          ..write('eventId: $eventId, ')
+          ..write('loopCount: $loopCount, ')
+          ..write('likes: $likes, ')
+          ..write('views: $views, ')
+          ..write('comments: $comments, ')
+          ..write('avgCompletion: $avgCompletion, ')
+          ..write('hasProofmode: $hasProofmode, ')
+          ..write('hasDeviceAttestation: $hasDeviceAttestation, ')
+          ..write('hasPgpSignature: $hasPgpSignature, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    eventId,
+    loopCount,
+    likes,
+    views,
+    comments,
+    avgCompletion,
+    hasProofmode,
+    hasDeviceAttestation,
+    hasPgpSignature,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VideoMetricRow &&
+          other.eventId == this.eventId &&
+          other.loopCount == this.loopCount &&
+          other.likes == this.likes &&
+          other.views == this.views &&
+          other.comments == this.comments &&
+          other.avgCompletion == this.avgCompletion &&
+          other.hasProofmode == this.hasProofmode &&
+          other.hasDeviceAttestation == this.hasDeviceAttestation &&
+          other.hasPgpSignature == this.hasPgpSignature &&
+          other.updatedAt == this.updatedAt);
+}
+
+class VideoMetricsCompanion extends UpdateCompanion<VideoMetricRow> {
+  final Value<String> eventId;
+  final Value<int?> loopCount;
+  final Value<int?> likes;
+  final Value<int?> views;
+  final Value<int?> comments;
+  final Value<double?> avgCompletion;
+  final Value<int?> hasProofmode;
+  final Value<int?> hasDeviceAttestation;
+  final Value<int?> hasPgpSignature;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const VideoMetricsCompanion({
+    this.eventId = const Value.absent(),
+    this.loopCount = const Value.absent(),
+    this.likes = const Value.absent(),
+    this.views = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.avgCompletion = const Value.absent(),
+    this.hasProofmode = const Value.absent(),
+    this.hasDeviceAttestation = const Value.absent(),
+    this.hasPgpSignature = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VideoMetricsCompanion.insert({
+    required String eventId,
+    this.loopCount = const Value.absent(),
+    this.likes = const Value.absent(),
+    this.views = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.avgCompletion = const Value.absent(),
+    this.hasProofmode = const Value.absent(),
+    this.hasDeviceAttestation = const Value.absent(),
+    this.hasPgpSignature = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : eventId = Value(eventId),
+       updatedAt = Value(updatedAt);
+  static Insertable<VideoMetricRow> custom({
+    Expression<String>? eventId,
+    Expression<int>? loopCount,
+    Expression<int>? likes,
+    Expression<int>? views,
+    Expression<int>? comments,
+    Expression<double>? avgCompletion,
+    Expression<int>? hasProofmode,
+    Expression<int>? hasDeviceAttestation,
+    Expression<int>? hasPgpSignature,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (eventId != null) 'event_id': eventId,
+      if (loopCount != null) 'loop_count': loopCount,
+      if (likes != null) 'likes': likes,
+      if (views != null) 'views': views,
+      if (comments != null) 'comments': comments,
+      if (avgCompletion != null) 'avg_completion': avgCompletion,
+      if (hasProofmode != null) 'has_proofmode': hasProofmode,
+      if (hasDeviceAttestation != null)
+        'has_device_attestation': hasDeviceAttestation,
+      if (hasPgpSignature != null) 'has_pgp_signature': hasPgpSignature,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VideoMetricsCompanion copyWith({
+    Value<String>? eventId,
+    Value<int?>? loopCount,
+    Value<int?>? likes,
+    Value<int?>? views,
+    Value<int?>? comments,
+    Value<double?>? avgCompletion,
+    Value<int?>? hasProofmode,
+    Value<int?>? hasDeviceAttestation,
+    Value<int?>? hasPgpSignature,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return VideoMetricsCompanion(
+      eventId: eventId ?? this.eventId,
+      loopCount: loopCount ?? this.loopCount,
+      likes: likes ?? this.likes,
+      views: views ?? this.views,
+      comments: comments ?? this.comments,
+      avgCompletion: avgCompletion ?? this.avgCompletion,
+      hasProofmode: hasProofmode ?? this.hasProofmode,
+      hasDeviceAttestation: hasDeviceAttestation ?? this.hasDeviceAttestation,
+      hasPgpSignature: hasPgpSignature ?? this.hasPgpSignature,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (eventId.present) {
+      map['event_id'] = Variable<String>(eventId.value);
+    }
+    if (loopCount.present) {
+      map['loop_count'] = Variable<int>(loopCount.value);
+    }
+    if (likes.present) {
+      map['likes'] = Variable<int>(likes.value);
+    }
+    if (views.present) {
+      map['views'] = Variable<int>(views.value);
+    }
+    if (comments.present) {
+      map['comments'] = Variable<int>(comments.value);
+    }
+    if (avgCompletion.present) {
+      map['avg_completion'] = Variable<double>(avgCompletion.value);
+    }
+    if (hasProofmode.present) {
+      map['has_proofmode'] = Variable<int>(hasProofmode.value);
+    }
+    if (hasDeviceAttestation.present) {
+      map['has_device_attestation'] = Variable<int>(hasDeviceAttestation.value);
+    }
+    if (hasPgpSignature.present) {
+      map['has_pgp_signature'] = Variable<int>(hasPgpSignature.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VideoMetricsCompanion(')
+          ..write('eventId: $eventId, ')
+          ..write('loopCount: $loopCount, ')
+          ..write('likes: $likes, ')
+          ..write('views: $views, ')
+          ..write('comments: $comments, ')
+          ..write('avgCompletion: $avgCompletion, ')
+          ..write('hasProofmode: $hasProofmode, ')
+          ..write('hasDeviceAttestation: $hasDeviceAttestation, ')
+          ..write('hasPgpSignature: $hasPgpSignature, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $NostrEventsTable nostrEvents = $NostrEventsTable(this);
   late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
+  late final $VideoMetricsTable videoMetrics = $VideoMetricsTable(this);
   late final UserProfilesDao userProfilesDao = UserProfilesDao(
     this as AppDatabase,
   );
   late final NostrEventsDao nostrEventsDao = NostrEventsDao(
+    this as AppDatabase,
+  );
+  late final VideoMetricsDao videoMetricsDao = VideoMetricsDao(
     this as AppDatabase,
   );
   @override
@@ -1327,6 +1976,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     nostrEvents,
     userProfiles,
+    videoMetrics,
   ];
 }
 
@@ -1962,6 +2612,309 @@ typedef $$UserProfilesTableProcessedTableManager =
       UserProfileRow,
       PrefetchHooks Function()
     >;
+typedef $$VideoMetricsTableCreateCompanionBuilder =
+    VideoMetricsCompanion Function({
+      required String eventId,
+      Value<int?> loopCount,
+      Value<int?> likes,
+      Value<int?> views,
+      Value<int?> comments,
+      Value<double?> avgCompletion,
+      Value<int?> hasProofmode,
+      Value<int?> hasDeviceAttestation,
+      Value<int?> hasPgpSignature,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$VideoMetricsTableUpdateCompanionBuilder =
+    VideoMetricsCompanion Function({
+      Value<String> eventId,
+      Value<int?> loopCount,
+      Value<int?> likes,
+      Value<int?> views,
+      Value<int?> comments,
+      Value<double?> avgCompletion,
+      Value<int?> hasProofmode,
+      Value<int?> hasDeviceAttestation,
+      Value<int?> hasPgpSignature,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$VideoMetricsTableFilterComposer
+    extends Composer<_$AppDatabase, $VideoMetricsTable> {
+  $$VideoMetricsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get eventId => $composableBuilder(
+    column: $table.eventId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get loopCount => $composableBuilder(
+    column: $table.loopCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get likes => $composableBuilder(
+    column: $table.likes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get views => $composableBuilder(
+    column: $table.views,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get comments => $composableBuilder(
+    column: $table.comments,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get avgCompletion => $composableBuilder(
+    column: $table.avgCompletion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hasProofmode => $composableBuilder(
+    column: $table.hasProofmode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hasDeviceAttestation => $composableBuilder(
+    column: $table.hasDeviceAttestation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hasPgpSignature => $composableBuilder(
+    column: $table.hasPgpSignature,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VideoMetricsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VideoMetricsTable> {
+  $$VideoMetricsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get eventId => $composableBuilder(
+    column: $table.eventId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get loopCount => $composableBuilder(
+    column: $table.loopCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get likes => $composableBuilder(
+    column: $table.likes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get views => $composableBuilder(
+    column: $table.views,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get comments => $composableBuilder(
+    column: $table.comments,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get avgCompletion => $composableBuilder(
+    column: $table.avgCompletion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hasProofmode => $composableBuilder(
+    column: $table.hasProofmode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hasDeviceAttestation => $composableBuilder(
+    column: $table.hasDeviceAttestation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hasPgpSignature => $composableBuilder(
+    column: $table.hasPgpSignature,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VideoMetricsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VideoMetricsTable> {
+  $$VideoMetricsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get eventId =>
+      $composableBuilder(column: $table.eventId, builder: (column) => column);
+
+  GeneratedColumn<int> get loopCount =>
+      $composableBuilder(column: $table.loopCount, builder: (column) => column);
+
+  GeneratedColumn<int> get likes =>
+      $composableBuilder(column: $table.likes, builder: (column) => column);
+
+  GeneratedColumn<int> get views =>
+      $composableBuilder(column: $table.views, builder: (column) => column);
+
+  GeneratedColumn<int> get comments =>
+      $composableBuilder(column: $table.comments, builder: (column) => column);
+
+  GeneratedColumn<double> get avgCompletion => $composableBuilder(
+    column: $table.avgCompletion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hasProofmode => $composableBuilder(
+    column: $table.hasProofmode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hasDeviceAttestation => $composableBuilder(
+    column: $table.hasDeviceAttestation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get hasPgpSignature => $composableBuilder(
+    column: $table.hasPgpSignature,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$VideoMetricsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VideoMetricsTable,
+          VideoMetricRow,
+          $$VideoMetricsTableFilterComposer,
+          $$VideoMetricsTableOrderingComposer,
+          $$VideoMetricsTableAnnotationComposer,
+          $$VideoMetricsTableCreateCompanionBuilder,
+          $$VideoMetricsTableUpdateCompanionBuilder,
+          (
+            VideoMetricRow,
+            BaseReferences<_$AppDatabase, $VideoMetricsTable, VideoMetricRow>,
+          ),
+          VideoMetricRow,
+          PrefetchHooks Function()
+        > {
+  $$VideoMetricsTableTableManager(_$AppDatabase db, $VideoMetricsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VideoMetricsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VideoMetricsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VideoMetricsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> eventId = const Value.absent(),
+                Value<int?> loopCount = const Value.absent(),
+                Value<int?> likes = const Value.absent(),
+                Value<int?> views = const Value.absent(),
+                Value<int?> comments = const Value.absent(),
+                Value<double?> avgCompletion = const Value.absent(),
+                Value<int?> hasProofmode = const Value.absent(),
+                Value<int?> hasDeviceAttestation = const Value.absent(),
+                Value<int?> hasPgpSignature = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VideoMetricsCompanion(
+                eventId: eventId,
+                loopCount: loopCount,
+                likes: likes,
+                views: views,
+                comments: comments,
+                avgCompletion: avgCompletion,
+                hasProofmode: hasProofmode,
+                hasDeviceAttestation: hasDeviceAttestation,
+                hasPgpSignature: hasPgpSignature,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String eventId,
+                Value<int?> loopCount = const Value.absent(),
+                Value<int?> likes = const Value.absent(),
+                Value<int?> views = const Value.absent(),
+                Value<int?> comments = const Value.absent(),
+                Value<double?> avgCompletion = const Value.absent(),
+                Value<int?> hasProofmode = const Value.absent(),
+                Value<int?> hasDeviceAttestation = const Value.absent(),
+                Value<int?> hasPgpSignature = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => VideoMetricsCompanion.insert(
+                eventId: eventId,
+                loopCount: loopCount,
+                likes: likes,
+                views: views,
+                comments: comments,
+                avgCompletion: avgCompletion,
+                hasProofmode: hasProofmode,
+                hasDeviceAttestation: hasDeviceAttestation,
+                hasPgpSignature: hasPgpSignature,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VideoMetricsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VideoMetricsTable,
+      VideoMetricRow,
+      $$VideoMetricsTableFilterComposer,
+      $$VideoMetricsTableOrderingComposer,
+      $$VideoMetricsTableAnnotationComposer,
+      $$VideoMetricsTableCreateCompanionBuilder,
+      $$VideoMetricsTableUpdateCompanionBuilder,
+      (
+        VideoMetricRow,
+        BaseReferences<_$AppDatabase, $VideoMetricsTable, VideoMetricRow>,
+      ),
+      VideoMetricRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1970,4 +2923,6 @@ class $AppDatabaseManager {
       $$NostrEventsTableTableManager(_db, _db.nostrEvents);
   $$UserProfilesTableTableManager get userProfiles =>
       $$UserProfilesTableTableManager(_db, _db.userProfiles);
+  $$VideoMetricsTableTableManager get videoMetrics =>
+      $$VideoMetricsTableTableManager(_db, _db.videoMetrics);
 }

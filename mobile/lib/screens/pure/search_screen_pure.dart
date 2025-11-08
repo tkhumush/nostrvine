@@ -444,9 +444,7 @@ class _SearchScreenPureState extends ConsumerState<SearchScreenPure>
         final userPubkey = _userResults[index];
         final profileService = ref.watch(userProfileServiceProvider);
         final profile = profileService.getCachedProfile(userPubkey);
-        final displayName = profile?.displayName ??
-                           profile?.name ??
-                           '@${userPubkey}...';
+        final displayName = profile?.bestDisplayName ?? '@${userPubkey}...';
 
         return Card(
           color: VineTheme.cardBackground,

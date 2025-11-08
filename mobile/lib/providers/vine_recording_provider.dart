@@ -107,6 +107,9 @@ class VineRecordingNotifier extends StateNotifier<VineRecordingUIState> {
   // Track whether video was successfully published to prevent auto-save
   bool _wasPublished = false;
 
+  // Track the draft ID we created in stopRecording to prevent duplicate drafts
+  String? _currentDraftId;
+
   /// Get the camera preview widget from the controller
   Widget get previewWidget => _controller.previewWidget;
 
@@ -154,6 +157,7 @@ class VineRecordingNotifier extends StateNotifier<VineRecordingUIState> {
         );
 
         await draftStorage.saveDraft(draft);
+        _currentDraftId = draft.id; // Track draft to prevent duplicate on dispose
         Log.info('📹 Auto-created draft: ${draft.id}', category: LogCategory.video);
 
         return RecordingResult(
@@ -193,6 +197,7 @@ class VineRecordingNotifier extends StateNotifier<VineRecordingUIState> {
   void reset() {
     _controller.reset();
     _wasPublished = false; // Reset publish flag for new recording
+    _currentDraftId = null; // Clear draft ID for new recording
     updateState();
   }
 
@@ -211,6 +216,7 @@ class VineRecordingNotifier extends StateNotifier<VineRecordingUIState> {
       // Then reset state
       _controller.reset();
       _wasPublished = false;
+      _currentDraftId = null; // Clear draft ID for new recording
       updateState();
       Log.info('Cleaned up temp files and reset for new recording',
           name: 'VineRecordingProvider', category: LogCategory.system);
@@ -246,6 +252,13 @@ class VineRecordingNotifier extends StateNotifier<VineRecordingUIState> {
       // Skip auto-save if video was successfully published
       if (_wasPublished) {
         Log.info('Skipping auto-save - video was published',
+            name: 'VineRecordingProvider', category: LogCategory.system);
+        return;
+      }
+
+      // Skip auto-save if we already created a draft in stopRecording()
+      if (_currentDraftId != null) {
+        Log.info('Skipping auto-save - draft already created: $_currentDraftId',
             name: 'VineRecordingProvider', category: LogCategory.system);
         return;
       }

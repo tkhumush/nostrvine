@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'tables.dart';
 import 'daos/user_profiles_dao.dart';
 import 'daos/nostr_events_dao.dart';
+import 'daos/video_metrics_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -20,7 +21,7 @@ part 'app_database.g.dart';
 /// Schema versioning:
 /// - nostr_sdk: schema version 1-2 (event table)
 /// - AppDatabase: schema version 3+ (adds user_profiles, etc.)
-@DriftDatabase(tables: [NostrEvents, UserProfiles], daos: [UserProfilesDao, NostrEventsDao])
+@DriftDatabase(tables: [NostrEvents, UserProfiles, VideoMetrics], daos: [UserProfilesDao, NostrEventsDao, VideoMetricsDao])
 class AppDatabase extends _$AppDatabase {
   /// Default constructor - uses shared database path with nostr_sdk
   AppDatabase() : super(_openConnection());
@@ -30,7 +31,7 @@ class AppDatabase extends _$AppDatabase {
       : super(NativeDatabase(File(path), logStatements: false)); // Disabled - too verbose
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// Open connection to shared database file
   static QueryExecutor _openConnection() {
@@ -59,12 +60,32 @@ class AppDatabase extends _$AppDatabase {
           // In tests, we need to create it ourselves
           await m.createTable(nostrEvents);
           await m.createTable(userProfiles);
+          await m.createTable(videoMetrics);
         },
         onUpgrade: (m, from, to) async {
           // Migration from nostr_sdk schema v2 to AppDatabase schema v3
           if (from < 3) {
             // Add user_profiles table (event table already exists from nostr_sdk)
             await m.createTable(userProfiles);
+          }
+
+          // Migration from schema v3 to v4: Add video_metrics table
+          if (from < 4) {
+            await m.createTable(videoMetrics);
+
+            // Create indices for common sort/filter operations
+            await customStatement('''
+              CREATE INDEX IF NOT EXISTS idx_video_metrics_loop_count
+              ON video_metrics(loop_count DESC)
+            ''');
+            await customStatement('''
+              CREATE INDEX IF NOT EXISTS idx_video_metrics_likes
+              ON video_metrics(likes DESC)
+            ''');
+            await customStatement('''
+              CREATE INDEX IF NOT EXISTS idx_video_metrics_views
+              ON video_metrics(views DESC)
+            ''');
           }
         },
       );

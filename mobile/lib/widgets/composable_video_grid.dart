@@ -253,9 +253,7 @@ class ComposableVideoGrid extends ConsumerWidget {
   Widget _buildCreatorName(WidgetRef ref, VideoEvent video) {
     final profileService = ref.watch(userProfileServiceProvider);
     final profile = profileService.getCachedProfile(video.pubkey);
-    final displayName = profile?.displayName ??
-        profile?.name ??
-        'Loading...';
+    final displayName = profile?.bestDisplayName ?? 'Loading...';
 
     return Text(
       displayName,

@@ -1263,7 +1263,7 @@ class _SendToUserDialogState extends ConsumerState<_SendToUserDialog> {
           contacts.add(
             ShareableUser(
               pubkey: pubkey,
-              displayName: profile?.displayName ?? profile?.name,
+              displayName: profile?.bestDisplayName,
               picture: profile?.picture,
             ),
           );
@@ -1378,7 +1378,7 @@ class _SendToUserDialogState extends ConsumerState<_SendToUserDialog> {
           searchResults.add(
             ShareableUser(
               pubkey: pubkeyToSearch,
-              displayName: profile?.displayName ?? profile?.name,
+              displayName: profile?.bestDisplayName,
               picture: profile?.picture,
             ),
           );
@@ -1668,6 +1668,7 @@ class ReportContentDialog extends ConsumerStatefulWidget {
 class ReportContentDialogState extends ConsumerState<ReportContentDialog> {
   ContentFilterReason? _selectedReason;
   final TextEditingController _detailsController = TextEditingController();
+  bool _blockUser = false;
 
   @override
   Widget build(BuildContext context) => AlertDialog(
@@ -1719,6 +1720,16 @@ class ReportContentDialogState extends ConsumerState<ReportContentDialog> {
                 ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                title: const Text(
+                  'Block this user',
+                  style: TextStyle(color: VineTheme.whiteText),
+                ),
+                value: _blockUser,
+                onChanged: (value) => setState(() => _blockUser = value ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
             ],
           ),
         ),
@@ -1728,11 +1739,25 @@ class ReportContentDialogState extends ConsumerState<ReportContentDialog> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: _selectedReason != null ? _submitReport : null,
+            onPressed: _handleSubmitReport,
             child: const Text('Report'),
           ),
         ],
       );
+
+  void _handleSubmitReport() {
+    if (_selectedReason == null) {
+      // Show error when no reason selected (Apple requires button to be visible)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a reason for reporting this content'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    _submitReport();
+  }
 
   String _getReasonDisplayName(ContentFilterReason reason) {
     switch (reason) {
@@ -1777,6 +1802,33 @@ class ReportContentDialogState extends ConsumerState<ReportContentDialog> {
         Navigator.of(context).pop(); // Close share menu
 
         if (result.success) {
+          // Block user if checkbox was checked - publish proper Nostr events
+          if (_blockUser) {
+            // 1. Report the USER (creates kind 1984 for user harassment/abuse)
+            await reportService.reportUser(
+              userPubkey: widget.video.pubkey,
+              reason: _selectedReason!,
+              details: 'User blocked for ${_getReasonDisplayName(_selectedReason!)}',
+              relatedEventIds: [widget.video.id],
+            );
+
+            // 2. Add to mute list (publishes kind 10000 NIP-51 mute list)
+            final muteService = await ref.read(muteServiceProvider.future);
+            await muteService.muteUser(
+              widget.video.pubkey,
+              reason: 'Reported and blocked for ${_getReasonDisplayName(_selectedReason!)}',
+            );
+
+            // 3. Also add to local blocklist for immediate filtering
+            final blocklistService = ref.read(contentBlocklistServiceProvider);
+            blocklistService.blockUser(widget.video.pubkey);
+
+            Log.info(
+                'User blocked with Nostr events: kind 1984 user report + kind 10000 mute list: ${widget.video.pubkey}',
+                name: 'ShareVideoMenu',
+                category: LogCategory.ui);
+          }
+
           // Show success confirmation dialog using root navigator
           showDialog(
             context: context,

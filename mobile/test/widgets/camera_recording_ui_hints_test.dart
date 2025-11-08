@@ -29,8 +29,7 @@ void main() {
         remainingDuration: const Duration(seconds: 6),
         canRecord: true,
         isCameraInitialized: true,
-        segments: []
-          isCameraInitialized: true,
+        segments: [],
       );
 
       await tester.pumpWidget(
@@ -192,8 +191,7 @@ void main() {
         remainingDuration: const Duration(milliseconds: 5500),
         canRecord: false,
         isCameraInitialized: true,
-        segments: []
-          isCameraInitialized: true,
+        segments: [],
       );
 
       await tester.pumpWidget(
