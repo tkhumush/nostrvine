@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased Changes]
 
 ### Fixed
+- **Camera Screen UX Improvements**: Fixed multiple camera screen usability issues
+  - Camera switch button now only appears when multiple cameras are available (prevents confusion on single-camera devices)
+  - macOS camera switching fully implemented using native API with proper camera cycling
+  - iOS camera switch now properly updates preview with state notification and extensive debug logging
+  - iOS pinch-to-zoom gesture support added with zoom slider UI and smooth zoom control
+  - SnackBar notifications moved to top of screen to avoid covering publish button
+  - Added `canSwitchCamera` field to camera state management for conditional UI rendering
+  - Integrated existing `CameraControlsOverlay` widget for enhanced camera controls
+
 - **Performance: Explore/Trending Page Hangs Eliminated**: Fixed severe performance issues causing 3-10 second freezes when opening Explore, Trending, and hashtag pages
   - Added 9 critical database indexes on `event` and `video_metrics` tables to eliminate full table scans
   - `idx_event_kind`, `idx_event_created_at`, `idx_event_kind_created_at` - for video discovery queries
