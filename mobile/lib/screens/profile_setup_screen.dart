@@ -1107,10 +1107,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         throw Exception('No public key available');
       }
 
-      final result = await uploadService.uploadVideo(
-        videoFile: _selectedImage!,
+      final result = await uploadService.uploadImage(
+        imageFile: _selectedImage!,
         nostrPubkey: authService.currentPublicKeyHex!,
-        title: 'Profile Picture',
+        mimeType: 'image/jpeg',
         onProgress: (progress) {
           // Only log at major milestones to reduce noise
           if (progress == 1.0 || progress == 0.0) {
