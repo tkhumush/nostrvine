@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:openvine/models/aspect_ratio.dart' as vine;
 import 'package:openvine/models/vine_draft.dart';
 import 'package:openvine/providers/vine_recording_provider.dart';
 import 'package:openvine/services/proofmode_session_service.dart';
@@ -404,7 +405,9 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
               Positioned.fill(
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: 1.0, // Square format like original Vine
+                    aspectRatio: recordingState.aspectRatio == vine.AspectRatio.square
+                      ? 1.0
+                      : 9.0 / 16.0,
                     child: ClipRect(
                       child: Stack(
                         children: [
@@ -805,7 +808,34 @@ class _UniversalCameraScreenPureState extends ConsumerState<UniversalCameraScree
             size: 28,
           ),
         ),
+        const SizedBox(height: 8),
+        // Aspect ratio toggle
+        _buildAspectRatioToggle(recordingState),
       ],
+    );
+  }
+
+  Widget _buildAspectRatioToggle(VineRecordingUIState recordingState) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: IconButton(
+        icon: Icon(
+          recordingState.aspectRatio == vine.AspectRatio.square
+            ? Icons.crop_square  // Square icon for 1:1
+            : Icons.crop_portrait, // Portrait icon for 9:16
+          color: Colors.white,
+          size: 28,
+        ),
+        onPressed: recordingState.isRecording ? null : () {
+          final newRatio = recordingState.aspectRatio == vine.AspectRatio.square
+            ? vine.AspectRatio.vertical
+            : vine.AspectRatio.square;
+          ref.read(vineRecordingProvider.notifier).setAspectRatio(newRatio);
+        },
+      ),
     );
   }
 
