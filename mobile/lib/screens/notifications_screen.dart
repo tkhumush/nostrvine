@@ -45,63 +45,42 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         // Tab bar for filtering notifications
         Container(
           color: VineTheme.cardBackground,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final tabWidth = constraints.maxWidth / 5;
-              return TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                indicatorColor: VineTheme.whiteText,
-                indicatorWeight: 3,
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                labelColor: VineTheme.whiteText,
-                unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
-                labelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                onTap: (index) {
-                  setState(() {
-                    switch (index) {
-                      case 0:
-                        _selectedFilter = null;
-                      case 1:
-                        _selectedFilter = NotificationType.like;
-                      case 2:
-                        _selectedFilter = NotificationType.comment;
-                      case 3:
-                        _selectedFilter = NotificationType.follow;
-                      case 4:
-                        _selectedFilter = NotificationType.repost;
-                    }
-                  });
-                },
-                tabs: [
-                  SizedBox(
-                    width: tabWidth,
-                    child: const Tab(text: 'All'),
-                  ),
-                  SizedBox(
-                    width: tabWidth,
-                    child: const Tab(text: 'Likes'),
-                  ),
-                  SizedBox(
-                    width: tabWidth,
-                    child: const Tab(text: 'Comments'),
-                  ),
-                  SizedBox(
-                    width: tabWidth,
-                    child: const Tab(text: 'Follows'),
-                  ),
-                  SizedBox(
-                    width: tabWidth,
-                    child: const Tab(text: 'Reposts'),
-                  ),
-                ],
-              );
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: false,
+            indicatorColor: VineTheme.whiteText,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            labelColor: VineTheme.whiteText,
+            unselectedLabelColor: VineTheme.whiteText.withValues(alpha: 0.7),
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            onTap: (index) {
+              setState(() {
+                switch (index) {
+                  case 0:
+                    _selectedFilter = null;
+                  case 1:
+                    _selectedFilter = NotificationType.like;
+                  case 2:
+                    _selectedFilter = NotificationType.comment;
+                  case 3:
+                    _selectedFilter = NotificationType.follow;
+                  case 4:
+                    _selectedFilter = NotificationType.repost;
+                }
+              });
             },
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Likes'),
+              Tab(text: 'Comments'),
+              Tab(text: 'Follows'),
+              Tab(text: 'Reposts'),
+            ],
           ),
         ),
         // Notification list

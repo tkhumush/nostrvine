@@ -46,12 +46,13 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
     return Drawer(
       backgroundColor: VineTheme.backgroundColor,
       child: SafeArea(
+        top: false,
         child: Column(
           children: [
             // Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(20, 20 + MediaQuery.of(context).padding.top, 20, 20),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [VineTheme.vineGreen, Colors.green],
