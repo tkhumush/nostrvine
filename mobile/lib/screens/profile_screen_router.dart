@@ -326,25 +326,43 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                     headerSliverBuilder: (context, innerBoxIsScrolled) => [
                       // Profile Header
                       SliverToBoxAdapter(
-                        child: _buildProfileHeader(
-                          authService,
-                          userIdHex,
-                          isOwnProfile,
-                          profileStatsAsync,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: _buildProfileHeader(
+                              authService,
+                              userIdHex,
+                              isOwnProfile,
+                              profileStatsAsync,
+                            ),
+                          ),
                         ),
                       ),
 
                       // Stats Row
                       SliverToBoxAdapter(
-                        child: _buildStatsRow(profileStatsAsync),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: _buildStatsRow(profileStatsAsync),
+                          ),
+                        ),
                       ),
 
                       // Action Buttons
                       SliverToBoxAdapter(
-                        child: _buildActionButtons(
-                          socialService,
-                          userIdHex,
-                          isOwnProfile,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: _buildActionButtons(
+                              socialService,
+                              userIdHex,
+                              isOwnProfile,
+                            ),
+                          ),
                         ),
                       ),
 
@@ -865,37 +883,35 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
                 child: Consumer(
                   builder: (context, ref, _) {
                     final isFollowing = ref.watch(isFollowingProvider(userIdHex));
-                    return ElevatedButton(
-                      onPressed: isFollowing
-                          ? () => _unfollowUser(userIdHex)
-                          : () => _followUser(userIdHex),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isFollowing ? Colors.grey[700] : VineTheme.vineGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(isFollowing ? 'Following' : 'Follow'),
-                    );
+                    return isFollowing
+                        ? OutlinedButton(
+                            onPressed: () => _unfollowUser(userIdHex),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: VineTheme.vineGreen,
+                              side: const BorderSide(
+                                color: VineTheme.vineGreen,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Following'),
+                          )
+                        : ElevatedButton(
+                            onPressed: () => _followUser(userIdHex),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: VineTheme.vineGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Follow'),
+                          );
                   },
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _sendMessage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Icon(Icons.mail_outline),
               ),
               const SizedBox(width: 12),
               Consumer(
