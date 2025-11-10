@@ -188,6 +188,8 @@ flutter:
     - assets/fonts/
     - assets/icon/app_icon.png
     - assets/icon/White on black.png
+    - assets/icon/White on transparent.png
+    - assets/icon/White cropped.png
     - assets/icon/Ivory on Green.png
     - assets/icon/Black on white.png
     - assets/icon/Green on ivory.png

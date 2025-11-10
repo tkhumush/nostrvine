@@ -59,25 +59,28 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // diVine logo
-                  Image.asset(
-                    'assets/icon/app_icon.png',
-                    height: 60,
-                    width: 60,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Version $_appVersion',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // diVine logo
+                      Image.asset(
+                        'assets/icon/White cropped.png',
+                        width: constraints.maxWidth * 0.5,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Version $_appVersion',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
