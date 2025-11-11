@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvine/providers/app_providers.dart';
 import 'package:openvine/providers/optimistic_follow_provider.dart';
+import 'package:openvine/theme/vine_theme.dart';
 import 'package:openvine/utils/unified_logger.dart';
 
 /// Helper class for consistent follow/unfollow actions across the app
@@ -175,9 +176,30 @@ class FollowActionsHelper {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully followed user'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: VineTheme.vineGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Successfully followed user',
+                style: TextStyle(color: VineTheme.vineGreen),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.white,
         ),
       );
     }
@@ -197,9 +219,30 @@ class FollowActionsHelper {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully unfollowed user'),
-          backgroundColor: Colors.grey,
+        SnackBar(
+          content: Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: VineTheme.vineGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Successfully unfollowed user',
+                style: TextStyle(color: VineTheme.vineGreen),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.white,
         ),
       );
     }

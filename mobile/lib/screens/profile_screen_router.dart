@@ -84,8 +84,8 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
   }
 
   void _navigateToFollowers(BuildContext context, String pubkey, String displayName) {
-    Navigator.push(
-      context,
+    // Navigate using root navigator to escape shell route
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => FollowersScreen(pubkey: pubkey, displayName: displayName),
       ),
@@ -93,8 +93,8 @@ class _ProfileScreenRouterState extends ConsumerState<ProfileScreenRouter>
   }
 
   void _navigateToFollowing(BuildContext context, String pubkey, String displayName) {
-    Navigator.push(
-      context,
+    // Navigate using root navigator to escape shell route
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => FollowingScreen(pubkey: pubkey, displayName: displayName),
       ),

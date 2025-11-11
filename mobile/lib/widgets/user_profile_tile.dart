@@ -96,8 +96,9 @@ class UserProfileTile extends ConsumerWidget {
                             _toggleFollow(context, ref, pubkey, isFollowing),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              isFollowing ? Colors.grey[700] : Colors.purple,
-                          foregroundColor: Colors.white,
+                              isFollowing ? Colors.white : VineTheme.vineGreen,
+                          foregroundColor:
+                              isFollowing ? VineTheme.vineGreen : Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

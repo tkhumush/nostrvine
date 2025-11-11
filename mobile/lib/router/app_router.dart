@@ -60,6 +60,8 @@ int tabIndexFromLocation(String loc) {
     case 'setup-profile':
     case 'camera':
     case 'drafts':
+    case 'followers':
+    case 'following':
       return -1; // Non-tab routes - no bottom nav
     default:
       return 0; // fallback to home

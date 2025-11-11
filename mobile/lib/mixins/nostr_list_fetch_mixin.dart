@@ -108,7 +108,8 @@ mixin NostrListFetchMixin<T extends StatefulWidget> on State<T> {
   /// Build AppBar for the list screen
   AppBar buildAppBar(BuildContext context, String title) {
     return AppBar(
-      backgroundColor: VineTheme.backgroundColor,
+      backgroundColor: VineTheme.vineGreen,
+      foregroundColor: Colors.white,
       title: Text(
         title,
         style: const TextStyle(
