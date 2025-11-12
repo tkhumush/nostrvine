@@ -1211,15 +1211,15 @@ Video: ${_currentDraft?.videoFile.path ?? 'Unknown'}
 
     // Debug: Check if draft has ProofMode data
     final hasProofMode = _currentDraft!.hasProofMode;
-    final proofManifest = _currentDraft!.proofManifest;
-    Log.info('📜 Draft hasProofMode: $hasProofMode, proofManifest: ${proofManifest != null ? "present" : "null"}',
+    final nativeProof = _currentDraft!.nativeProof;
+    Log.info('📜 Draft hasProofMode: $hasProofMode, nativeProof: ${nativeProof != null ? "present" : "null"}',
         category: LogCategory.video);
-    if (hasProofMode && proofManifest == null) {
-      Log.error('📜 WARNING: Draft has proofManifestJson but proofManifest getter returned null - deserialization failed!',
+    if (hasProofMode && nativeProof == null) {
+      Log.error('📜 WARNING: Draft has proofManifestJson but nativeProof getter returned null - deserialization failed!',
           category: LogCategory.video);
     }
-    if (proofManifest != null) {
-      Log.info('📜 ProofManifest has ${proofManifest.segments.length} segments, deviceAttestation: ${proofManifest.deviceAttestation != null}, pgpSignature: ${proofManifest.pgpSignature != null}',
+    if (nativeProof != null) {
+      Log.info('📜 NativeProof videoHash: ${nativeProof.videoHash}, deviceAttestation: ${nativeProof.deviceAttestation != null}, pgpSignature: ${nativeProof.pgpSignature != null}',
           category: LogCategory.video);
     }
 

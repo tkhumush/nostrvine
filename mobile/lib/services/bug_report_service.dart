@@ -2,7 +2,7 @@
 // ABOUTME: Gathers device info, logs, errors and sanitizes sensitive data before transmission
 
 import 'dart:convert';
-import 'dart:io' show File;
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -16,7 +16,7 @@ import 'package:openvine/models/bug_report_result.dart';
 import 'package:openvine/models/log_entry.dart';
 import 'package:openvine/services/log_capture_service.dart';
 import 'package:openvine/services/error_analytics_tracker.dart';
-import 'package:openvine/services/proofmode_attestation_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:openvine/services/nip17_message_service.dart';
 import 'package:openvine/services/blossom_upload_service.dart';
 import 'package:openvine/utils/unified_logger.dart';
@@ -32,8 +32,6 @@ class BugReportService {
         _blossomUploadService = blossomUploadService;
 
   static const _uuid = Uuid();
-  final ProofModeAttestationService _proofModeService =
-      ProofModeAttestationService();
   final NIP17MessageService? _nip17MessageService;
   final BlossomUploadService? _blossomUploadService;
 
@@ -55,8 +53,32 @@ class BugReportService {
       final appVersion =
           '${packageInfo.version}+${packageInfo.buildNumber}';
 
-      // Get device info from ProofModeAttestationService
-      final deviceInfo = await _proofModeService.getDeviceInfo();
+      // Get device info using device_info_plus
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      Map<String, dynamic> deviceInfo = {};
+      try {
+        if (Platform.isAndroid) {
+          final androidInfo = await deviceInfoPlugin.androidInfo;
+          deviceInfo = {
+            'model': androidInfo.model,
+            'manufacturer': androidInfo.manufacturer,
+            'version': androidInfo.version.release,
+            'sdkInt': androidInfo.version.sdkInt,
+            'brand': androidInfo.brand,
+          };
+        } else if (Platform.isIOS) {
+          final iosInfo = await deviceInfoPlugin.iosInfo;
+          deviceInfo = {
+            'model': iosInfo.model,
+            'systemName': iosInfo.systemName,
+            'systemVersion': iosInfo.systemVersion,
+            'name': iosInfo.name,
+          };
+        }
+      } catch (e) {
+        Log.warning('Failed to get device info: $e', category: LogCategory.system);
+        deviceInfo = {'error': 'Failed to get device info'};
+      }
 
       // Get recent logs from LogCaptureService
       final recentLogs = LogCaptureService.instance.getRecentLogs(
@@ -71,7 +93,7 @@ class BugReportService {
         reportId: reportId,
         timestamp: DateTime.now(),
         userDescription: userDescription,
-        deviceInfo: deviceInfo.toJson(),
+        deviceInfo: deviceInfo,
         appVersion: appVersion,
         recentLogs: recentLogs,
         errorCounts: errorCounts,
