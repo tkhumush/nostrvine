@@ -371,7 +371,10 @@ class _KeyManagementScreenState extends ConsumerState<KeyManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: VineTheme.vineGreen),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
