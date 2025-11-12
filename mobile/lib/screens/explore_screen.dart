@@ -733,9 +733,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
         if (tabName == "Editor's Pick") {
           await ref.read(curationProvider.notifier).refreshAll();
         } else if (tabName == "New Videos") {
-          // Refresh popular now feed
-          ref.invalidate(popularNowFeedProvider);
-          await ref.read(popularNowFeedProvider.future);
+          // Refresh popular now feed - call refresh() to force new subscription
+          await ref.read(popularNowFeedProvider.notifier).refresh();
         } else {
           // For Trending tab, refresh video events
           ref.invalidate(videoEventsProvider);

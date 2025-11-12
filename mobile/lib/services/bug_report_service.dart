@@ -719,11 +719,13 @@ class BugReportService {
           category: LogCategory.system);
 
       // Share the file
+      // Note: text field is intentionally minimal to ensure the file is the primary content
+      // When users select "Copy" in the share dialog, they should get the file, not metadata
       final result = await SharePlus.instance.share(
         ShareParams(
           files: [XFile(filePath)],
           subject: 'OpenVine Full Logs',
-          text: 'OpenVine comprehensive diagnostic logs ($lineCount entries, $fileSizeMB MB)',
+          text: 'OpenVine Full Logs',
         ),
       );
 

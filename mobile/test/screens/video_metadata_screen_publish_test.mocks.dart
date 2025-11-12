@@ -7,9 +7,9 @@ import 'dart:async' as _i4;
 import 'dart:io' as _i6;
 
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:openvine/models/native_proof_data.dart' as _i7;
 import 'package:openvine/models/pending_upload.dart' as _i2;
 import 'package:openvine/models/vine_draft.dart' as _i5;
-import 'package:openvine/services/proofmode_session_service.dart' as _i7;
 import 'package:openvine/services/upload_manager.dart' as _i3;
 
 // ignore_for_file: type=lint
@@ -175,7 +175,7 @@ class MockUploadManager extends _i1.Mock implements _i3.UploadManager {
     int? videoWidth,
     int? videoHeight,
     Duration? videoDuration,
-    _i7.ProofManifest? proofManifest,
+    _i7.NativeProofData? nativeProof,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#startUpload, [], {
@@ -188,7 +188,7 @@ class MockUploadManager extends _i1.Mock implements _i3.UploadManager {
               #videoWidth: videoWidth,
               #videoHeight: videoHeight,
               #videoDuration: videoDuration,
-              #proofManifest: proofManifest,
+              #nativeProof: nativeProof,
             }),
             returnValue: _i4.Future<_i2.PendingUpload>.value(
               _FakePendingUpload_0(
@@ -203,7 +203,7 @@ class MockUploadManager extends _i1.Mock implements _i3.UploadManager {
                   #videoWidth: videoWidth,
                   #videoHeight: videoHeight,
                   #videoDuration: videoDuration,
-                  #proofManifest: proofManifest,
+                  #nativeProof: nativeProof,
                 }),
               ),
             ),
