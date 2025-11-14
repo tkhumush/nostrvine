@@ -36,6 +36,7 @@ class VideoEvent {
     this.isRepost = false,
     this.reposterId,
     this.reposterPubkey,
+    this.reposterPubkeys,
     this.repostedAt,
     this.isFlaggedContent = false,
     this.moderationStatus,
@@ -466,7 +467,8 @@ class VideoEvent {
   // Repost metadata fields
   final bool isRepost;
   final String? reposterId;
-  final String? reposterPubkey;
+  final String? reposterPubkey;  // Singular for backward compatibility
+  final List<String>? reposterPubkeys;  // Plural for multiple reposters
   final DateTime? repostedAt;
 
   // Content moderation fields
@@ -810,6 +812,7 @@ class VideoEvent {
     bool? isRepost,
     String? reposterId,
     String? reposterPubkey,
+    List<String>? reposterPubkeys,
     DateTime? repostedAt,
   }) =>
       VideoEvent(
@@ -836,6 +839,7 @@ class VideoEvent {
         isRepost: isRepost ?? this.isRepost,
         reposterId: reposterId ?? this.reposterId,
         reposterPubkey: reposterPubkey ?? this.reposterPubkey,
+        reposterPubkeys: reposterPubkeys ?? this.reposterPubkeys,
         repostedAt: repostedAt ?? this.repostedAt,
       );
 
@@ -859,16 +863,19 @@ class VideoEvent {
 
   /// Create a VideoEvent instance representing a repost
   /// Used when displaying Kind 6 repost events in the feed
+  /// Supports both single and multiple reposters for consolidation
   static VideoEvent createRepostEvent({
     required VideoEvent originalEvent,
     required String repostEventId,
     required String reposterPubkey,
     required DateTime repostedAt,
+    List<String>? reposterPubkeys,  // Optional: list of all reposters for consolidated reposts
   }) =>
       originalEvent.copyWith(
         isRepost: true,
         reposterId: repostEventId,
         reposterPubkey: reposterPubkey,
+        reposterPubkeys: reposterPubkeys ?? [reposterPubkey],  // Default to single reposter
         repostedAt: repostedAt,
       );
 

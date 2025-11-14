@@ -2933,6 +2933,58 @@ class VideoEventService extends ChangeNotifier {
       return;
     }
 
+    // REPOST CONSOLIDATION: Check if this is a repost of an existing video
+    if (videoEvent.isRepost) {
+      final existingVideoIndex =
+          eventList.indexWhere((existing) => existing.id == videoEvent.id);
+
+      if (existingVideoIndex != -1) {
+        // Found existing video (either original or another repost of same video)
+        final existingVideo = eventList[existingVideoIndex];
+
+        // Get the new reposter's pubkey
+        final newReposter = videoEvent.reposterPubkey;
+        if (newReposter != null) {
+          // Get existing reposters list (or create from reposterPubkey if null)
+          final existingReposters = existingVideo.reposterPubkeys ??
+              (existingVideo.reposterPubkey != null ? [existingVideo.reposterPubkey!] : <String>[]);
+
+          // Check if this reposter already exists (avoid duplicates)
+          if (!existingReposters.contains(newReposter)) {
+            // Add new reposter to the list
+            final updatedReposters = [...existingReposters, newReposter];
+
+            // Update the video with the new consolidated reposter list
+            final consolidatedVideo = existingVideo.copyWith(
+              reposterPubkeys: updatedReposters,
+              // Keep the original repost metadata (reposterId, repostedAt) from first reposter
+              isRepost: true,
+            );
+
+            // Replace the existing video with consolidated version
+            eventList[existingVideoIndex] = consolidatedVideo;
+
+            Log.info(
+              'Consolidated repost: ${videoEvent.id} now has ${updatedReposters.length} reposters: ${updatedReposters.join(", ")}',
+              name: 'VideoEventService',
+              category: LogCategory.video,
+            );
+
+            // Notify listeners of the update
+            notifyListeners();
+          } else {
+            Log.debug(
+              'Skipping duplicate repost from same user: $newReposter already reposted ${videoEvent.id}',
+              name: 'VideoEventService',
+              category: LogCategory.video,
+            );
+          }
+        }
+
+        return; // Don't add as separate video - we've consolidated it
+      }
+    }
+
     // Check for duplicates within this subscription type
     final existingIndex =
         eventList.indexWhere((existing) => existing.id == videoEvent.id);
