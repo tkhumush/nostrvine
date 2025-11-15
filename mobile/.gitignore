@@ -74,3 +74,6 @@ android/play-store-service-account.json
 *.g.dart
 *.freezed.dart
 *.mocks.dart
+
+# Environment variables (secrets)
+.env
