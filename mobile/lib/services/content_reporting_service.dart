@@ -169,6 +169,16 @@ class ContentReportingService {
         }
       }
 
+      // Create Zendesk ticket silently for moderation tracking
+      await _createZendeskTicket(
+        reportId: reportId,
+        eventId: eventId,
+        authorPubkey: authorPubkey,
+        reason: reason,
+        details: details,
+        additionalContext: additionalContext,
+      );
+
       // Save report to local history
       final report = ContentReport(
         reportId: reportId,
@@ -381,6 +391,61 @@ class ContentReportingService {
       'reason': reason.name,
       'timestamp': DateTime.now().toIso8601String(),
     };
+  }
+
+  /// Create Zendesk ticket for moderation tracking
+  Future<void> _createZendeskTicket({
+    required String reportId,
+    required String eventId,
+    required String authorPubkey,
+    required ContentFilterReason reason,
+    required String details,
+    String? additionalContext,
+  }) async {
+    try {
+      // Format ticket description with NIP-56 report details
+      final description = StringBuffer();
+      description.writeln('Content Report - NIP-56');
+      description.writeln('');
+      description.writeln('Report ID: $reportId');
+      description.writeln('Event ID: $eventId');
+      description.writeln('Author Pubkey: $authorPubkey');
+      description.writeln('');
+      description.writeln('Violation Type: ${reason.name}');
+      description.writeln('');
+      description.writeln('Reporter Details:');
+      description.writeln(details);
+
+      if (additionalContext != null) {
+        description.writeln('');
+        description.writeln('Additional Context:');
+        description.writeln(additionalContext);
+      }
+
+      description.writeln('');
+      description.writeln('---');
+      description.writeln('Reported via diVine mobile app');
+      description.writeln('NIP-56 Nostr event created: $eventId');
+
+      // Create Zendesk ticket silently
+      final success = await ZendeskSupportService.createTicket(
+        subject: 'Content Report: ${reason.name}',
+        description: description.toString(),
+        tags: ['mobile', 'content-report', 'nip-56', reason.name.toLowerCase()],
+      );
+
+      if (success) {
+        Log.info('Zendesk ticket created for report: $reportId',
+            name: 'ContentReportingService', category: LogCategory.system);
+      } else {
+        Log.warning('Failed to create Zendesk ticket for report: $reportId',
+            name: 'ContentReportingService', category: LogCategory.system);
+      }
+    } catch (e) {
+      Log.error('Error creating Zendesk ticket: $e',
+          name: 'ContentReportingService', category: LogCategory.system);
+      // Don't fail the report if Zendesk ticket creation fails
+    }
   }
 
   /// Get quick report details for common violations

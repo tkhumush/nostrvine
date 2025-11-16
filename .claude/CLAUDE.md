@@ -396,6 +396,7 @@ flutter analyze                    # Static analysis
 ./build_web_optimized.sh            # Build optimized web version
 ./build_ios.sh release             # iOS-specific build
 ./build_macos.sh release           # macOS-specific build
+./build_dmg.sh                      # Build signed DMG for macOS distribution (Developer ID)
 
 # Backend commands (run from /backend directory)
 npm run dev                        # Local Cloudflare Workers development
@@ -445,6 +446,9 @@ Flutter App → Blossom Server → Nostr Event
 ./build_native.sh macos debug      # Build macOS debug
 ./build_native.sh macos release    # Build macOS release
 ./build_native.sh both debug       # Build both platforms
+
+# Distribution builds
+./build_dmg.sh                      # Create signed DMG for macOS distribution
 
 # Platform-specific scripts
 ./build_ios.sh debug               # iOS-only build script

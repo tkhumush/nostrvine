@@ -222,18 +222,21 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
                       final isZendeskAvailable = ZendeskSupportService.isAvailable;
                       print('🔍 Zendesk available: $isZendeskAvailable');
 
+                      // Get navigator context before closing drawer
+                      final navigatorContext = Navigator.of(context).context;
+
                       Navigator.pop(context); // Close drawer
 
                       // Wait for drawer close animation
                       await Future.delayed(const Duration(milliseconds: 300));
-                      if (!context.mounted) {
-                        print('⚠️ Context not mounted after drawer close');
+                      if (!navigatorContext.mounted) {
+                        print('⚠️ Navigator context not mounted after drawer close');
                         return;
                       }
 
-                      // Show support options dialog
+                      // Show support options dialog using navigator context
                       _showSupportOptionsDialog(
-                        context,
+                        navigatorContext,
                         ref,
                         authService,
                         isZendeskAvailable,
@@ -416,6 +419,29 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
             const SizedBox(height: 12),
             _buildSupportOption(
               context: context,
+              icon: Icons.chat,
+              title: 'View Past Messages',
+              subtitle: 'Check responses from support',
+              onTap: () async {
+                Navigator.pop(context);
+                if (isZendeskAvailable) {
+                  print('💬 Opening Zendesk ticket list');
+                  await ZendeskSupportService.showTicketList();
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Support chat not available'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildSupportOption(
+              context: context,
               icon: Icons.help,
               title: 'View FAQ',
               subtitle: 'Common questions & answers',
@@ -498,6 +524,10 @@ class _VineDrawerState extends ConsumerState<VineDrawer> {
     dynamic authService,
     bool isZendeskAvailable,
   ) async {
+    // Capture provider values BEFORE any async operations
+    final bugReportService = ref.read(bugReportServiceProvider);
+    final userPubkey = authService.currentPublicKeyHex;
+
     if (isZendeskAvailable) {
       // Get device and app info
       final packageInfo = await PackageInfo.fromPlatform();
@@ -519,10 +549,14 @@ Platform: ${Theme.of(context).platform.name}
       );
 
       if (!success && context.mounted) {
-        _showSupportFallback(context, ref, authService);
+        _showSupportFallbackWithServices(
+          context,
+          bugReportService,
+          userPubkey,
+        );
       }
     } else {
-      _showSupportFallback(context, ref, authService);
+      _showSupportFallbackWithServices(context, bugReportService, userPubkey);
     }
   }
 
@@ -533,6 +567,10 @@ Platform: ${Theme.of(context).platform.name}
     dynamic authService,
     bool isZendeskAvailable,
   ) async {
+    // Capture provider values BEFORE any async operations
+    final bugReportService = ref.read(bugReportServiceProvider);
+    final userPubkey = authService.currentPublicKeyHex;
+
     if (isZendeskAvailable) {
       final description = '''
 Please describe the inappropriate content:
@@ -551,22 +589,23 @@ Reason for report:
       );
 
       if (!success && context.mounted) {
-        _showSupportFallback(context, ref, authService);
+        _showSupportFallbackWithServices(
+          context,
+          bugReportService,
+          userPubkey,
+        );
       }
     } else {
-      _showSupportFallback(context, ref, authService);
+      _showSupportFallbackWithServices(context, bugReportService, userPubkey);
     }
   }
 
   /// Show fallback support options when Zendesk is not available
-  void _showSupportFallback(
+  void _showSupportFallbackWithServices(
     BuildContext context,
-    WidgetRef ref,
-    dynamic authService,
+    dynamic bugReportService,
+    String? userPubkey,
   ) {
-    final bugReportService = ref.read(bugReportServiceProvider);
-    final userPubkey = authService.currentPublicKeyHex;
-
     showDialog(
       context: context,
       builder: (context) => BugReportDialog(

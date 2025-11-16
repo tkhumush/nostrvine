@@ -190,4 +190,49 @@ class ZendeskSupportService {
       return false;
     }
   }
+
+  /// Show ticket list (user's support request history)
+  ///
+  /// Opens the Zendesk ticket list UI showing the user's past support tickets
+  /// and allowing them to view responses and continue conversations.
+  /// Returns true if ticket list shown successfully, false otherwise.
+  static Future<bool> showTicketList() async {
+    if (!_initialized) {
+      Log.warning(
+        'Zendesk not initialized - cannot show ticket list',
+        category: LogCategory.system,
+      );
+      return false;
+    }
+
+    try {
+      final result = await _channel.invokeMethod('showTicketList');
+
+      if (result == true) {
+        Log.info(
+          'Zendesk ticket list shown successfully',
+          category: LogCategory.system,
+        );
+        return true;
+      } else {
+        Log.warning(
+          'Failed to show Zendesk ticket list',
+          category: LogCategory.system,
+        );
+        return false;
+      }
+    } on PlatformException catch (e) {
+      Log.error(
+        'Platform error showing Zendesk ticket list: ${e.code} - ${e.message}',
+        category: LogCategory.system,
+      );
+      return false;
+    } catch (e) {
+      Log.error(
+        'Unexpected error showing Zendesk ticket list: $e',
+        category: LogCategory.system,
+      );
+      return false;
+    }
+  }
 }

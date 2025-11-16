@@ -211,9 +211,13 @@ import SupportProvidersSDK
         // Build request list screen
         let requestListScreen = RequestUi.buildRequestList()
 
-        // Present modally
-        controller.present(requestListScreen, animated: true) {
-          NSLog("✅ Zendesk: Ticket list presented")
+        // CRITICAL: Zendesk RequestUi requires UINavigationController for ticket navigation
+        // Without this, tapping tickets won't open the conversation view
+        let navigationController = UINavigationController(rootViewController: requestListScreen)
+
+        // Present modally with navigation controller
+        controller.present(navigationController, animated: true) {
+          NSLog("✅ Zendesk: Ticket list presented in navigation controller")
         }
 
         result(true)
